@@ -128,31 +128,54 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
 //        let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
 //        stillImageOutput.capturePhoto(with: settings, delegate: self)
         
+        var captureSession2: AVCaptureSession? = AVCaptureSession()
+        let captureDevice2 = AVCaptureDevice.default(for: AVMediaType.video)
+        
+        let input2: AVCaptureDeviceInput?
+        do {
+            input2 = try AVCaptureDeviceInput(device: captureDevice2!)
+            captureSession2?.addInput(input2!)
+        } catch {
+            print("COULDN'T ASSIGN DEVICE INPUT TO VARIABLE")
+            return
+        }
+        
         let photoOutput = AVCaptureVideoDataOutput()
         let queue = DispatchQueue(label: "com.davidhartzog.queue")
         photoOutput.setSampleBufferDelegate(self, queue: queue)
-        if ((captureSession?.canAddOutput(photoOutput))!) {
-            captureSession?.addOutput(photoOutput)
+        if ((captureSession2?.canAddOutput(photoOutput))!) {
+            captureSession2?.addOutput(photoOutput)
         }
         else {
             print("CANT ADD OUTPUT TO CAPTURESESSION")
         }
+        
+        captureSession2?.startRunning()
+        captureSession2?.stopRunning()
+        print("CAPTURESESSION2 STOPPED RUNNING")
     }
-    func setTheImage(image: UIImage) {
-        imageView.image = image
-    }
+    
+//    func setTheImage(image: UIImage) {
+//        imageView.image = image
+//    }
     
     func captureOutput(_ output: AVCaptureOutput,
                                 didOutput sampleBuffer: CMSampleBuffer,
                                 from connection: AVCaptureConnection) {
-        print("IMAGE RECEIVED!!!")
+        //print("IMAGE RECEIVED!!!")
         let imageBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
         let ciImage: CIImage = CIImage(cvPixelBuffer: imageBuffer)
         let context: CIContext = CIContext.init()
         let cgImage: CGImage = context.createCGImage(ciImage, from: ciImage.extent)!
         let image: UIImage = UIImage.init(cgImage: cgImage)
         
-        setTheImage(image: image)
+        //setTheImage(image: image)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.imageView.image = image
+        }
+        
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
     
     
@@ -163,10 +186,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
             else {
                 return
         }
+        DispatchQueue.main.async { [unowned self] in
+            let image = UIImage(data: imageData)
+            self.imageView.image = image
+        }
         
-        let image = UIImage(data: imageData)
         
-        UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
+        //UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
         
         print("photo saved!")
     }
@@ -195,40 +221,24 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
     }
     
     @objc func updateCoordinates() {
-//        print("coordinates updated!")
-//
-//        var location: CLLocation!
-//        location = getCoordinates()
-//
-//        if location == nil {
-//            print("LOCATION IS NIL!!!")
-//        }
-//        else {
-//            latitudeLabel.text = "\(location.coordinate.latitude)"
-//            longitudeLabel.text = "\(location.coordinate.longitude)"
-//        }
+        let (latDeg, latMin, latSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.latitude)
+        let (lonDeg, lonMin, lonSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.longitude)
         
-        let decimalLatitude = locationFinder.latitude
-        let decimalLongitude = locationFinder.longitude
-        
-        let (latDeg, latMin, latSec) = locationFinder.decimalToDegrees(coordinate: decimalLatitude!)
-        let (lonDeg, lonMin, lonSec) = locationFinder.decimalToDegrees(coordinate: decimalLongitude!)
-        
-        latitudeLabel.text = "\(latDeg) \(latMin) \(latSec)"
-        longitudeLabel.text = "\(lonDeg) \(lonMin) \(lonSec)"
+        latitudeLabel.text = "\(latDeg) \(latMin)' \(latSec)''"
+        longitudeLabel.text = "\(lonDeg) \(lonMin)' \(lonSec)''"
     }
 
     @IBAction func buttonClick(_ sender: UIButton) {
         statusLabel.text = "Running"
         statusLabel.textColor = UIColor.green
         
-        //timer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(updateCoordinates), userInfo: nil, repeats: true)
-        
         locationFinder.startFindingLocation {
             print("!!!!!!!!!!!!")
         }
         
-        timer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(updateCoordinates), userInfo: nil, repeats: true)
+        if ((timer == nil) || (timer.isValid == false)) {
+            timer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(updateCoordinates), userInfo: nil, repeats: true)
+        }
     }
     
     @IBAction func stopTimer(_ sender: UIButton) {
