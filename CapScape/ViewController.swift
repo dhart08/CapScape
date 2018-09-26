@@ -21,10 +21,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
     @IBOutlet weak var imageView: UIImageView!
     
     //helps transfer data between input devices (camera, mic, etc.) and a view
-    var captureSession: AVCaptureSession?
+    var captureVideoSession: AVCaptureSession?
     //helps render the camera view finder in the view controller
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
-    var input: AVCaptureDeviceInput?
+    var videoInput: AVCaptureDeviceInput?
+    
+    var capturePhotoSession: AVCaptureSession?
+    var photoInput: AVCaptureDeviceInput?
+    var photoOutput: AVCapturePhotoOutput?
     
     var timer: Timer!
     var locationManager: CLLocationManager!
@@ -45,21 +49,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
 //        }
         
         //initialize a decive object and provide the video as a media type parameter object
-        let captureDevice = AVCaptureDevice.default(for: AVMediaType.video)
+        let captureVideoDevice = AVCaptureDevice.default(for: AVMediaType.video)
         //attaches the input device to the capture device
         do {
-            input = try AVCaptureDeviceInput(device: captureDevice!)
+            videoInput = try AVCaptureDeviceInput(device: captureVideoDevice!)
         } catch {
             print(error)
         }
         
         //initialize the captureSession object
-        captureSession = AVCaptureSession()
+        captureVideoSession = AVCaptureSession()
         //add the input device to our session
-        captureSession?.addInput(input!)
+        captureVideoSession?.addInput(videoInput!)
         
         //create an AVCaptureVideoPreviewLayer from the session
-        videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureSession!)
+        videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureVideoSession!)
         //configure the layer to resize while maintaining original aspect ratio
         videoPreviewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
         //set preview layer frame to our video controller view bounds
@@ -69,7 +73,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
         cameraView.layer.addSublayer(videoPreviewLayer!)
         
         //start the capture session
-        captureSession?.startRunning()
+        captureVideoSession?.startRunning()
         
         cameraView.bringSubview(toFront: recordButton)
         cameraView.bringSubview(toFront: snapshotButton)
@@ -128,48 +132,52 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
 //        let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
 //        stillImageOutput.capturePhoto(with: settings, delegate: self)
         
-        var captureSession2: AVCaptureSession? = AVCaptureSession()
-        let captureDevice2 = AVCaptureDevice.default(for: AVMediaType.video)
+        let capturePhotoSession: AVCaptureSession? = AVCaptureSession()
+        let capturePhotoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back)
         
-        let input2: AVCaptureDeviceInput?
         do {
-            input2 = try AVCaptureDeviceInput(device: captureDevice2!)
-            captureSession2?.addInput(input2!)
+            photoInput = try AVCaptureDeviceInput(device: capturePhotoDevice!)
+            capturePhotoSession?.addInput(photoInput!)
         } catch {
             print("COULDN'T ASSIGN DEVICE INPUT TO VARIABLE")
             return
         }
         
-        let photoOutput = AVCaptureVideoDataOutput()
-        let queue = DispatchQueue(label: "com.davidhartzog.queue")
-        photoOutput.setSampleBufferDelegate(self, queue: queue)
-        if ((captureSession2?.canAddOutput(photoOutput))!) {
-            captureSession2?.addOutput(photoOutput)
+        photoOutput = AVCapturePhotoOutput()
+        if ((capturePhotoSession?.canAddOutput(photoOutput!))!) {
+            capturePhotoSession?.addOutput(photoOutput!)
         }
         else {
             print("CANT ADD OUTPUT TO CAPTURESESSION")
+            return
         }
+        photoOutput!.isHighResolutionCaptureEnabled = true
+        photoOutput!.isLivePhotoCaptureEnabled = photoOutput!.isLivePhotoCaptureSupported
         
-        captureSession2?.startRunning()
-        captureSession2?.stopRunning()
+        capturePhotoSession?.startRunning()
+        
+        let photoSettings = AVCapturePhotoSettings()
+        photoSettings.isHighResolutionPhotoEnabled = true
+        photoOutput!.capturePhoto(with: photoSettings, delegate: self)
+        
+        capturePhotoSession?.stopRunning()
         print("CAPTURESESSION2 STOPPED RUNNING")
     }
     
-//    func setTheImage(image: UIImage) {
-//        imageView.image = image
-//    }
-    
-    func captureOutput(_ output: AVCaptureOutput,
-                                didOutput sampleBuffer: CMSampleBuffer,
-                                from connection: AVCaptureConnection) {
-        //print("IMAGE RECEIVED!!!")
-        let imageBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
-        let ciImage: CIImage = CIImage(cvPixelBuffer: imageBuffer)
-        let context: CIContext = CIContext.init()
-        let cgImage: CGImage = context.createCGImage(ciImage, from: ciImage.extent)!
-        let image: UIImage = UIImage.init(cgImage: cgImage)
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        print("photoOutput2!")
         
-        //setTheImage(image: image)
+        guard let imageData = photo.fileDataRepresentation()
+            else {
+                print("FAILED TO GET IMAGE DATA FROM FILE REPRESENTATION")
+                return
+        }
+        
+        guard let image = UIImage.init(data: imageData)
+            else {
+                print("FAILED TO CONVERT IMAGE DATA TO UIIMAGE")
+                return
+        }
         
         DispatchQueue.main.async { [weak self] in
             self?.imageView.image = image
@@ -178,24 +186,40 @@ class ViewController: UIViewController, CLLocationManagerDelegate, AVCapturePhot
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
     
-    
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        print("trying to save photo...")
+    func captureOutput(_ output: AVCaptureOutput,
+                                didOutput sampleBuffer: CMSampleBuffer,
+                                from connection: AVCaptureConnection) {
+        print("IMAGE RECEIVED!!!")
+        let imageBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
+        let ciImage: CIImage = CIImage(cvPixelBuffer: imageBuffer)
+        let context: CIContext = CIContext.init()
+        let cgImage: CGImage = context.createCGImage(ciImage, from: ciImage.extent)!
+        let image: UIImage = UIImage.init(cgImage: cgImage)
         
-        guard let imageData = photo.fileDataRepresentation()
-            else {
-                return
+        DispatchQueue.main.async { [weak self] in
+            self?.imageView.image = image
         }
-        DispatchQueue.main.async { [unowned self] in
-            let image = UIImage(data: imageData)
-            self.imageView.image = image
-        }
         
-        
-        //UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
-        
-        print("photo saved!")
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
+    
+//    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+//        print("trying to save photo...")
+//
+//        guard let imageData = photo.fileDataRepresentation()
+//            else {
+//                return
+//        }
+//        DispatchQueue.main.async { [unowned self] in
+//            let image = UIImage(data: imageData)
+//            self.imageView.image = image
+//        }
+//
+//
+//        //UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
+//
+//        print("photo saved!")
+//    }
     
     
     
