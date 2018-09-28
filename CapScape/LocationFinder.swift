@@ -31,7 +31,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         print("LocationFinder:requestAuthorization")
     }
     
-    func startFindingLocation(_: () -> Void) {
+    func startFindingLocation() {
         if CLLocationManager.locationServicesEnabled() {
             locationManager.startUpdatingLocation()
         }
@@ -51,10 +51,11 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         latitude = location.coordinate.latitude
         longitude = location.coordinate.longitude
         
-        print("LocationFinder:callback")
+        NotificationCenter.default.post(name: .didReceiveCoordinates, object: nil, userInfo: nil)
         
-        print(latitude)
-        print(longitude)
+//        print("LocationFinder:callback")
+//        print(latitude)
+//        print(longitude)
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -77,4 +78,8 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         
         return (deg, min, sec)
     }
+}
+
+extension Notification.Name {
+    static let didReceiveCoordinates = Notification.Name("didReceiveCoordinates")
 }
