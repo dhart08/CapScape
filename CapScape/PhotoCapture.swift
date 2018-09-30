@@ -50,14 +50,14 @@ class PhotoCapture: NSObject, AVCapturePhotoCaptureDelegate {
     }
     
     func takePhoto() {
-        capturePhotoSession?.startRunning()
+        //capturePhotoSession?.startRunning()
         print("CAPTUREPHOTOSESSION STARTED RUNNING")
         
         photoSettings = AVCapturePhotoSettings()
         photoSettings!.isHighResolutionPhotoEnabled = true
         photoOutput!.capturePhoto(with: photoSettings!, delegate: self)
         
-        capturePhotoSession?.stopRunning()
+        //capturePhotoSession?.stopRunning()
         print("CAPTUREPHOTOSESSION STOPPED RUNNING")
     }
     
@@ -87,6 +87,16 @@ class PhotoCapture: NSObject, AVCapturePhotoCaptureDelegate {
     
     func saveImageToPhotosAlbum(image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+    }
+    
+    func startRunningSession() {
+        DispatchQueue.global(qos: .userInitiated).async {
+        self.capturePhotoSession?.startRunning()
+        }
+    }
+    
+    func stopRunningSession() {
+        capturePhotoSession?.stopRunning()
     }
 }
 

@@ -81,6 +81,10 @@
                                         <rect key="frame" x="273" y="571" width="133" height="75"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <gestureRecognizers/>
+                                        <connections>
+                                            <outletCollection property="gestureRecognizers" destination="IGf-22-hOz" appends="YES" id="imP-a4-pmg"/>
+                                        </connections>
                                     </imageView>
                                 </subviews>
                                 <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -105,16 +109,22 @@
                         <outlet property="photoPreview" destination="Yz5-q9-bgp" id="zlz-aL-5FX"/>
                         <outlet property="recordButton" destination="Sie-Cp-cW6" id="ke4-XI-Lxl"/>
                         <outlet property="snapshotButton" destination="FWt-JQ-kdY" id="gHh-mU-q4s"/>
+                        <segue destination="jx1-hg-QvA" kind="presentation" id="kdY-l6-nRk"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                <tapGestureRecognizer id="IGf-22-hOz">
+                    <connections>
+                        <action selector="photoViewSegueWithGesture:" destination="BYZ-38-t0r" id="wlN-ru-SBk"/>
+                    </connections>
+                </tapGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="117.39130434782609" y="192.39130434782609"/>
         </scene>
-        <!--View Controller-->
+        <!--Photo Edit View Controller-->
         <scene sceneID="bOE-uy-A8I">
             <objects>
-                <viewController id="jx1-hg-QvA" sceneMemberID="viewController">
+                <viewController id="jx1-hg-QvA" customClass="PhotoEditViewController" customModule="CapScape" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Z44-EW-ng0">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

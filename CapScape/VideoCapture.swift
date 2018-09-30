@@ -10,13 +10,17 @@ import UIKit
 import Foundation
 import AVFoundation
 
-class VideoCapture {
+class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     //helps transfer data between input devices (camera, mic, etc.) and a view
     var captureVideoSession: AVCaptureSession?
     //helps render the camera view finder in the view controller
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
     var videoInput: AVCaptureDeviceInput?
+    var videoOutput: AVCaptureVideoDataOutput?
+    
+    var getImage: Bool = false
+    var image: UIImage?
     
     func setupSession() {
         //initialize the captureSession object
@@ -30,6 +34,17 @@ class VideoCapture {
         } catch {
             print(error)
         }
+        
+        do {
+            videoOutput = AVCaptureVideoDataOutput()
+            let videoQueue = DispatchQueue(label: "videoQueue")
+            videoOutput!.setSampleBufferDelegate(self, queue: videoQueue)
+            
+            if (captureVideoSession?.canAddOutput(videoOutput!))! {
+                captureVideoSession?.addOutput(videoOutput!)
+                print("ADDED OUTPUT TO VIDEO SESSION")
+            }
+        }
         //add the input device to our session
         captureVideoSession?.addInput(videoInput!)
         
@@ -37,8 +52,6 @@ class VideoCapture {
         videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureVideoSession!)
         //configure the layer to resize while maintaining original aspect ratio
         videoPreviewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        
-        
     }
     
     func setVideoPreviewInView(previewView: UIView) {
@@ -57,5 +70,29 @@ class VideoCapture {
     func stopRunningSession() {
         //stop the capture sesssion
         captureVideoSession?.stopRunning()
+    }
+    
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        //print("CAPTURED FRAME OUTPUT!!!")
+        
+        if (getImage == true) {
+            let imageBuffer: CVPixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
+            let ciImage: CIImage = CIImage(cvPixelBuffer: imageBuffer)
+            let context: CIContext = CIContext.init(options: nil)
+            let cgImage: CGImage = context.createCGImage(ciImage, from: ciImage.extent)!
+            image = UIImage.init(cgImage: cgImage)
+            
+            NotificationCenter.default.post(name: .didReceiveImage, object: nil)
+            
+            getImage = false
+        }
+    }
+    
+    func captureImage() {
+        print("CAPTURE IMAGE")
+        
+        getImage = true
+        
+        print("BACK TO CAPTURE IMAGE")
     }
 }

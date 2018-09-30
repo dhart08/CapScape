@@ -40,17 +40,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         videoCapture.setupSession()
         videoCapture.setVideoPreviewInView(previewView: cameraView)
         
-        photoCapture.setupSession()
+        //photoCapture.setupSession()
         
         locationFinder = LocationFinder()
         locationFinder.requestAuthorization()
-        
-        let photoPreviewTapGesture = UITapGestureRecognizer(target: self, action:#selector(photoViewSegue))
-        photoPreview.addGestureRecognizer(photoPreviewTapGesture)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         videoCapture.startRunningSession()
+        //photoCapture.startRunningSession()
         
         cameraView.bringSubview(toFront: recordButton)
         cameraView.bringSubview(toFront: snapshotButton)
@@ -65,6 +63,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     
     override func viewWillDisappear(_ animated: Bool) {
         videoCapture.stopRunningSession()
+        //photoCapture.stopRunningSession()
         locationFinder.stopFindingLocation()
     }
 
@@ -73,13 +72,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         // Dispose of any resources that can be recreated.
     }
     
-    @objc func photoViewSegue(gesture: UIGestureRecognizer) {
-        if (photoPreview == gesture.view as? UIImageView) {
-            print("photoViewSegue")
-        }
-        else {
-            print("not photoPreview")
-        }
+    @IBAction func photoViewSegue(gesture: UIGestureRecognizer) {
+        //let photoEditViewController = PhotoEditViewController()
+        //self.present(photoEditViewController, animated: true, completion: nil)
+        print("photoViewSegue!")
+        
     }
 
     @IBAction func recordButtonClick(_ sender: UIButton) {
@@ -98,26 +95,30 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     @IBAction func snapshotButtonClick(_ sender: UIButton) {
         let photoThread = DispatchQueue(label: "photoThread")
         photoThread.async {
-            self.photoCapture.takePhoto()
+            //self.photoCapture.takePhoto()
+            self.videoCapture.captureImage()
         }
     }
     
     @objc func onDidReceiveImage(_ notification: Notification) {
-        currentPhoto = photoCapture.getPhoto()
-        photoPreview.image = currentPhoto
+        currentPhoto = videoCapture.image
+        DispatchQueue.main.async {
+            self.photoPreview.image = self.currentPhoto
         
-        let minSize: CGSize = photoPreview.frame.size
-        let minX: CGFloat = photoPreview.frame.origin.x
-        let minY: CGFloat = photoPreview.frame.origin.y
         
-        photoPreview.alpha = 0.0
-        photoPreview.frame = CGRect(x: 0, y: 0, width: cameraView.frame.width, height: cameraView.frame.height)
+        let minSize: CGSize = self.photoPreview.frame.size
+        let minX: CGFloat = self.photoPreview.frame.origin.x
+        let minY: CGFloat = self.photoPreview.frame.origin.y
+        
+        self.photoPreview.alpha = 0.0
+        self.photoPreview.frame = CGRect(x: 0, y: 0, width: self.cameraView.frame.width, height: self.cameraView.frame.height)
         
         UIView.animate(withDuration: 0.2){
             self.photoPreview.alpha = 1
             self.photoPreview.frame.size = minSize
             self.photoPreview.frame.origin.x = minX
             self.photoPreview.frame.origin.y = minY
+        }
         }
     }
     
