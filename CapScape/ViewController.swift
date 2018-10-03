@@ -76,7 +76,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         //let photoEditViewController = PhotoEditViewController()
         //self.present(photoEditViewController, animated: true, completion: nil)
         print("photoViewSegue!")
-        
+        let destinationVC = self.storyboard?.instantiateViewController(withIdentifier: "PhotoEditViewController") as! PhotoEditViewController
+        destinationVC.image = currentPhoto
+        self.navigationController?.pushViewController(destinationVC, animated: true)
     }
 
     @IBAction func recordButtonClick(_ sender: UIButton) {
