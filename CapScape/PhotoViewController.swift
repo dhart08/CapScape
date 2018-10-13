@@ -18,6 +18,12 @@ class PhotoViewController: UIViewController {
     @IBOutlet weak var longitudeLabel: UILabel!
     @IBOutlet weak var snapPhotoButton: UIButton!
     
+    struct Annotation {
+        var text: NSString
+        var textSize: CGFloat
+        var point: CGPoint
+    }
+    
     private var photoCapture: PhotoCapture!
     private var image: UIImage?
     
@@ -77,36 +83,54 @@ class PhotoViewController: UIViewController {
         
         DispatchQueue.main.async {
             if let oldImage = self.image {
-                let latString = NSString(string: "Lat:  \(self.latitudeLabel.text!)")
-                let latStringPoint = CGPoint(x: 0, y: oldImage.size.height - 200)
-                let lonString = NSString(string: "Lon: \(self.longitudeLabel.text!)")
-                let lonStringPoint = CGPoint(x: 0, y: oldImage.size.height - 100)
+//                let latString = NSString(string: "Lat:  \(self.latitudeLabel.text!)")
+//                let latStringPoint = CGPoint(x: 0, y: oldImage.size.height - 200)
+//                let lonString = NSString(string: "Lon: \(self.longitudeLabel.text!)")
+//                let lonStringPoint = CGPoint(x: 0, y: oldImage.size.height - 100)
                 
-                var newImage = self.putTextInImage(text: latString, textSize: 100, atPoint: latStringPoint, oldImage: oldImage)
-                newImage = self.putTextInImage(text: lonString, textSize: 100, atPoint: lonStringPoint, oldImage: newImage)
+                let latAnnotation = Annotation(
+                    text: NSString(string: "Lat:  \(self.latitudeLabel.text!)"),
+                    textSize: 100,
+                    point: CGPoint(x: 0, y: oldImage.size.height-200)
+                )
                 
-                //self.photoCapture.saveImageToPhotosAlbum(image: newImage)
+                let lonAnnotation = Annotation(
+                    text: NSString(string: "Lon:  \(self.longitudeLabel.text!)"),
+                    textSize: 100,
+                    point: CGPoint(x: 0, y: oldImage.size.height-100)
+                )
+                
+//                var newImage = self.putTextInImage(text: latString, textSize: 100, atPoint: latStringPoint, oldImage: oldImage)
+//                newImage = self.putTextInImage(text: lonString, textSize: 100, atPoint: lonStringPoint, oldImage: newImage)
+                
+                let newImage = self.putTextInImage(annotations: latAnnotation, lonAnnotation, oldImage: oldImage)
+                
+                
+                self.photoCapture.saveImageToPhotosAlbum(image: newImage)
                 print("photo Saved!")
             }
         }
     }
     
-    func putTextInImage(text: NSString, textSize: CGFloat, atPoint: CGPoint, oldImage: UIImage) -> UIImage {
+    func putTextInImage(annotations: Annotation..., oldImage: UIImage) -> UIImage {
         let scale = UIScreen.main.scale
         UIGraphicsBeginImageContextWithOptions(oldImage.size, false, scale)
         
+        //slow!!!
         oldImage.draw(in: CGRect(origin: CGPoint.zero, size: oldImage.size))
         
-        let color = UIColor.white
-        let font = UIFont(name: "Helvetica", size: textSize)!
-        let textFontAttributes = [
-            NSAttributedStringKey.font: font,
-            NSAttributedStringKey.foregroundColor: color,
-            NSAttributedStringKey.backgroundColor: UIColor.black
-        ] as [NSAttributedStringKey: Any]
+        for annotation in annotations {
+            let color = UIColor.white
+            let font = UIFont(name: "Helvetica", size: annotation.textSize)!
+            let textFontAttributes = [
+                NSAttributedStringKey.font: font,
+                NSAttributedStringKey.foregroundColor: color,
+                NSAttributedStringKey.backgroundColor: UIColor.black
+            ] as [NSAttributedStringKey: Any]
         
-        let rect = CGRect(origin: atPoint, size: oldImage.size)
-        text.draw(in: rect, withAttributes: textFontAttributes)
+            let rect = CGRect(origin: annotation.point, size: oldImage.size)
+            annotation.text.draw(in: rect, withAttributes: textFontAttributes)
+        }
         
         let newImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
