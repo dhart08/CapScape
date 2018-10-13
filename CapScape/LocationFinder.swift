@@ -52,10 +52,6 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         longitude = location.coordinate.longitude
         
         NotificationCenter.default.post(name: .didReceiveCoordinates, object: nil, userInfo: nil)
-        
-//        print("LocationFinder:callback")
-//        print(latitude)
-//        print(longitude)
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

@@ -73,8 +73,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     }
     
     @IBAction func photoViewSegue(gesture: UIGestureRecognizer) {
-        //let photoEditViewController = PhotoEditViewController()
-        //self.present(photoEditViewController, animated: true, completion: nil)
         print("photoViewSegue!")
         let destinationVC = self.storyboard?.instantiateViewController(withIdentifier: "PhotoEditViewController") as! PhotoEditViewController
         destinationVC.image = currentPhoto
@@ -125,11 +123,14 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     }
     
     @objc func onDidReceiveCoordinates(_ notification: Notification) {
-        let (latDeg, latMin, latSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.latitude)
-        let (lonDeg, lonMin, lonSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.longitude)
-        
-        latitudeValueLabel.text = "\(latDeg) \(latMin)' \(latSec)''"
-        longitudeValueLabel.text = "\(lonDeg) \(lonMin)' \(lonSec)''"
+        if locationFinder.latitude != nil {
+            let (latDeg, latMin, latSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.latitude!)
+            latitudeValueLabel.text = "\(latDeg) \(latMin)' \(latSec)''"
+        }
+        if locationFinder.longitude != nil {
+            let (lonDeg, lonMin, lonSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.longitude!)
+            longitudeValueLabel.text = "\(lonDeg) \(lonMin)' \(lonSec)''"
+        }
     }
     
 }

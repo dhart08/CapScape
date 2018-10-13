@@ -89,12 +89,16 @@
                             </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <viewLayoutGuide key="safeArea" id="CAz-PT-Ryt"/>
                     </view>
                     <navigationItem key="navigationItem" id="2hr-ih-TQC">
                         <leftBarButtonItems>
                             <barButtonItem title="Videos" id="YSD-Th-1gW"/>
-                            <barButtonItem title="Photos" id="Pce-jJ-nwh"/>
+                            <barButtonItem title="Photos" id="Pce-jJ-nwh">
+                                <connections>
+                                    <segue destination="Nun-6k-CHz" kind="show" id="P5y-dz-SEX"/>
+                                </connections>
+                            </barButtonItem>
                             <barButtonItem title="Audio" id="uM4-BB-Yyq"/>
                         </leftBarButtonItems>
                     </navigationItem>
@@ -119,6 +123,75 @@
             </objects>
             <point key="canvasLocation" x="117.39130434782609" y="192.39130434782609"/>
         </scene>
+        <!--Photo View Controller-->
+        <scene sceneID="IKG-t5-Fob">
+            <objects>
+                <viewController id="Nun-6k-CHz" customClass="PhotoViewController" customModule="CapScape" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="oqh-Bs-hah">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="672"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9uB-Jn-oJu">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="672"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" fixedFrame="YES" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NjU-e4-g1Z">
+                                        <rect key="frame" x="0.0" y="0.0" width="414" height="672"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="OTB-iG-org">
+                                                <rect key="frame" x="8" y="598" width="133" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="G8Q-ko-60s">
+                                                <rect key="frame" x="241" y="569" width="149" height="79"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            </imageView>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="112-Zo-JFS">
+                                                <rect key="frame" x="8" y="627" width="133" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="RP0-Gn-DVb">
+                                                <rect key="frame" x="182" y="593" width="35" height="30"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <state key="normal" title="Snap">
+                                                    <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="takePhotoButtonClick:" destination="Nun-6k-CHz" eventType="touchUpInside" id="eAi-mt-Rp5"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                        <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <viewLayoutGuide key="safeArea" id="OqH-fi-oax"/>
+                                    </view>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="k5n-yb-ch3"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <connections>
+                        <outlet property="latitudeLabel" destination="OTB-iG-org" id="pKU-55-dlL"/>
+                        <outlet property="longitudeLabel" destination="112-Zo-JFS" id="cUR-s1-5qa"/>
+                        <outlet property="photoThumbnail" destination="G8Q-ko-60s" id="MGt-PV-cUq"/>
+                        <outlet property="photoView" destination="NjU-e4-g1Z" id="foK-Ku-9H2"/>
+                        <outlet property="snapPhotoButton" destination="RP0-Gn-DVb" id="M8Q-XL-XUm"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ruq-sf-G8k" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1018.840579710145" y="-23.64130434782609"/>
+        </scene>
         <!--Photo Edit View Controller-->
         <scene sceneID="bOE-uy-A8I">
             <objects>
@@ -134,7 +207,7 @@
                             </imageView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                        <viewLayoutGuide key="safeArea" id="FKo-CS-pE1"/>
+                        <viewLayoutGuide key="safeArea" id="5kW-T6-zOT"/>
                     </view>
                     <connections>
                         <outlet property="photoView" destination="gJL-Cw-Puc" id="aHr-WI-2mA"/>
@@ -142,7 +215,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="EPI-gX-IOA" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="934.78260869565224" y="188.31521739130437"/>
+            <point key="canvasLocation" x="1019" y="651"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="BdX-VA-Rgf">

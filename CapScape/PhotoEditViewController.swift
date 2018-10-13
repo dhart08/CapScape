@@ -16,7 +16,5 @@ class PhotoEditViewController: UIViewController {
     
     override func viewDidLoad() {
         print("PhotoEditViewController loaded!")
-        
-        photoView.image = image
     }
 }

@@ -18,6 +18,7 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
     var videoInput: AVCaptureDeviceInput?
     var videoOutput: AVCaptureVideoDataOutput?
+    var captureVideoDevice: AVCaptureDevice?
     
     var getImage: Bool = false
     var image: UIImage?
@@ -27,7 +28,7 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         captureVideoSession = AVCaptureSession()
         
         //initialize a decive object and provide the video as a media type parameter object
-        let captureVideoDevice = AVCaptureDevice.default(for: AVMediaType.video)
+        captureVideoDevice = AVCaptureDevice.default(for: AVMediaType.video)
         //attaches the input device to the capture device
         do {
             videoInput = try AVCaptureDeviceInput(device: captureVideoDevice!)
@@ -95,4 +96,5 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         
         print("BACK TO CAPTURE IMAGE")
     }
+    
 }

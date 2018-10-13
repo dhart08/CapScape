@@ -17,6 +17,7 @@
 		63A54DA7215FA0B400FB8EFE /* PhotoEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A54DA6215FA0B400FB8EFE /* PhotoEditViewController.swift */; };
 		63E71437215DB1C500CC417E /* VideoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E71436215DB1C500CC417E /* VideoCapture.swift */; };
 		63E7143B215DB9B900CC417E /* PhotoCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E7143A215DB9B900CC417E /* PhotoCapture.swift */; };
+		63E95F902164F7500050C5ED /* PhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E95F8F2164F7500050C5ED /* PhotoViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		63A54DA6215FA0B400FB8EFE /* PhotoEditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEditViewController.swift; sourceTree = "<group>"; };
 		63E71436215DB1C500CC417E /* VideoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
 		63E7143A215DB9B900CC417E /* PhotoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCapture.swift; sourceTree = "<group>"; };
+		63E95F8F2164F7500050C5ED /* PhotoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 			children = (
 				63436C98214374F3002A6EC6 /* AppDelegate.swift */,
 				63A54DA6215FA0B400FB8EFE /* PhotoEditViewController.swift */,
+				63E95F8F2164F7500050C5ED /* PhotoViewController.swift */,
 				63436C9A214374F3002A6EC6 /* ViewController.swift */,
 				63436C9C214374F3002A6EC6 /* Main.storyboard */,
 				63436CA2214374F6002A6EC6 /* Assets.xcassets */,
@@ -155,6 +158,7 @@
 				63436C9B214374F3002A6EC6 /* ViewController.swift in Sources */,
 				63436C99214374F3002A6EC6 /* AppDelegate.swift in Sources */,
 				63A54DA7215FA0B400FB8EFE /* PhotoEditViewController.swift in Sources */,
+				63E95F902164F7500050C5ED /* PhotoViewController.swift in Sources */,
 				63436CA1214374F3002A6EC6 /* CapScape.xcdatamodeld in Sources */,
 				63E7143B215DB9B900CC417E /* PhotoCapture.swift in Sources */,
 			);
