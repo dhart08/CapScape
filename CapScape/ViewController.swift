@@ -47,6 +47,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        NotificationCenter.default.addObserver(self, selector: #selector(onDeviceRotation), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+        
         videoCapture.startRunningSession()
         //photoCapture.startRunningSession()
         
@@ -62,9 +64,20 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+        
         videoCapture.stopRunningSession()
         //photoCapture.stopRunningSession()
         locationFinder.stopFindingLocation()
+    }
+    
+    @objc func onDeviceRotation() {
+        if UIDeviceOrientationIsPortrait(UIDevice.current.orientation) {
+            videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.portrait)
+        }
+        else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
+            videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.landscapeLeft)
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -84,11 +97,14 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
             print("Record Clicked")
             sender.setTitle("Stop", for: .normal)
             sender.setTitleColor(UIColor.white, for: .normal)
+            videoCapture.startRecording()
         }
         else {
             print("Stop Clicked")
             sender.setTitle("Record", for: .normal)
             sender.setTitleColor(UIColor.red, for: .normal)
+            
+            videoCapture.stopRecording()
         }
     }
     
@@ -96,7 +112,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         let photoThread = DispatchQueue(label: "photoThread")
         photoThread.async {
             //self.photoCapture.takePhoto()
-            self.videoCapture.captureImage()
+            //self.videoCapture.captureImage()
         }
     }
     

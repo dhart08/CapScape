@@ -17,8 +17,10 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     //helps render the camera view finder in the view controller
     var videoPreviewLayer: AVCaptureVideoPreviewLayer?
     var videoInput: AVCaptureDeviceInput?
+    var audioInput: AVCaptureDevice?
     var videoOutput: AVCaptureVideoDataOutput?
     var captureVideoDevice: AVCaptureDevice?
+    var movieFileOutput: AVCaptureMovieFileOutput?
     
     var getImage: Bool = false
     var image: UIImage?
@@ -30,29 +32,41 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         //initialize a decive object and provide the video as a media type parameter object
         captureVideoDevice = AVCaptureDevice.default(for: AVMediaType.video)
         //attaches the input device to the capture device
-        do {
-            videoInput = try AVCaptureDeviceInput(device: captureVideoDevice!)
-        } catch {
-            print(error)
-        }
         
         do {
+            videoInput = try? AVCaptureDeviceInput(device: captureVideoDevice!)
+            audioInput = AVCaptureDevice.default(for: AVMediaType.audio)
+            
             videoOutput = AVCaptureVideoDataOutput()
             let videoQueue = DispatchQueue(label: "videoQueue")
             videoOutput!.setSampleBufferDelegate(self, queue: videoQueue)
             
-            if (captureVideoSession?.canAddOutput(videoOutput!))! {
-                captureVideoSession?.addOutput(videoOutput!)
+//            if (captureVideoSession?.canAddOutput(videoOutput!))! {
+//                captureVideoSession?.addOutput(videoOutput!)
+//                print("ADDED OUTPUT TO VIDEO SESSION")
+//            }
+            
+            movieFileOutput = AVCaptureMovieFileOutput()
+            if (captureVideoSession?.canAddOutput(movieFileOutput!))! {
+                captureVideoSession?.addOutput(movieFileOutput!)
                 print("ADDED OUTPUT TO VIDEO SESSION")
             }
         }
         //add the input device to our session
-        captureVideoSession?.addInput(videoInput!)
+        do {
+            captureVideoSession?.addInput(videoInput!)
+            try captureVideoSession?.addInput(AVCaptureDeviceInput(device: audioInput!))
+        }
+        catch {
+            print(error)
+        }
+        
         
         //create an AVCaptureVideoPreviewLayer from the session
         videoPreviewLayer = AVCaptureVideoPreviewLayer(session: captureVideoSession!)
         //configure the layer to resize while maintaining original aspect ratio
         videoPreviewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        videoPreviewLayer?.connection?.videoOrientation = AVCaptureVideoOrientation.portrait
     }
     
     func setVideoPreviewInView(previewView: UIView) {
@@ -61,6 +75,10 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         videoPreviewLayer?.frame.size = previewView.frame.size
         //add the preview layer as a sublayer to our cameraView
         previewView.layer.addSublayer(videoPreviewLayer!)
+    }
+    
+    func setVideoOrientation(orientation: AVCaptureVideoOrientation) {
+        videoPreviewLayer?.connection?.videoOrientation = orientation
     }
     
     func startRunningSession() {
@@ -89,12 +107,33 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
     
-    func captureImage() {
-        print("CAPTURE IMAGE")
+    func startRecording() {
+        print("recording...")
         
-        getImage = true
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let fileURL = paths[0].appendingPathComponent("myMovie.mov")
         
-        print("BACK TO CAPTURE IMAGE")
+        try? FileManager.default.removeItem(at: fileURL)
+        
+        movieFileOutput?.startRecording(to: fileURL, recordingDelegate: self as AVCaptureFileOutputRecordingDelegate)
+    }
+    
+    func stopRecording() {
+        print("stopped recording...")
+        movieFileOutput?.stopRecording()
+    }
+}
+
+extension VideoCapture: AVCaptureFileOutputRecordingDelegate {
+    
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+        
+        print("entered save video")
+        
+        if error == nil {
+            UISaveVideoAtPathToSavedPhotosAlbum(outputFileURL.path, nil, nil, nil)
+            print("saved recording!")
+        }
     }
     
 }
