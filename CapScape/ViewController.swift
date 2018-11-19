@@ -14,8 +14,9 @@ import GPUImage
 class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
 
     @IBOutlet weak var cameraView: UIView!
-    @IBOutlet weak var recordButton: UIButton!
-    @IBOutlet weak var snapshotButton: UIButton!
+    @IBOutlet weak var videoButton: UIButton!
+    @IBOutlet weak var photoButton: UIButton!
+    @IBOutlet weak var audioButton: UIButton!
     @IBOutlet weak var photoPreview: UIImageView!
     
     var locationManager: CLLocationManager!
@@ -29,7 +30,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     var chromaFilter: ChromaKeying!
     var coordinatesOverlay: PictureInput!
     
-    var isRecording: Bool = false
+    var isVideoRecording: Bool = false
+    var isAudioRecording: Bool = false
     var fileURL: URL!
     
     
@@ -50,8 +52,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         
         renderView = RenderView(frame: cameraView.bounds)
         cameraView.addSubview(renderView)
-        cameraView.bringSubview(toFront: recordButton)
-        cameraView.bringSubview(toFront: snapshotButton)
+        cameraView.bringSubview(toFront: videoButton)
+        cameraView.bringSubview(toFront: photoButton)
         
         blendFilter = SourceOverBlend()
         chromaFilter = ChromaKeying()
@@ -109,15 +111,22 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     @objc func onDeviceRotation() {
         if UIDeviceOrientationIsPortrait(UIDevice.current.orientation) {
             //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.portrait)
-            
             print("orientation: portrait")
+            
+            renderView.frame = cameraView.bounds
         }
         else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
             //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.landscapeRight)
             print("orientation: landscape")
             
-            renderView.frame = cameraView.bounds
-            renderView.orientation = .landscapeRight
+            //renderView.frame = cameraView.bounds
+            
+            if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
+                //renderView.orientation = .landscapeLeft
+            }
+            else if UIDevice.current.orientation == UIDeviceOrientation.landscapeRight {
+                //renderView.orientation = .landscapeRight
+            }
         }
         
     }
@@ -145,13 +154,20 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
 //        destinationVC.image = currentPhoto
 //        self.navigationController?.pushViewController(destinationVC, animated: true)
     }
-
-    @IBAction func recordButtonClick(_ sender: UIButton) {
-        if isRecording == false {
-            isRecording = true
+    
+    // MARK: - Element Click Actions ----------------------------------------------------
+    
+    @IBAction func videoButtonClick(_ sender: UIButton) {
+        if isVideoRecording == false {
+            isVideoRecording = true
             
-            sender.setTitle("Stop", for: .normal)
-            sender.setTitleColor(UIColor.red, for: .normal)
+            //sender.setTitle("Stop", for: .normal)
+            //sender.setTitleColor(UIColor.red, for: .normal)
+            sender.setImage(UIImage(named: "video_stop"), for: .normal)
+            photoButton.setImage(UIImage(named: "photo_disabled"), for: .normal)
+            photoButton.isEnabled = false
+            audioButton.setImage(UIImage(named: "audio_disabled"), for: .normal)
+            audioButton.isEnabled = false
             
             let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             fileURL = URL(string: "\(createTimestamp()).mp4", relativeTo: documentsDir)
@@ -169,10 +185,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
             movieOutput.startRecording()
         }
         else {
-            isRecording = false
-            
-            sender.setTitle("Record", for: .normal)
-            sender.setTitleColor(UIColor.white, for: .normal)
+            isVideoRecording = false
             
             movieOutput.finishRecording() {
                 self.camera.audioEncodingTarget = nil
@@ -182,16 +195,58 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
                 
                 self.popupMessage(message: "Video Saved")
             }
+            
+            sender.setImage(UIImage(named: "video_start"), for: .normal)
+            photoButton.setImage(UIImage(named: "photo_start"), for: .normal)
+            photoButton.isEnabled = true
+            audioButton.setImage(UIImage(named: "audio_start"), for: .normal)
+            audioButton.isEnabled = true
         }
     }
     
-    @IBAction func snapshotButtonClick(_ sender: UIButton) {
-        let photoThread = DispatchQueue(label: "photoThread")
-        photoThread.async {
-            //self.photoCapture.takePhoto()
-            //self.videoCapture.captureImage()
+    @IBAction func photoButtonClick(_ sender: UIButton) {
+//        let photoThread = DispatchQueue(label: "photoThread")
+//        photoThread.async {
+//            //self.photoCapture.takePhoto()
+//            //self.videoCapture.captureImage()
+//
+//        }
+        
+        print("photo button clicked!!!")
+        
+        var documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        var photoURL = URL(string: "myphoto1.jpg", relativeTo: documentsDir)!
+        do {
+            try! FileManager.default.removeItem(at: photoURL)
+        }
+        catch {
+            
+        }
+        
+        var pictureOutput: PictureOutput = PictureOutput()
+        pictureOutput.addSource(blendFilter)
+        pictureOutput.saveNextFrameToURL(photoURL, format: .jpeg)
+        
+        UIImageWriteToSavedPhotosAlbum(UIImage(contentsOfFile: photoURL.path)!, nil, nil, nil)
+    }
+    
+    @IBAction func audioButtonClick(_ sender: UIButton) {
+        if isAudioRecording == false {
+            isAudioRecording = true
+            
+            sender.setImage(UIImage(named: "audio_stop"), for: .normal)
+            videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
+            videoButton.isEnabled = false
+        }
+        else {
+            sender.setImage(UIImage(named: "audio_start"), for: .normal)
+            videoButton.setImage(UIImage(named: "video_start"), for: .normal)
+            videoButton.isEnabled = true
+            
+            isAudioRecording = false
         }
     }
+    
     
     @objc func onDidReceiveImage(_ notification: Notification) {
         //currentPhoto = videoCapture.image
@@ -243,6 +298,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         
         return timestamp
     }
+    
+    // MARK: - UI Updating -----------------------------------------------------------
     
     func popupMessage(message: String) {
         let alert = UIAlertController(title: message, message: nil, preferredStyle: .alert)
