@@ -36,9 +36,6 @@ class PhotoViewController: UIViewController {
         photoCapture = PhotoCapture()
         photoCapture?.setupSession()
         
-        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveCoordinates), name: .didReceiveCoordinates, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveimage(_:)), name: .didReceiveImage, object: nil)
-        
         photoCapture.setPhotoPreviewInView(previewView: photoView)
         photoView.bringSubview(toFront: latitudeLabel)
         photoView.bringSubview(toFront: longitudeLabel)
@@ -47,14 +44,16 @@ class PhotoViewController: UIViewController {
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        print("PhotoViewController appeared")
+        NotificationCenter.default.addObserver(self, selector: #selector(didReceiveCoordinates), name: .didReceiveCoordinates, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveimage(_:)), name: .didReceiveImage, object: nil)
         
         locationFinder?.startFindingLocation()
         photoCapture?.startRunningSession()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        print("PhotoViewController disappeared")
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.didReceiveCoordinates, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.didReceiveImage, object: nil)
         
         locationFinder?.stopFindingLocation()
         photoCapture?.stopRunningSession()

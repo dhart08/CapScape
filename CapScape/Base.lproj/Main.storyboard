@@ -17,53 +17,20 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5yg-yQ-tOy">
-                                <rect key="frame" x="0.0" y="65" width="414" height="671"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <view contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="5yg-yQ-tOy">
+                                <rect key="frame" x="0.0" y="64" width="414" height="672"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Sie-Cp-cW6">
                                         <rect key="frame" x="70" y="518" width="80" height="36"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                         <state key="normal" title="Record">
-                                            <color key="titleColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </state>
                                         <connections>
                                             <action selector="recordButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="cpb-Qd-Dea"/>
                                         </connections>
                                     </button>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Longitude:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Z7r-0J-kl5">
-                                        <rect key="frame" x="8" y="625" width="100" height="21"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Latitude:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SKe-6X-vdr">
-                                        <rect key="frame" x="8" y="596" width="100" height="21"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Waiting..." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rSh-aa-VQj">
-                                        <rect key="frame" x="116" y="596" width="165" height="21"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Waiting..." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dPL-7N-F1h">
-                                        <rect key="frame" x="116" y="625" width="165" height="21"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
                                     <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="FWt-JQ-kdY">
                                         <rect key="frame" x="247" y="518" width="84" height="36"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -85,10 +52,20 @@
                                         </connections>
                                     </imageView>
                                 </subviews>
-                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" red="0.0" green="0.97680455450000003" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </view>
                         </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="bottom" secondItem="CAz-PT-Ryt" secondAttribute="bottom" id="417-ch-xWZ"/>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="top" secondItem="CAz-PT-Ryt" secondAttribute="top" id="8fO-Va-5J7"/>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="bottom" secondItem="CAz-PT-Ryt" secondAttribute="bottom" id="Aty-9y-FdW"/>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="TzG-ss-rmY"/>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="top" secondItem="CAz-PT-Ryt" secondAttribute="top" id="kdv-mM-NSF"/>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="trailing" secondItem="CAz-PT-Ryt" secondAttribute="trailing" id="m1J-3U-DTH"/>
+                            <constraint firstItem="5yg-yQ-tOy" firstAttribute="leading" secondItem="CAz-PT-Ryt" secondAttribute="leading" id="oYt-BQ-D1J"/>
+                            <constraint firstAttribute="trailing" secondItem="5yg-yQ-tOy" secondAttribute="trailing" id="w34-Ix-wEx"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="CAz-PT-Ryt"/>
                     </view>
                     <navigationItem key="navigationItem" id="2hr-ih-TQC">
@@ -104,10 +81,6 @@
                     </navigationItem>
                     <connections>
                         <outlet property="cameraView" destination="5yg-yQ-tOy" id="dIl-uB-tRq"/>
-                        <outlet property="latitudeLabel" destination="SKe-6X-vdr" id="jM8-tA-Ogo"/>
-                        <outlet property="latitudeValueLabel" destination="rSh-aa-VQj" id="WwW-k5-OpO"/>
-                        <outlet property="longitudeLabel" destination="Z7r-0J-kl5" id="gSN-nW-9lw"/>
-                        <outlet property="longitudeValueLabel" destination="dPL-7N-F1h" id="sAg-JU-UVX"/>
                         <outlet property="photoPreview" destination="Yz5-q9-bgp" id="zlz-aL-5FX"/>
                         <outlet property="recordButton" destination="Sie-Cp-cW6" id="ke4-XI-Lxl"/>
                         <outlet property="snapshotButton" destination="FWt-JQ-kdY" id="gHh-mU-q4s"/>

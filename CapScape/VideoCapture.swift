@@ -72,7 +72,7 @@ class VideoCapture: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     func setVideoPreviewInView(previewView: UIView) {
         //set preview layer frame to our video controller view bounds
         //videoPreviewLayer?.bounds = view.layer.bounds
-        videoPreviewLayer?.frame.size = previewView.frame.size
+        videoPreviewLayer?.frame = previewView.bounds
         //add the preview layer as a sublayer to our cameraView
         previewView.layer.addSublayer(videoPreviewLayer!)
     }
