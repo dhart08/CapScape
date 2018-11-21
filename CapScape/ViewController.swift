@@ -29,6 +29,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     var blendFilter: SourceOverBlend!
     var chromaFilter: ChromaKeying!
     var coordinatesOverlay: PictureInput!
+    var pictureOutput: PictureOutput!
     
     var isVideoRecording: Bool = false
     var isAudioRecording: Bool = false
@@ -138,14 +139,21 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     
     func getCaptureDevice() -> AVCaptureDevice {
         if let device = AVCaptureDevice.default(.builtInDualCamera, for: AVMediaType.video, position: .back) {
+            
+            try! device.lockForConfiguration()
+            device.focusMode = .autoFocus
             return device
         }
         else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back) {
+            
+            try! device.lockForConfiguration()
+            device.focusMode = .autoFocus
             return device
         }
         else {
             fatalError("ERROR: Could not get capture device!")
         }
+        
     }
     
     @IBAction func photoViewSegue(gesture: UIGestureRecognizer) {
@@ -205,29 +213,20 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     }
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
-//        let photoThread = DispatchQueue(label: "photoThread")
-//        photoThread.async {
-//            //self.photoCapture.takePhoto()
-//            //self.videoCapture.captureImage()
-//
-//        }
-        
         print("photo button clicked!!!")
         
-        var documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        var photoURL = URL(string: "myphoto1.jpg", relativeTo: documentsDir)!
-        do {
-            try! FileManager.default.removeItem(at: photoURL)
-        }
-        catch {
+        pictureOutput = PictureOutput()
+        pictureOutput.encodedImageFormat = .jpeg
+        pictureOutput.imageAvailableCallback = {image in
+            DispatchQueue.main.async {
+                self.photoPreview.image = image
+            }
             
+            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+            self.pictureOutput = nil
         }
         
-        var pictureOutput: PictureOutput = PictureOutput()
-        pictureOutput.addSource(blendFilter)
-        pictureOutput.saveNextFrameToURL(photoURL, format: .jpeg)
-        
-        UIImageWriteToSavedPhotosAlbum(UIImage(contentsOfFile: photoURL.path)!, nil, nil, nil)
+        blendFilter --> pictureOutput
     }
     
     @IBAction func audioButtonClick(_ sender: UIButton) {
