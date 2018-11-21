@@ -49,9 +49,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
         
         camera = try! Camera(sessionPreset: .hd1920x1080, cameraDevice: getCaptureDevice(), location: .backFacing, captureAsYUV: true)
-        //camera = try! Camera(sessionPreset: .hd1280x720)
         
         renderView = RenderView(frame: cameraView.bounds)
+        renderView.fillMode = .stretch
         cameraView.addSubview(renderView)
         cameraView.bringSubview(toFront: videoButton)
         cameraView.bringSubview(toFront: photoButton)
@@ -87,9 +87,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         
         let blackRect = CGRect(
             x: 0,
-            y: greenRect.height - (greenRect.height / 11),
-            width: greenRect.width / 1.5,
-            height: greenRect.height / 11
+            y: greenRect.height - (greenRect.height / 12),
+            width: greenRect.width / 1.75,
+            height: greenRect.height / 12
         )
         UIColor.black.setFill()
         UIRectFill(blackRect)
@@ -188,6 +188,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
             }
             
             movieOutput = try!  MovieOutput(URL: fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+            camera.audioEncodingTarget = movieOutput
             
             blendFilter --> movieOutput
             movieOutput.startRecording()
