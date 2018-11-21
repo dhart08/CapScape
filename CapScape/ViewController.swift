@@ -30,6 +30,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     var chromaFilter: ChromaKeying!
     var coordinatesOverlay: PictureInput!
     var pictureOutput: PictureOutput!
+    var audioRecorder: AVAudioRecorder!
     
     var isVideoRecording: Bool = false
     var isAudioRecording: Bool = false
@@ -39,8 +40,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveImage(_:)), name: .didReceiveImage, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
         locationFinder = LocationFinder()
@@ -163,7 +162,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
 //        self.navigationController?.pushViewController(destinationVC, animated: true)
     }
     
-    // MARK: - Element Click Actions ----------------------------------------------------
+// MARK: - Element Click Actions ----------------------------------------------------
     
     @IBAction func videoButtonClick(_ sender: UIButton) {
         if isVideoRecording == false {
@@ -231,43 +230,55 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     }
     
     @IBAction func audioButtonClick(_ sender: UIButton) {
+        print("audio button clicked!")
+        
         if isAudioRecording == false {
+            print("recording started!")
             isAudioRecording = true
             
             sender.setImage(UIImage(named: "audio_stop"), for: .normal)
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
+            
+            var audioSession = AVAudioSession.sharedInstance()
+            try! audioSession.setCategory(AVAudioSessionCategoryRecord, mode: AVAudioSessionModeDefault)
+            try! audioSession.setActive(true)
+            
+            let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            fileURL = URL(string: "\(createTimestamp()).m4a", relativeTo: documentsDir)
+            do {
+                try FileManager.default.removeItem(at: fileURL)
+            }
+            catch {
+                
+            }
+            
+            let audioSettings = [
+                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVSampleRateKey: 44100,
+                AVNumberOfChannelsKey: 2,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            ]
+            
+            audioRecorder = try! AVAudioRecorder(url: fileURL, settings: audioSettings)
+            
+            audioRecorder.prepareToRecord()
+            audioRecorder.record()
         }
-        else {
+        else
+        {
+            
             sender.setImage(UIImage(named: "audio_start"), for: .normal)
             videoButton.setImage(UIImage(named: "video_start"), for: .normal)
             videoButton.isEnabled = true
             
+            audioRecorder.stop()
+            UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
+            
             isAudioRecording = false
+            
+            print("recording stopped!")
         }
-    }
-    
-    
-    @objc func onDidReceiveImage(_ notification: Notification) {
-        //currentPhoto = videoCapture.image
-//        DispatchQueue.main.async {
-//            self.photoPreview.image = self.currentPhoto
-//
-//
-//        let minSize: CGSize = self.photoPreview.frame.size
-//        let minX: CGFloat = self.photoPreview.frame.origin.x
-//        let minY: CGFloat = self.photoPreview.frame.origin.y
-//
-//        self.photoPreview.alpha = 0.0
-//        self.photoPreview.frame = CGRect(x: 0, y: 0, width: self.cameraView.frame.width, height: self.cameraView.frame.height)
-//
-//        UIView.animate(withDuration: 0.2){
-//            self.photoPreview.alpha = 1
-//            self.photoPreview.frame.size = minSize
-//            self.photoPreview.frame.origin.x = minX
-//            self.photoPreview.frame.origin.y = minY
-//        }
-//        }
     }
     
     @objc func onDidReceiveCoordinates(_ notification: Notification) {
