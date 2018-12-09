@@ -10,14 +10,20 @@ import UIKit
 import AVFoundation
 import CoreLocation
 import GPUImage
+import MapKit
 
-class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
+class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
+// MARK: - Object References --------------------------------------------------
+    
     @IBOutlet weak var cameraView: UIView!
+    @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
     @IBOutlet weak var audioButton: UIButton!
     @IBOutlet weak var photoPreview: UIImageView!
+    
+// MARK: - APP Variables ------------------------------------------------------
     
     var locationManager: CLLocationManager!
     var locationFinder: LocationFinder!
@@ -30,16 +36,25 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
     var chromaFilter: ChromaKeying!
     var coordinatesOverlay: PictureInput!
     var pictureOutput: PictureOutput!
+    var lastPictureImage: UIImage!
     var audioRecorder: AVAudioRecorder!
+    var currentSlideshowInput: PictureInput!
+    var slideShowBlendFilter: SourceOverBlend!
+    var slideshowMovieOutput: MovieOutput!
     
     var isVideoRecording: Bool = false
     var isAudioRecording: Bool = false
     var fileURL: URL!
     
+    var isMapFullScreen: Bool = false
+    var mapViewFrame: CGRect!
+    var closeMapButton: UIButton!
+
+// MARK: - ViewController Methods ---------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
         NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
         locationFinder = LocationFinder()
@@ -52,8 +67,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         renderView = RenderView(frame: cameraView.bounds)
         renderView.fillMode = .stretch
         cameraView.addSubview(renderView)
-        cameraView.bringSubview(toFront: videoButton)
-        cameraView.bringSubview(toFront: photoButton)
+        cameraView.bringSubview(toFront: mapView)
         
         blendFilter = SourceOverBlend()
         chromaFilter = ChromaKeying()
@@ -76,83 +90,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
         
         locationFinder.stopFindingLocation()
-    }
-    
-    func updateCoordinatesOverlay(latitude: NSString, longitude: NSString) {
-        let greenRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        UIGraphicsBeginImageContext(greenRect.size)
-        UIColor.green.setFill()
-        UIRectFill(greenRect)
-        
-        let blackRect = CGRect(
-            x: 0,
-            y: greenRect.height - (greenRect.height / 12),
-            width: greenRect.width / 1.75,
-            height: greenRect.height / 12
-        )
-        UIColor.black.setFill()
-        UIRectFill(blackRect)
-        
-        let fontAttrs = [
-            NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 25),
-            NSAttributedString.Key.foregroundColor: UIColor.white
-        ]
-        
-        
-        latitude.draw(at: blackRect.origin, withAttributes: fontAttrs as [NSAttributedString.Key : Any])
-        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: fontAttrs as [NSAttributedString.Key : Any])
-        
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        coordinatesOverlay = PictureInput(image: image!)
-    }
-    
-    @objc func onDeviceRotation() {
-        if UIDeviceOrientationIsPortrait(UIDevice.current.orientation) {
-            //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.portrait)
-            print("orientation: portrait")
-            
-            renderView.frame = cameraView.bounds
-        }
-        else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
-            //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.landscapeRight)
-            print("orientation: landscape")
-            
-            //renderView.frame = cameraView.bounds
-            
-            if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
-                //renderView.orientation = .landscapeLeft
-            }
-            else if UIDevice.current.orientation == UIDeviceOrientation.landscapeRight {
-                //renderView.orientation = .landscapeRight
-            }
-        }
-        
+        camera.stopCapture()
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
-    }
-    
-    func getCaptureDevice() -> AVCaptureDevice {
-        if let device = AVCaptureDevice.default(.builtInDualCamera, for: AVMediaType.video, position: .back) {
-            
-            try! device.lockForConfiguration()
-            device.focusMode = .autoFocus
-            return device
-        }
-        else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back) {
-            
-            try! device.lockForConfiguration()
-            device.focusMode = .autoFocus
-            return device
-        }
-        else {
-            fatalError("ERROR: Could not get capture device!")
-        }
-        
     }
     
     @IBAction func photoViewSegue(gesture: UIGestureRecognizer) {
@@ -162,14 +105,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
 //        self.navigationController?.pushViewController(destinationVC, animated: true)
     }
     
-// MARK: - Element Click Actions ----------------------------------------------------
+// MARK: - Element Click Actions ------------------------------------------------
     
     @IBAction func videoButtonClick(_ sender: UIButton) {
         if isVideoRecording == false {
             isVideoRecording = true
             
-            //sender.setTitle("Stop", for: .normal)
-            //sender.setTitleColor(UIColor.red, for: .normal)
             sender.setImage(UIImage(named: "video_stop"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_disabled"), for: .normal)
             photoButton.isEnabled = false
@@ -204,7 +145,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
                 self.popupMessage(message: "Video Saved")
             }
             
-            sender.setImage(UIImage(named: "video_start"), for: .normal)
+            sender.setImage(UIImage(named: "audio_start"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_start"), for: .normal)
             photoButton.isEnabled = true
             audioButton.setImage(UIImage(named: "audio_start"), for: .normal)
@@ -220,65 +161,142 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         pictureOutput.imageAvailableCallback = {image in
             DispatchQueue.main.async {
                 self.photoPreview.image = image
-            }
+                self.lastPictureImage = image
             
-            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-            self.pictureOutput = nil
+                UIImageWriteToSavedPhotosAlbum(self.lastPictureImage, nil, nil, nil)
+                self.pictureOutput = nil
+            
+                if self.isVideoRecording == true {
+                    self.updateSlideshowImage()
+                }
+            }
         }
         
         blendFilter --> pictureOutput
     }
     
     @IBAction func audioButtonClick(_ sender: UIButton) {
-        print("audio button clicked!")
+        //print("audio button clicked!")
         
-        if isAudioRecording == false {
-            print("recording started!")
-            isAudioRecording = true
+        if isVideoRecording == false {
+            isVideoRecording = true
             
             sender.setImage(UIImage(named: "audio_stop"), for: .normal)
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
             
-            var audioSession = AVAudioSession.sharedInstance()
-            try! audioSession.setCategory(AVAudioSessionCategoryRecord, mode: AVAudioSessionModeDefault)
-            try! audioSession.setActive(true)
+            let blackRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+            UIGraphicsBeginImageContext(blackRect.size)
+            UIColor.black.setFill()
+            UIRectFill(blackRect)
+            
+            currentSlideshowInput = PictureInput(image: UIGraphicsGetImageFromCurrentImageContext()!)
+            UIGraphicsEndImageContext()
+            
+            slideShowBlendFilter = SourceOverBlend()
             
             let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            fileURL = URL(string: "\(createTimestamp()).m4a", relativeTo: documentsDir)
+            fileURL = URL(string: "\(createTimestamp()).mp4", relativeTo: documentsDir)
+            
             do {
-                try FileManager.default.removeItem(at: fileURL)
+                try FileManager.default.removeItem(at: fileURL!)
             }
             catch {
                 
             }
             
-            let audioSettings = [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 44100,
-                AVNumberOfChannelsKey: 2,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-            ]
+            slideshowMovieOutput = try! MovieOutput(URL: fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+            camera.audioEncodingTarget = slideshowMovieOutput
             
-            audioRecorder = try! AVAudioRecorder(url: fileURL, settings: audioSettings)
-            
-            audioRecorder.prepareToRecord()
-            audioRecorder.record()
+            camera --> slideShowBlendFilter
+            currentSlideshowInput --> slideShowBlendFilter --> slideshowMovieOutput
+            currentSlideshowInput.processImage()
+            slideshowMovieOutput.startRecording()
         }
-        else
-        {
+        else {
+            isVideoRecording = false
             
+            slideshowMovieOutput.finishRecording() {
+                self.camera.audioEncodingTarget = nil
+                self.slideshowMovieOutput = nil
+                
+                UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
+                
+                //self.popupMessage(message: "Slideshow Saved")
+            }
+
             sender.setImage(UIImage(named: "audio_start"), for: .normal)
-            videoButton.setImage(UIImage(named: "video_start"), for: .normal)
-            videoButton.isEnabled = true
-            
-            audioRecorder.stop()
-            UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
-            
-            isAudioRecording = false
-            
-            print("recording stopped!")
+            self.audioButton.setImage(UIImage(named: "video_start"), for: .normal)
+            self.audioButton.isEnabled = true
         }
+        
+    }
+    
+    @IBAction func mapViewClick(_ sender: Any) {
+        if isMapFullScreen == false {
+            photoPreview.isHidden = true
+            
+            mapViewFrame = mapView.frame
+            
+            closeMapButton = UIButton(type: .roundedRect)
+            closeMapButton.frame = CGRect(x: UIScreen.main.bounds.width - 100,
+                                          y: UIScreen.main.bounds.height - 50,
+                                          width: 100,
+                                          height: 50)
+            closeMapButton.layer.cornerRadius = 10
+            
+            closeMapButton.backgroundColor = UIColor.white
+            closeMapButton.alpha = 0.5
+            closeMapButton.setTitle("Close", for: .normal)
+            closeMapButton.addTarget(self, action: #selector(ViewController.closeMapButtonClick), for: .touchUpInside)
+            
+            UIView.animate(withDuration: 0.3, animations: {
+                self.mapView.frame = UIScreen.main.bounds
+            }, completion: { val in
+                self.view.addSubview(self.closeMapButton)
+            })
+        }
+        
+        isMapFullScreen = true
+    }
+    
+    @objc func closeMapButtonClick() {
+        print("closeMapButton Clicked!")
+        
+        closeMapButton.removeFromSuperview()
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            self.mapView.frame = self.mapViewFrame
+        }) { (Bool) in
+            self.photoPreview.isHidden = false
+        }
+        
+        isMapFullScreen = false
+    }
+
+// MARK: - Push Notifications ----------------------------------------------------
+    
+    @objc func onDeviceRotation() {
+        if UIDeviceOrientationIsPortrait(UIDevice.current.orientation) {
+            //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.portrait)
+            print("orientation: portrait")
+            
+            renderView.frame = cameraView.bounds
+        }
+        else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
+            //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.landscapeRight)
+            print("orientation: landscape")
+            
+            renderView.frame = cameraView.bounds
+            
+            if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
+                //renderView.orientation = .landscapeLeft
+            }
+            else if UIDevice.current.orientation == UIDeviceOrientation.landscapeRight {
+                //renderView.orientation = .landscapeRight
+            }
+        }
+        
     }
     
     @objc func onDidReceiveCoordinates(_ notification: Notification) {
@@ -299,6 +317,103 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         chromaFilter.removeSourceAtIndex(0)
         coordinatesOverlay.addTarget(chromaFilter)
         coordinatesOverlay.processImage()
+        
+        updateMap()
+    }
+    
+// MARK: - UI Updating -----------------------------------------------------------
+    
+    func updateCoordinatesOverlay(latitude: NSString, longitude: NSString) {
+        let greenRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+        UIGraphicsBeginImageContext(greenRect.size)
+        UIColor.green.setFill()
+        UIRectFill(greenRect)
+        
+        let blackRect = CGRect(
+            x: 0,
+            y: greenRect.height - (greenRect.height / 12),
+            width: greenRect.width / 1.75,
+            height: greenRect.height / 12
+        )
+        UIColor.black.setFill()
+        UIRectFill(blackRect)
+        
+        let fontAttrs = [
+            NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 25),
+            NSAttributedString.Key.foregroundColor: UIColor.white
+        ]
+        
+        
+        latitude.draw(at: blackRect.origin, withAttributes: fontAttrs as [NSAttributedString.Key : Any])
+        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: fontAttrs as [NSAttributedString.Key : Any])
+        
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        coordinatesOverlay = PictureInput(image: image!)
+    }
+    
+    func updateMap() {
+        guard (locationFinder?.latitude != nil) && (locationFinder?.longitude != nil) else {
+            return
+        }
+        
+        mapView.mapType = .satellite
+        mapView.showsUserLocation = true
+        
+        if isMapFullScreen == false {
+        
+        let regionRadius: CLLocationDistance = 25
+        let coordinateRegion = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2D(latitude: locationFinder.latitude, longitude: locationFinder.longitude), regionRadius, regionRadius)
+        mapView.setRegion(coordinateRegion, animated: true)
+        }
+    }
+    
+// MARK: - Helper functions ------------------------------------------------------
+    
+    func updateSlideshowImage() {
+        currentSlideshowInput.removeAllTargets()
+        currentSlideshowInput = PictureInput(image: lastPictureImage)
+        
+        currentSlideshowInput.addTarget(slideShowBlendFilter)
+        currentSlideshowInput.processImage()
+
+        //print("updated slideshow image!!!")
+    }
+    
+    func getCaptureDevice() -> AVCaptureDevice {
+        if let device = AVCaptureDevice.default(.builtInDualCamera, for: AVMediaType.video, position: .back) {
+            
+            if device.isSmoothAutoFocusSupported == true {
+                try! device.lockForConfiguration()
+                device.focusMode = .continuousAutoFocus
+                device.unlockForConfiguration()
+            }
+            
+            return device
+        }
+        else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back) {
+            
+            if device.isSmoothAutoFocusSupported == true {
+                try! device.lockForConfiguration()
+                device.focusMode = .continuousAutoFocus
+                device.unlockForConfiguration()
+            }
+            
+            return device
+        }
+        else {
+            fatalError("ERROR: Could not get capture device!")
+        }
+        
+    }
+    
+    func popupMessage(message: String) {
+        let alert = UIAlertController(title: message, message: nil, preferredStyle: .alert)
+        present(alert, animated: true) {
+            usleep(1000 * 500)
+            alert.dismiss(animated: true, completion: nil)
+        }
     }
     
     func createTimestamp() -> String {
@@ -310,16 +425,52 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate{
         return timestamp
     }
     
-    // MARK: - UI Updating -----------------------------------------------------------
+    func createFolder(name: String) -> Bool{
+        let fileMgr = FileManager.default
+        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
+        let docsDir = dirPaths[0]
+        let newDir = docsDir.appendingPathComponent(name).path
+        
+        print("docsDir = \(docsDir)")
+        print("docsdir.path = \(docsDir.path)")
+        
+        do {
+            try fileMgr.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
+        }
+        catch {
+            fatalError("Couldn't create new directory!")
+        }
+        
+        return true
+        
+    }
     
-    func popupMessage(message: String) {
-        let alert = UIAlertController(title: message, message: nil, preferredStyle: .alert)
-        present(alert, animated: true) {
-            usleep(1000 * 500)
-            alert.dismiss(animated: true, completion: nil)
+    func listDirectoryContents() {
+        let fileMgr = FileManager.default
+        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
+        
+        do {
+            let fileList = try fileMgr.contentsOfDirectory(atPath: dirPaths[0].path)
+            
+            for fileName in  fileList {
+                print(fileName)
+            }
+        }
+        catch {
+            print("ERROR:\(error.localizedDescription)")
         }
     }
     
-    
 }
 
+extension ViewController: AVAudioRecorderDelegate {
+    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        
+        print("audioRecroder delegate called!")
+        UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
+    }
+    
+    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+        print("ERROR: Audio recorder experienced error in encoding!!!!!!!!")
+    }
+}
