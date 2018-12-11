@@ -16,11 +16,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
 // MARK: - Object References --------------------------------------------------
     
-    @IBOutlet weak var cameraView: UIView!
-    @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var cameraView: CameraView!
+    @IBOutlet weak var mapView: MapView!
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
-    @IBOutlet weak var audioButton: UIButton!
+    @IBOutlet weak var audioButton: ControlButton!
     @IBOutlet weak var photoPreview: UIImageView!
     
 // MARK: - APP Variables ------------------------------------------------------
@@ -308,10 +308,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         let (latDeg, latMin, latSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.latitude!)
-        latitude = NSString(string: "Lat: \(latDeg) \(latMin)' \(latSec)''")
+        latitude = NSString(string: " Lat: \(latDeg) \(latMin)' \(latSec)''")
         
         let (lonDeg, lonMin, lonSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.longitude!)
-        longitude = NSString(string: "Lon: \(lonDeg) \(lonMin)' \(lonSec)''")
+        longitude = NSString(string: " Lon: \(lonDeg) \(lonMin)' \(lonSec)''")
         
         updateCoordinatesOverlay(latitude: latitude, longitude: longitude)
         chromaFilter.removeSourceAtIndex(0)
@@ -331,15 +331,24 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         let blackRect = CGRect(
             x: 0,
-            y: greenRect.height - (greenRect.height / 12),
+            y: greenRect.height - (greenRect.height / 14),
             width: greenRect.width / 1.75,
-            height: greenRect.height / 12
+            height: greenRect.height / 14
         )
-        UIColor.black.setFill()
-        UIRectFill(blackRect)
+        
+//        UIColor.black.setFill()
+//        UIRectFill(blackRect)
+        
+        let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
+        
+        UIGraphicsGetCurrentContext()?.addPath(rectClipPath)
+        UIGraphicsGetCurrentContext()?.setFillColor(UIColor.black.cgColor)
+        UIGraphicsGetCurrentContext()?.closePath()
+        UIGraphicsGetCurrentContext()?.fillPath()
+        
         
         let fontAttrs = [
-            NSAttributedString.Key.font: UIFont(name: "Helvetica", size: 25),
+            NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
             NSAttributedString.Key.foregroundColor: UIColor.white
         ]
         

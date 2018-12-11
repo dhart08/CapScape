@@ -14,6 +14,9 @@
 		63436CA1214374F3002A6EC6 /* CapScape.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 63436C9F214374F3002A6EC6 /* CapScape.xcdatamodeld */; };
 		63436CA3214374F6002A6EC6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 63436CA2214374F6002A6EC6 /* Assets.xcassets */; };
 		63436CA6214374F6002A6EC6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63436CA4214374F6002A6EC6 /* LaunchScreen.storyboard */; };
+		6355C70621BF8D0200E5AB55 /* ControlButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6355C70521BF8D0200E5AB55 /* ControlButton.swift */; };
+		6357188021BF77E100655BCB /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6357187F21BF77E100655BCB /* CameraView.swift */; };
+		6357188521BF7C7500655BCB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6357188421BF7C7500655BCB /* MapView.swift */; };
 		638FB6B4219E8A03006112D5 /* GPUImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 638FB6AE219E89CE006112D5 /* GPUImage.framework */; };
 		638FB6B6219E8A2B006112D5 /* GPUImage.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 638FB6AE219E89CE006112D5 /* GPUImage.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		639C39CC21AAB7D7008B59E1 /* DirectoryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */; };
@@ -83,6 +86,9 @@
 		63436CA2214374F6002A6EC6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		63436CA5214374F6002A6EC6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		63436CA7214374F6002A6EC6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6355C70521BF8D0200E5AB55 /* ControlButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlButton.swift; sourceTree = "<group>"; };
+		6357187F21BF77E100655BCB /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		6357188421BF7C7500655BCB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		638FB6A2219E89CE006112D5 /* GPUImage.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GPUImage.xcodeproj; path = "../../../Downloads/GPUImage2-master/framework/GPUImage.xcodeproj"; sourceTree = "<group>"; };
 		639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryHandler.swift; sourceTree = "<group>"; };
 		63E71436215DB1C500CC417E /* VideoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
@@ -135,6 +141,9 @@
 				63E71436215DB1C500CC417E /* VideoCapture.swift */,
 				63E7143A215DB9B900CC417E /* PhotoCapture.swift */,
 				639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */,
+				6357187F21BF77E100655BCB /* CameraView.swift */,
+				6357188421BF7C7500655BCB /* MapView.swift */,
+				6355C70521BF8D0200E5AB55 /* ControlButton.swift */,
 			);
 			path = CapScape;
 			sourceTree = "<group>";
@@ -267,12 +276,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6355C70621BF8D0200E5AB55 /* ControlButton.swift in Sources */,
 				632FD1772144B37900CFE5EF /* LocationFinder.swift in Sources */,
 				63E71437215DB1C500CC417E /* VideoCapture.swift in Sources */,
 				63436C9B214374F3002A6EC6 /* ViewController.swift in Sources */,
+				6357188021BF77E100655BCB /* CameraView.swift in Sources */,
 				63436C99214374F3002A6EC6 /* AppDelegate.swift in Sources */,
 				639C39CC21AAB7D7008B59E1 /* DirectoryHandler.swift in Sources */,
 				63E95F902164F7500050C5ED /* PhotoViewController.swift in Sources */,
+				6357188521BF7C7500655BCB /* MapView.swift in Sources */,
 				63436CA1214374F3002A6EC6 /* CapScape.xcdatamodeld in Sources */,
 				63E7143B215DB9B900CC417E /* PhotoCapture.swift in Sources */,
 			);
