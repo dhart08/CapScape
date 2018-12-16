@@ -28,6 +28,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var locationManager: CLLocationManager!
     var locationFinder: LocationFinder!
     
+    var directoryHandler: DirectoryHandler!
+    
     var camera: Camera!
     var movieInput: MovieInput!
     var movieOutput: MovieOutput!
@@ -59,6 +61,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         locationFinder = LocationFinder()
         locationFinder.requestAuthorization()
+        
+        directoryHandler = DirectoryHandler()
         
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
         
@@ -117,8 +121,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             audioButton.setImage(UIImage(named: "audio_disabled"), for: .normal)
             audioButton.isEnabled = false
             
-            let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            fileURL = URL(string: "\(createTimestamp()).mp4", relativeTo: documentsDir)
+            directoryHandler.createDirectory(dirType: .videos)
+            
+            fileURL = URL(string: "Videos/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
             
             do {
                 try FileManager.default.removeItem(at: fileURL!)
@@ -127,11 +132,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
             }
             
-            movieOutput = try!  MovieOutput(URL: fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
-            camera.audioEncodingTarget = movieOutput
+            DispatchQueue.global().async {
             
-            blendFilter --> movieOutput
-            movieOutput.startRecording()
+            self.movieOutput = try!  MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+            
+            self.blendFilter --> self.movieOutput
+            
+            self.camera.audioEncodingTarget = self.movieOutput
+            
+            self.movieOutput.startRecording()
+            }
         }
         else {
             isVideoRecording = false
@@ -140,7 +150,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.camera.audioEncodingTarget = nil
                 self.movieOutput = nil
                 
-                UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
+                //UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
                 
                 self.popupMessage(message: "Video Saved")
             }
@@ -154,22 +164,32 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
-        print("photo button clicked!!!")
+        //print("photo button clicked!!!")
         
         pictureOutput = PictureOutput()
-        pictureOutput.encodedImageFormat = .jpeg
-        pictureOutput.imageAvailableCallback = {image in
+        pictureOutput.encodedImageFormat = .png
+        pictureOutput.imageAvailableCallback = { outputImage in
+            
+            DispatchQueue.global().async {
+                self.directoryHandler.createDirectory(dirType: .photos)
+
+                let outputPNG = UIImagePNGRepresentation(outputImage)
+                let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
+
+                try! outputPNG?.write(to: fileURL)
+            }
+
             DispatchQueue.main.async {
-                self.photoPreview.image = image
-                self.lastPictureImage = image
-            
-                UIImageWriteToSavedPhotosAlbum(self.lastPictureImage, nil, nil, nil)
+                self.photoPreview.image = outputImage
+                self.lastPictureImage = outputImage
+
                 self.pictureOutput = nil
-            
+
                 if self.isVideoRecording == true {
                     self.updateSlideshowImage()
                 }
             }
+            
         }
         
         blendFilter --> pictureOutput
@@ -195,8 +215,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             slideShowBlendFilter = SourceOverBlend()
             
-            let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            fileURL = URL(string: "\(createTimestamp()).mp4", relativeTo: documentsDir)
+            directoryHandler.createDirectory(dirType: .slideshows)
+            fileURL = URL(fileURLWithPath: "Slideshows/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
             
             do {
                 try FileManager.default.removeItem(at: fileURL!)
@@ -376,6 +396,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let coordinateRegion = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2D(latitude: locationFinder.latitude, longitude: locationFinder.longitude), regionRadius, regionRadius)
         mapView.setRegion(coordinateRegion, animated: true)
         }
+        else {
+            //mapView.userLocation =
+        }
     }
     
 // MARK: - Helper functions ------------------------------------------------------
@@ -434,41 +457,41 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         return timestamp
     }
     
-    func createFolder(name: String) -> Bool{
-        let fileMgr = FileManager.default
-        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
-        let docsDir = dirPaths[0]
-        let newDir = docsDir.appendingPathComponent(name).path
-        
-        print("docsDir = \(docsDir)")
-        print("docsdir.path = \(docsDir.path)")
-        
-        do {
-            try fileMgr.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
-        }
-        catch {
-            fatalError("Couldn't create new directory!")
-        }
-        
-        return true
-        
-    }
-    
-    func listDirectoryContents() {
-        let fileMgr = FileManager.default
-        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
-        
-        do {
-            let fileList = try fileMgr.contentsOfDirectory(atPath: dirPaths[0].path)
-            
-            for fileName in  fileList {
-                print(fileName)
-            }
-        }
-        catch {
-            print("ERROR:\(error.localizedDescription)")
-        }
-    }
+//    func createFolder(name: String) -> Bool{
+//        let fileMgr = FileManager.default
+//        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
+//        let docsDir = dirPaths[0]
+//        let newDir = docsDir.appendingPathComponent(name).path
+//
+//        print("docsDir = \(docsDir)")
+//        print("docsdir.path = \(docsDir.path)")
+//
+//        do {
+//            try fileMgr.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
+//        }
+//        catch {
+//            fatalError("Couldn't create new directory!")
+//        }
+//
+//        return true
+//
+//    }
+//
+//    func listDirectoryContents() {
+//        let fileMgr = FileManager.default
+//        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
+//
+//        do {
+//            let fileList = try fileMgr.contentsOfDirectory(atPath: dirPaths[0].path)
+//
+//            for fileName in  fileList {
+//                print(fileName)
+//            }
+//        }
+//        catch {
+//            print("ERROR:\(error.localizedDescription)")
+//        }
+//    }
     
 }
 

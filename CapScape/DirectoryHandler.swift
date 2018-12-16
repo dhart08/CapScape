@@ -19,33 +19,23 @@ final class DirectoryHandler {
         case slideshows = "Slideshows"
     }
     
-    private var fileMgr: FileManager!
-    
     init() {
-        fileMgr = FileManager()
-    }
-    
-    func changeDirectory(type: directoryType) -> Bool {
-        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
-        let docsDir = dirPaths[0]
         
-        switch type {
-            case .appDocuments:
-                fileMgr.changeCurrentDirectoryPath(docsDir.path)
-                return true
-            default:
-                fileMgr.changeCurrentDirectoryPath(docsDir.appendingPathComponent(type.rawValue).path)
-            return true
-        }
     }
     
-    func createDirectory(type: directoryType) {
-        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
+    func changeDirectory(dirType: directoryType) {
+        let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(dirType.rawValue)
+        
+        FileManager.default.changeCurrentDirectoryPath(documentsDir.path)
+    }
+    
+    func createDirectory(dirType: directoryType) {
+        let dirPaths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let docsDir = dirPaths[0]
-        let newDir = docsDir.appendingPathComponent(type.rawValue).path
+        let newDir = docsDir.appendingPathComponent(dirType.rawValue).path
         
         do {
-            try fileMgr.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
+            try FileManager.default.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
         }
         catch {
             print("\(error.localizedDescription)")
@@ -54,7 +44,7 @@ final class DirectoryHandler {
     
     func listDirectoryContents() {
         do {
-            let fileList = try fileMgr.contentsOfDirectory(atPath: fileMgr.currentDirectoryPath)
+            let fileList = try FileManager.default.contentsOfDirectory(atPath: FileManager.default.currentDirectoryPath)
             
             for filename in fileList {
                 print("\(filename)")
@@ -65,6 +55,12 @@ final class DirectoryHandler {
         }
         
         print("printed folder contents!")
+    }
+    
+    func getDocumentsPath() -> URL {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        
+        return documentsDir
     }
     
 }
