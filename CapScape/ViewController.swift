@@ -20,7 +20,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var mapView: MapView!
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
-    @IBOutlet weak var audioButton: ControlButton!
+    @IBOutlet weak var slideshowButton: ControlButton!
     @IBOutlet weak var photoPreview: UIImageView!
     
 // MARK: - APP Variables ------------------------------------------------------
@@ -66,22 +66,27 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
         
-        camera = try! Camera(sessionPreset: .hd1920x1080, cameraDevice: getCaptureDevice(), location: .backFacing, captureAsYUV: true)
-        
-        renderView = RenderView(frame: cameraView.bounds)
-        renderView.fillMode = .stretch
-        cameraView.addSubview(renderView)
-        cameraView.bringSubview(toFront: mapView)
-        
-        blendFilter = SourceOverBlend()
-        chromaFilter = ChromaKeying()
-        chromaFilter.colorToReplace = Color.green
-        
-        camera --> blendFilter
-        coordinatesOverlay --> chromaFilter --> blendFilter --> renderView
-        
-        coordinatesOverlay.processImage()
-        camera.startCapture()
+        do {
+            camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: getCaptureDevice(), location: .backFacing, captureAsYUV: true)
+            
+            renderView = RenderView(frame: cameraView.bounds)
+            renderView.fillMode = .stretch
+            cameraView.addSubview(renderView)
+            cameraView.bringSubview(toFront: mapView)
+            
+            blendFilter = SourceOverBlend()
+            chromaFilter = ChromaKeying()
+            chromaFilter.colorToReplace = Color.green
+            
+            camera --> blendFilter
+            coordinatesOverlay --> chromaFilter --> blendFilter --> renderView
+            
+            coordinatesOverlay.processImage()
+            camera.startCapture()
+        }
+        catch {
+            popupMessage(message: "Could not get camera started in ViewDidLoad")
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -118,8 +123,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             sender.setImage(UIImage(named: "video_stop"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_disabled"), for: .normal)
             photoButton.isEnabled = false
-            audioButton.setImage(UIImage(named: "audio_disabled"), for: .normal)
-            audioButton.isEnabled = false
+            slideshowButton.setImage(UIImage(named: "audio_disabled"), for: .normal)
+            slideshowButton.isEnabled = false
             
             directoryHandler.createDirectory(dirType: .videos)
             
@@ -158,8 +163,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             sender.setImage(UIImage(named: "audio_start"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_start"), for: .normal)
             photoButton.isEnabled = true
-            audioButton.setImage(UIImage(named: "audio_start"), for: .normal)
-            audioButton.isEnabled = true
+            slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
+            slideshowButton.isEnabled = true
         }
     }
     
@@ -188,6 +193,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 if self.isVideoRecording == true {
                     self.updateSlideshowImage()
                 }
+                
+                self.flashScreen()
             }
             
         }
@@ -195,13 +202,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         blendFilter --> pictureOutput
     }
     
-    @IBAction func audioButtonClick(_ sender: UIButton) {
+    @IBAction func slideshowButtonClick(_ sender: UIButton) {
         //print("audio button clicked!")
         
         if isVideoRecording == false {
             isVideoRecording = true
             
-            sender.setImage(UIImage(named: "audio_stop"), for: .normal)
+            slideshowButton.setImage(UIImage(named: "audio_stop"), for: .normal)
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
             
@@ -245,9 +252,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 //self.popupMessage(message: "Slideshow Saved")
             }
 
-            sender.setImage(UIImage(named: "audio_start"), for: .normal)
-            self.audioButton.setImage(UIImage(named: "video_start"), for: .normal)
-            self.audioButton.isEnabled = true
+            self.slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
+            self.videoButton.setImage(UIImage(named: "video_start"), for: .normal)
+            self.videoButton.isEnabled = true
         }
         
     }
@@ -356,9 +363,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             height: greenRect.height / 14
         )
         
-//        UIColor.black.setFill()
-//        UIRectFill(blackRect)
-        
         let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
         
         UIGraphicsGetCurrentContext()?.addPath(rectClipPath)
@@ -398,6 +402,18 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         else {
             //mapView.userLocation =
+        }
+    }
+    
+    func flashScreen() {
+        let flashView = UIImageView(frame: UIScreen.main.bounds)
+        flashView.backgroundColor = UIColor.white
+        self.view.addSubview(flashView)
+        
+        UIView.animate(withDuration: 0.5, animations: {
+            flashView.alpha = 0.0
+        }) { value in
+            flashView.removeFromSuperview()
         }
     }
     
@@ -456,43 +472,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         return timestamp
     }
-    
-//    func createFolder(name: String) -> Bool{
-//        let fileMgr = FileManager.default
-//        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
-//        let docsDir = dirPaths[0]
-//        let newDir = docsDir.appendingPathComponent(name).path
-//
-//        print("docsDir = \(docsDir)")
-//        print("docsdir.path = \(docsDir.path)")
-//
-//        do {
-//            try fileMgr.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
-//        }
-//        catch {
-//            fatalError("Couldn't create new directory!")
-//        }
-//
-//        return true
-//
-//    }
-//
-//    func listDirectoryContents() {
-//        let fileMgr = FileManager.default
-//        let dirPaths = fileMgr.urls(for: .documentDirectory, in: .userDomainMask)
-//
-//        do {
-//            let fileList = try fileMgr.contentsOfDirectory(atPath: dirPaths[0].path)
-//
-//            for fileName in  fileList {
-//                print(fileName)
-//            }
-//        }
-//        catch {
-//            print("ERROR:\(error.localizedDescription)")
-//        }
-//    }
-    
 }
 
 extension ViewController: AVAudioRecorderDelegate {
