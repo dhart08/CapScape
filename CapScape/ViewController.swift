@@ -22,6 +22,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var photoButton: UIButton!
     @IBOutlet weak var slideshowButton: ControlButton!
     @IBOutlet weak var photoPreview: UIImageView!
+    @IBOutlet weak var filesButton: UIButton!
+    
     
 // MARK: - APP Variables ------------------------------------------------------
     
@@ -63,6 +65,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         locationFinder.requestAuthorization()
         
         directoryHandler = DirectoryHandler()
+        directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
         
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
         
@@ -73,6 +76,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             renderView.fillMode = .stretch
             cameraView.addSubview(renderView)
             cameraView.bringSubview(toFront: mapView)
+            cameraView.bringSubview(toFront: filesButton)
             
             blendFilter = SourceOverBlend()
             chromaFilter = ChromaKeying()
@@ -82,7 +86,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             coordinatesOverlay --> chromaFilter --> blendFilter --> renderView
             
             coordinatesOverlay.processImage()
-            camera.startCapture()
+            //camera.startCapture()
         }
         catch {
             popupMessage(message: "Could not get camera started in ViewDidLoad")
@@ -93,6 +97,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(onDeviceRotation), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
         
         locationFinder.startFindingLocation()
+        camera.startCapture()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -128,7 +133,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             directoryHandler.createDirectory(dirType: .videos)
             
-            fileURL = URL(string: "Videos/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
+            fileURL = URL(string: "Videos/\(createTimestamp()).m4a", relativeTo: directoryHandler.getDocumentsPath())
             
             do {
                 try FileManager.default.removeItem(at: fileURL!)
@@ -155,12 +160,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.camera.audioEncodingTarget = nil
                 self.movieOutput = nil
                 
-                //UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
-                
                 self.popupMessage(message: "Video Saved")
             }
             
-            sender.setImage(UIImage(named: "audio_start"), for: .normal)
+            videoButton.setImage(UIImage(named: "video_start"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_start"), for: .normal)
             photoButton.isEnabled = true
             slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
@@ -223,7 +226,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             slideShowBlendFilter = SourceOverBlend()
             
             directoryHandler.createDirectory(dirType: .slideshows)
-            fileURL = URL(fileURLWithPath: "Slideshows/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
+            fileURL = URL(fileURLWithPath: "Slideshows/\(createTimestamp()).m4a", relativeTo: directoryHandler.getDocumentsPath())
             
             do {
                 try FileManager.default.removeItem(at: fileURL!)
@@ -451,6 +454,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             return device
         }
         else {
+            popupMessage(message: "getCaptureDevice() could not get a device!")
             fatalError("ERROR: Could not get capture device!")
         }
         

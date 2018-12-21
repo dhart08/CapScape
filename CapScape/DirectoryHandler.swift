@@ -13,54 +13,88 @@ import Foundation
 final class DirectoryHandler {
     
     enum directoryType: String {
-        case appDocuments = "Documents"
-        case videos = "Videos"
+        case appDocuments
         case photos = "Photos"
+        case videos = "Videos"
         case slideshows = "Slideshows"
+        case specific
     }
+    
+    private var fileManager: FileManager!
+    var currentDirectory: URL!
     
     init() {
-        
+        fileManager = FileManager()
+        changeDirectory(dirType: .appDocuments, url: nil)
     }
     
-    func changeDirectory(dirType: directoryType) {
-        let documentsDir = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(dirType.rawValue)
+    func changeDirectory(dirType: directoryType, url: URL?) {
+        var documentsDir: URL!
         
-        FileManager.default.changeCurrentDirectoryPath(documentsDir.path)
+        if dirType == .specific {
+            documentsDir = url
+        }
+        else if dirType == .appDocuments {
+            documentsDir = try! fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            fileManager.changeCurrentDirectoryPath(documentsDir.path)
+        }
+        else {
+            documentsDir = try! fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(dirType.rawValue)
+        }
+        
+        fileManager.changeCurrentDirectoryPath(documentsDir.path)
+        
+        currentDirectory = documentsDir
     }
     
     func createDirectory(dirType: directoryType) {
-        let dirPaths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let dirPaths = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
         let docsDir = dirPaths[0]
         let newDir = docsDir.appendingPathComponent(dirType.rawValue).path
         
         do {
-            try FileManager.default.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
+            try fileManager.createDirectory(atPath: newDir, withIntermediateDirectories: true, attributes: nil)
         }
         catch {
             print("\(error.localizedDescription)")
         }
     }
     
-    func listDirectoryContents() {
+    func getDirectoryContents() -> [String]{
+        var dirContents: [String]!
+        
         do {
-            let fileList = try FileManager.default.contentsOfDirectory(atPath: FileManager.default.currentDirectoryPath)
+            dirContents = try fileManager.contentsOfDirectory(atPath: fileManager.currentDirectoryPath)
             
-            for filename in fileList {
-                print("\(filename)")
-            }
+//            var contentsList: [String] = []
+//
+//            for obj in dirContents {
+//                contentsList.append(obj)
+//            }
         }
         catch {
             print("\(error.localizedDescription)")
         }
         
-        print("printed folder contents!")
+        return dirContents
     }
     
     func getDocumentsPath() -> URL {
-        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         
         return documentsDir
     }
     
+    func isDirectory(url: URL) -> Bool {
+        var isDirectory: ObjCBool = ObjCBool(false)
+        
+        if fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) {
+            return isDirectory.boolValue
+        }
+        else {
+            print("ERROR isDirectory(): FILE DOESN'T EXIST!!!")
+        }
+        
+        return false
+    }
 }
