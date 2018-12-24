@@ -13,11 +13,14 @@ import AVFoundation
 class FileViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
     @IBOutlet weak var backButton: UIBarButtonItem!
+    @IBOutlet weak var selectbutton: UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
     
     let thumbnailCache = NSCache<NSString, UIImage>()
     var directoryHandler: DirectoryHandler!
     var contentsList: [String] = []
+    
+    // MARK: ViewController Functions -------------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,12 +41,25 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
     }
     
+    // MARK: Element Action Functions -------------------------------------------------
+    
     @IBAction func backButtonClick(_ sender: UIBarButtonItem) {
-//        let mv = self.storyboard?.instantiateViewController(withIdentifier: "mainView")
-//        self.show(mv!, sender: self)
-        
         self.dismiss(animated: true, completion: nil)
     }
+    
+    @IBAction func selectButtonClick(_ sender: UIBarButtonItem) {
+        if sender.title == "Select" {
+            sender.title = "Cancel"
+            
+            tableView.allowsMultipleSelection = true
+        } else {
+            sender.title = "Select"
+            
+            tableView.allowsMultipleSelection = false
+        }
+    }
+    
+    // MARK: TableView Functions ------------------------------------------------------
     
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
@@ -94,7 +110,16 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
             
             openDirectory(url: directoryHandler.currentDirectory)
         }
+        else {
+//            print("Can open: \(UIApplication.shared.canOpenURL(selectedCellURL))")
+//            print("Opening file... \(selectedCellURL)")
+//            UIApplication.shared.open(selectedCellURL, options: [:], completionHandler: { success in
+//                print("Opened success: \(success)")
+//            })
+        }
     }
+    
+    // MARK: Helper Functions ---------------------------------------------------------
     
     func getThumbnail(url: URL) -> UIImage? {
         var originalImage: UIImage? = nil
@@ -116,7 +141,6 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
             originalImage = UIImage(named: "parent_directory_icon")
         }
         else if url.pathExtension == "m4a" {
-            print("trying to open movie")
             let asset: AVAsset = AVAsset(url: url)
             let assetImageGenerator: AVAssetImageGenerator = AVAssetImageGenerator(asset: asset)
             assetImageGenerator.appliesPreferredTrackTransform = true
@@ -132,12 +156,9 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
             }
         }
         else if url.pathExtension == "png" || url.pathExtension == "jpg" {
-            print("photo")
             originalImage = UIImage(contentsOfFile: url.path)!
         }
         else {
-            print("file")
-            
             originalImage = UIImage(named: "file_icon")!
         }
         
