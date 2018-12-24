@@ -13,7 +13,7 @@
 		63436C99214374F3002A6EC6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63436C98214374F3002A6EC6 /* AppDelegate.swift */; };
 		63436C9B214374F3002A6EC6 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63436C9A214374F3002A6EC6 /* ViewController.swift */; };
 		63436C9E214374F3002A6EC6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63436C9C214374F3002A6EC6 /* Main.storyboard */; };
-		63436CA1214374F3002A6EC6 /* CapScape.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 63436C9F214374F3002A6EC6 /* CapScape.xcdatamodeld */; };
+		63436CA1214374F3002A6EC6 /* CaptureScape.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 63436C9F214374F3002A6EC6 /* CaptureScape.xcdatamodeld */; };
 		63436CA3214374F6002A6EC6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 63436CA2214374F6002A6EC6 /* Assets.xcassets */; };
 		63436CA6214374F6002A6EC6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63436CA4214374F6002A6EC6 /* LaunchScreen.storyboard */; };
 		6355C70621BF8D0200E5AB55 /* ControlButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6355C70521BF8D0200E5AB55 /* ControlButton.swift */; };
@@ -81,7 +81,7 @@
 		630B6E0721C6949500AE1CBF /* FileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileViewController.swift; sourceTree = "<group>"; };
 		630B6E0F21CA4F0200AE1CBF /* CustomFileViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFileViewCell.swift; sourceTree = "<group>"; };
 		632FD1762144B37900CFE5EF /* LocationFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationFinder.swift; sourceTree = "<group>"; };
-		63436C95214374F3002A6EC6 /* CapScape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CapScape.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		63436C95214374F3002A6EC6 /* CaptureScape.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CaptureScape.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		63436C98214374F3002A6EC6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		63436C9A214374F3002A6EC6 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		63436C9D214374F3002A6EC6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -114,7 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				638FB6A2219E89CE006112D5 /* GPUImage.xcodeproj */,
-				63436C97214374F3002A6EC6 /* CapScape */,
+				63436C97214374F3002A6EC6 /* CaptureScape */,
 				63436C96214374F3002A6EC6 /* Products */,
 				638FB6B3219E8A03006112D5 /* Frameworks */,
 			);
@@ -123,12 +123,12 @@
 		63436C96214374F3002A6EC6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				63436C95214374F3002A6EC6 /* CapScape.app */,
+				63436C95214374F3002A6EC6 /* CaptureScape.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		63436C97214374F3002A6EC6 /* CapScape */ = {
+		63436C97214374F3002A6EC6 /* CaptureScape */ = {
 			isa = PBXGroup;
 			children = (
 				63436C98214374F3002A6EC6 /* AppDelegate.swift */,
@@ -138,7 +138,7 @@
 				63436CA2214374F6002A6EC6 /* Assets.xcassets */,
 				63436CA4214374F6002A6EC6 /* LaunchScreen.storyboard */,
 				63436CA7214374F6002A6EC6 /* Info.plist */,
-				63436C9F214374F3002A6EC6 /* CapScape.xcdatamodeld */,
+				63436C9F214374F3002A6EC6 /* CaptureScape.xcdatamodeld */,
 				632FD1762144B37900CFE5EF /* LocationFinder.swift */,
 				63E71436215DB1C500CC417E /* VideoCapture.swift */,
 				63E7143A215DB9B900CC417E /* PhotoCapture.swift */,
@@ -148,7 +148,7 @@
 				6355C70521BF8D0200E5AB55 /* ControlButton.swift */,
 				630B6E0F21CA4F0200AE1CBF /* CustomFileViewCell.swift */,
 			);
-			path = CapScape;
+			path = CaptureScape;
 			sourceTree = "<group>";
 		};
 		638FB6A3219E89CE006112D5 /* Products */ = {
@@ -172,9 +172,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		63436C94214374F3002A6EC6 /* CapScape */ = {
+		63436C94214374F3002A6EC6 /* CaptureScape */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 63436CAA214374F6002A6EC6 /* Build configuration list for PBXNativeTarget "CapScape" */;
+			buildConfigurationList = 63436CAA214374F6002A6EC6 /* Build configuration list for PBXNativeTarget "CaptureScape" */;
 			buildPhases = (
 				63436C91214374F3002A6EC6 /* Sources */,
 				63436C92214374F3002A6EC6 /* Frameworks */,
@@ -186,9 +186,9 @@
 			dependencies = (
 				638FB6B2219E89EF006112D5 /* PBXTargetDependency */,
 			);
-			name = CapScape;
+			name = CaptureScape;
 			productName = CapScape;
-			productReference = 63436C95214374F3002A6EC6 /* CapScape.app */;
+			productReference = 63436C95214374F3002A6EC6 /* CaptureScape.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -206,7 +206,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 63436C90214374F3002A6EC6 /* Build configuration list for PBXProject "CapScape" */;
+			buildConfigurationList = 63436C90214374F3002A6EC6 /* Build configuration list for PBXProject "CaptureScape" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -225,7 +225,7 @@
 			);
 			projectRoot = "";
 			targets = (
-				63436C94214374F3002A6EC6 /* CapScape */,
+				63436C94214374F3002A6EC6 /* CaptureScape */,
 			);
 		};
 /* End PBXProject section */
@@ -289,7 +289,7 @@
 				639C39CC21AAB7D7008B59E1 /* DirectoryHandler.swift in Sources */,
 				630B6E0821C6949500AE1CBF /* FileViewController.swift in Sources */,
 				6357188521BF7C7500655BCB /* MapView.swift in Sources */,
-				63436CA1214374F3002A6EC6 /* CapScape.xcdatamodeld in Sources */,
+				63436CA1214374F3002A6EC6 /* CaptureScape.xcdatamodeld in Sources */,
 				63E7143B215DB9B900CC417E /* PhotoCapture.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -444,13 +444,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 42T65W8L3Z;
-				INFOPLIST_FILE = CapScape/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/CaptureScape/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.davidhartzog.CapScape;
+				PRODUCT_BUNDLE_IDENTIFIER = com.davidhartzog.CaptureScape;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -463,13 +463,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 42T65W8L3Z;
-				INFOPLIST_FILE = CapScape/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/CaptureScape/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.davidhartzog.CapScape;
+				PRODUCT_BUNDLE_IDENTIFIER = com.davidhartzog.CaptureScape;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -479,7 +479,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		63436C90214374F3002A6EC6 /* Build configuration list for PBXProject "CapScape" */ = {
+		63436C90214374F3002A6EC6 /* Build configuration list for PBXProject "CaptureScape" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				63436CA8214374F6002A6EC6 /* Debug */,
@@ -488,7 +488,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		63436CAA214374F6002A6EC6 /* Build configuration list for PBXNativeTarget "CapScape" */ = {
+		63436CAA214374F6002A6EC6 /* Build configuration list for PBXNativeTarget "CaptureScape" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				63436CAB214374F6002A6EC6 /* Debug */,
@@ -500,13 +500,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		63436C9F214374F3002A6EC6 /* CapScape.xcdatamodeld */ = {
+		63436C9F214374F3002A6EC6 /* CaptureScape.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
 				63436CA0214374F3002A6EC6 /* CapScape.xcdatamodel */,
 			);
 			currentVersion = 63436CA0214374F3002A6EC6 /* CapScape.xcdatamodel */;
-			path = CapScape.xcdatamodeld;
+			path = CaptureScape.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};
