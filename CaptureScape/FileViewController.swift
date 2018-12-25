@@ -56,6 +56,7 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
         if sender.title == "Select" {
             sender.title = "Cancel"
             
+            
             tableView.allowsMultipleSelection = true
             inSelectMode = true
         } else {
@@ -67,24 +68,32 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     @objc func cellLongPress(sender: UILongPressGestureRecognizer) {
-        let hasSelection = tableView.indexPathsForSelectedRows
-        
         if sender.state == UIGestureRecognizerState.began {
-            print(hasSelection as Any)
+            let touchPoint = sender.location(in: self.tableView)
+            if let indexPath = tableView.indexPathForRow(at: touchPoint) {
+                if indexPath == [0, 0] {
+                    return
+                }
+                tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+            }
             
-            // TODO : Make sure parent directory cell click cannot long press
-//            if hasSelection?.count == 1 {
-//                tableView.cellForRow(at: hasSelection[0].
-//            }
+            let currentSelection = tableView.indexPathsForSelectedRows
             
-            let popupMenu = UIAlertController(title: "Title", message: "What do?", preferredStyle: .actionSheet)
+            let popupMenu = UIAlertController(title: "\(currentSelection!.count) File(s) Selected", message: nil, preferredStyle: .actionSheet)
             
-            popupMenu.addAction(UIAlertAction(title: "Button 1", style: .default, handler:{ _ in
-                print("Button 1 pressed")
+            popupMenu.addAction(UIAlertAction(title: "Upload", style: .default, handler:{ _ in
+                print("Upload button pressed")
             }))
-            popupMenu.addAction(UIAlertAction(title: "Button 2", style: .default, handler: { _ in
-                print("Button 2 pressed")
+            popupMenu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in
+                print("Delete button pressed")
             }))
+            
+            if currentSelection?.count == 1 {
+                popupMenu.addAction(UIAlertAction(title: "Rename", style: .default, handler: { _ in
+                    print("Rename button pressed")
+                }))
+            }
+            
             popupMenu.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
                 popupMenu.dismiss(animated: true, completion: nil)
             }))
@@ -245,5 +254,9 @@ class FileViewController: UIViewController, UITableViewDataSource, UITableViewDe
         tableView.reloadData()
     }
     
+    // MARK: Dropbox Functions -------------------------------------------------------
     
+    func uploadFile(url: URL) {
+        
+    }
 }
