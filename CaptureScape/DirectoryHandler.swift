@@ -65,12 +65,6 @@ final class DirectoryHandler {
         
         do {
             dirContents = try fileManager.contentsOfDirectory(atPath: fileManager.currentDirectoryPath)
-            
-//            var contentsList: [String] = []
-//
-//            for obj in dirContents {
-//                contentsList.append(obj)
-//            }
         }
         catch {
             print("\(error.localizedDescription)")
@@ -92,7 +86,7 @@ final class DirectoryHandler {
             return isDirectory.boolValue
         }
         else {
-            print("ERROR isDirectory(): FILE DOESN'T EXIST!!!")
+            //print("ERROR isDirectory(): FILE DOESN'T EXIST!!!")
         }
         
         return false

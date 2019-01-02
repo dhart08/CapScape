@@ -1,262 +1,171 @@
 //
-//  FileViewController.swift
-//  CapScape
+//  FileViewerController.swift
+//  CaptureScape
 //
-//  Created by David on 12/16/18.
+//  Created by David on 12/27/18.
 //  Copyright © 2018 David Hartzog. All rights reserved.
 //
 
 import Foundation
 import UIKit
+import SwiftyDropbox
 import AVFoundation
+import AVKit
 
-class FileViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
+class FileViewController: UIViewController {
     
-    @IBOutlet weak var backButton: UIBarButtonItem!
-    @IBOutlet weak var selectbutton: UIBarButtonItem!
-    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var backBarButton: UIBarButtonItem!
+    @IBOutlet weak var previewView: CameraView!
+    @IBOutlet weak var loginButton: UIButton!
+    @IBOutlet weak var filenameLabel: UILabel!
+    @IBOutlet weak var fileSizeLabel: UILabel!
+    @IBOutlet weak var fileCreationLabel: UILabel!
+    @IBOutlet weak var myButton: UIButton!
     
-    let thumbnailCache = NSCache<NSString, UIImage>()
-    var directoryHandler: DirectoryHandler!
-    var contentsList: [String] = []
-    var inSelectMode = false
+    var dropboxClient: DropboxClient!
+    var fileURL: URL!
+    private var cancelUpload: Bool = false
+    var passClientToFileList: ((DropboxClient) -> Void)?
     
-    // MARK: ViewController Functions -------------------------------------------------
+    // MARK: ViewController Functions --------------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let longPressGR = UILongPressGestureRecognizer(target: self, action: #selector(cellLongPress))
-        longPressGR.minimumPressDuration = 1.0
-        tableView.addGestureRecognizer(longPressGR)
+        NotificationCenter.default.addObserver(self, selector: #selector(createDropboxClient), name: .userWasLoggedIn, object: nil)
         
-        tableView.dataSource = self
-        tableView.delegate = self
-        
-        directoryHandler = DirectoryHandler()
-        directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
-        contentsList = directoryHandler.getDirectoryContents()
+        placeMediaInPlayerView()
+        populateFileAttributes()
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        
+        super.viewWillAppear(true)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        
+        super.viewWillDisappear(true)
     }
     
-    // MARK: Element Action Functions -------------------------------------------------
+    // MARK: Element Action Functions --------------------------------------------------
     
-    @IBAction func backButtonClick(_ sender: UIBarButtonItem) {
+    @IBAction func backBarButtonClick(_ sender: UIBarButtonItem) {
         self.dismiss(animated: true, completion: nil)
     }
     
-    @IBAction func selectButtonClick(_ sender: UIBarButtonItem) {
-        if sender.title == "Select" {
-            sender.title = "Cancel"
+    @IBAction func loginButtonClick(_ sender: UIButton) {
+        if dropboxClient == nil {
+            startAuthorizationFlow()
+            return
+        }
+        
+        print("User already logged in!")
+    }
+    
+    @IBAction func myButtonClick(_ sender: UIButton) {
+        createDropboxFolder(name: "/Photos")
+        uploadFileToDropbox(url: fileURL, folder: "/Photos")
+    }
+    
+    // MARK: Helper Functions ----------------------------------------------------------
+    
+    func startAuthorizationFlow() {
+        print("startAuthorizationFlow")
+        
+        DropboxClientsManager.authorizeFromController(UIApplication.shared, controller: self, openURL: { (url) in
+                print("opening URL...")
+                UIApplication.shared.open(url)
+            }
+        )
+    }
+    
+    @objc func createDropboxClient() {
+        print("createDropboxClient")
+        dropboxClient = DropboxClientsManager.authorizedClient
+        passClientToFileList?(dropboxClient)
+    }
+    
+    func createDropboxFolder(name: String) {
+        print("createDropboxFolder")
+        
+        dropboxClient.files.createFolderV2(path: name).response { response, error in
+            if let response = response {
+                print(response)
+            } else if let error = error {
+                print(error)
+            }
+        }
+    }
+    
+    func uploadFileToDropbox(url: URL, folder: String) {
+        print("uploadFileToDropbox")
+        
+        let dropboxPath = "\(folder)/\(url.lastPathComponent)"
+        
+        let request = dropboxClient.files.upload(path: dropboxPath, input: url).response { response, error in
+            if let response = response {
+                print("\(response)")
+            } else if let error = error {
+                print("ERROR: \(error)")
+            }
+        }.progress { progressData in
+                print(progressData)
+        }
+        
+        if cancelUpload {
+            request.cancel()
+        }
+    }
+    
+    func populateFileAttributes() {
+        let fileDictionary = try! FileManager.default.attributesOfItem(atPath: fileURL.path)
+        let fileSize = String(describing: fileDictionary[FileAttributeKey.size]!)
+        let fileCreationDate = String(describing: fileDictionary[FileAttributeKey.creationDate]!)
+        
+        
+        filenameLabel.text = fileURL.lastPathComponent
+        fileSizeLabel.text = fileSize
+        fileCreationLabel.text = fileCreationDate
+    }
+    
+    private func placeMediaInPlayerView() {
+        print("placeMediaInPreviewView")
+        
+        let fileType = fileURL.pathExtension
+        
+        if fileType == "png" || fileType == "jpg" {
+            print("placeMediaInPreviewView: found picture")
             
+            let previewImage: UIImage!
+            previewImage = UIImage(contentsOfFile: fileURL.path)
             
-            tableView.allowsMultipleSelection = true
-            inSelectMode = true
+            let myImageView: UIImageView = UIImageView(image: previewImage)
+            myImageView.frame = previewView.bounds
+            
+            previewView.addSubview(myImageView)
+            
+        } else if fileType == "mp4" {
+            print("placeMediaInPreviewView: found video")
+            
+            let avPlayer = AVPlayer(url: fileURL)
+            let avPlayerViewController = AVPlayerViewController()
+            avPlayerViewController.player = avPlayer
+            avPlayerViewController.view.frame = previewView.bounds
+            self.addChildViewController(avPlayerViewController)
+            previewView.addSubview(avPlayerViewController.view)
+            avPlayerViewController.didMove(toParentViewController: self)
+            
         } else {
-            sender.title = "Select"
+            let previewImage = UIImage(named: "file_icon")
             
-            tableView.allowsMultipleSelection = false
-            inSelectMode = false
-        }
-    }
-    
-    @objc func cellLongPress(sender: UILongPressGestureRecognizer) {
-        if sender.state == UIGestureRecognizerState.began {
-            let touchPoint = sender.location(in: self.tableView)
-            if let indexPath = tableView.indexPathForRow(at: touchPoint) {
-                if indexPath == [0, 0] {
-                    return
-                }
-                tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-            }
+            let myImageView: UIImageView = UIImageView(image: previewImage)
+            myImageView.frame = previewView.bounds
             
-            let currentSelection = tableView.indexPathsForSelectedRows
-            
-            let popupMenu = UIAlertController(title: "\(currentSelection!.count) File(s) Selected", message: nil, preferredStyle: .actionSheet)
-            
-            popupMenu.addAction(UIAlertAction(title: "Upload", style: .default, handler:{ _ in
-                print("Upload button pressed")
-            }))
-            popupMenu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in
-                print("Delete button pressed")
-            }))
-            
-            if currentSelection?.count == 1 {
-                popupMenu.addAction(UIAlertAction(title: "Rename", style: .default, handler: { _ in
-                    print("Rename button pressed")
-                }))
-            }
-            
-            popupMenu.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
-                popupMenu.dismiss(animated: true, completion: nil)
-            }))
-            
-            present(popupMenu, animated: true, completion: nil)
         }
+        
+        return
     }
-    
-    // MARK: TableView Functions ------------------------------------------------------
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return contentsList.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cellReuseIdentifier") as! CustomFileViewCell
-        
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        let myCell = cell as! CustomFileViewCell
-        myCell.alpha = 0
-        
-        var thumbnailImage: UIImage!
-        DispatchQueue.global().async() {
-            thumbnailImage = self.getThumbnail(url: self.directoryHandler.currentDirectory.appendingPathComponent(self.contentsList[indexPath.row]))
-            
-            DispatchQueue.main.async {
-                myCell.cellThumbnailImage.image = thumbnailImage
-                let cellText = self.contentsList[indexPath.row]
-                myCell.cellFilenameLabel.text = cellText
-                
-                if cellText == "..." {
-                    myCell.cellSwitch.isHidden = true
-                    //tableView.cellForRow(at: IndexPath(row: 0, section: 0))?.selectionStyle = UITableViewCellSelectionStyle.none
-                    myCell.selectionStyle = UITableViewCellSelectionStyle.none
-                }
-                
-                UIView.animate(withDuration: 0.2, animations: {
-                    myCell.alpha = 1
-                })
-            }
-        }
-        
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        var selectedCellURL: URL = directoryHandler.currentDirectory
-        selectedCellURL.appendPathComponent(contentsList[indexPath.row])
-        
-        if directoryHandler.isDirectory(url: selectedCellURL) {
-            openDirectory(url: selectedCellURL)
-        }
-        else if contentsList[indexPath.row] == "..." {
-            if inSelectMode {
-                print("deselecting")
-                tableView.deselectRow(at: indexPath, animated: false)
-            } else {
-                directoryHandler.changeDirectory(dirType: .specific, url: directoryHandler.currentDirectory.deletingLastPathComponent())
-            
-                openDirectory(url: directoryHandler.currentDirectory)
-            }
-        }
-        else {
-//            print("Can open: \(UIApplication.shared.canOpenURL(selectedCellURL))")
-//            print("Opening file... \(selectedCellURL)")
-//            UIApplication.shared.open(selectedCellURL, options: [:], completionHandler: { success in
-//                print("Opened success: \(success)")
-//            })
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        let isSelected = tableView.indexPathsForSelectedRows
-        
-        if isSelected == nil {
-            selectbutton.title = "Select"
-            inSelectMode = false
-        }
-    }
-    
-    // MARK: Helper Functions ---------------------------------------------------------
-    
-    func getThumbnail(url: URL) -> UIImage? {
-        var originalImage: UIImage? = nil
-        let cachedImage: UIImage? = nil
-        
-        if let cachedImage = thumbnailCache.object(forKey: url.absoluteString as NSString) {
-            //print("Found picture in cache!")
-            return cachedImage
-        }
-        
-        print("\(url.pathExtension)")
-        
-        if directoryHandler.isDirectory(url: url){
-            print("dir")
-            originalImage = UIImage(named: "folder_icon")!
-        }
-        else if url.pathExtension == "" {
-            print("parent")
-            originalImage = UIImage(named: "parent_directory_icon")
-        }
-        else if url.pathExtension == "m4a" {
-            let asset: AVAsset = AVAsset(url: url)
-            let assetImageGenerator: AVAssetImageGenerator = AVAssetImageGenerator(asset: asset)
-            assetImageGenerator.appliesPreferredTrackTransform = true
-            
-            do {
-                let time = CMTimeMakeWithSeconds(1.0, 500)
-                let cgImage = try assetImageGenerator.copyCGImage(at: time, actualTime: nil)
-                originalImage = UIImage(cgImage: cgImage)
-            }
-            catch {
-                print(error.localizedDescription)
-                originalImage = UIImage(named: "file_icon")
-            }
-        }
-        else if url.pathExtension == "png" || url.pathExtension == "jpg" {
-            originalImage = UIImage(contentsOfFile: url.path)!
-        }
-        else {
-            originalImage = UIImage(named: "file_icon")!
-        }
-        
-        let newSize = CGSize(width: 38, height: 38)
-        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
-        
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        originalImage!.draw(in: rect)
-        
-        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        guard cachedImage != nil else {
-            //print("Storing picture in cache!")
-            thumbnailCache.setObject(resizedImage!, forKey: url.absoluteString as NSString)
-            return resizedImage
-        }
-        
-        return resizedImage
-    }
-    
-    func openDirectory(url: URL) {
-        directoryHandler.changeDirectory(dirType: .specific, url: url)
-        contentsList = directoryHandler.getDirectoryContents()
-        
-        if directoryHandler.currentDirectory != directoryHandler.getDocumentsPath() {
-            contentsList.insert("...", at: 0)
-        }
-        
-        tableView.reloadData()
-    }
-    
-    // MARK: Dropbox Functions -------------------------------------------------------
-    
-    func uploadFile(url: URL) {
-        
-    }
+}
+
+extension Notification.Name {
+    static let userWasLoggedIn = Notification.Name("userWasLoggedin")
 }

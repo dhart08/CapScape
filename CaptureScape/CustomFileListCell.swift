@@ -8,7 +8,7 @@
 
 import UIKit
 
-class CustomFileViewCell: UITableViewCell {
+class CustomFileListCell: UITableViewCell {
 
     @IBOutlet weak var cellThumbnailImage: UIImageView!
     @IBOutlet weak var cellFilenameLabel: UILabel!

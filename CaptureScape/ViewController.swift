@@ -11,6 +11,7 @@ import AVFoundation
 import CoreLocation
 import GPUImage
 import MapKit
+import SwiftyDropbox
 
 class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
@@ -31,6 +32,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var locationFinder: LocationFinder!
     
     var directoryHandler: DirectoryHandler!
+    
+    var dropboxClient: DropboxClient! = nil
     
     var camera: Camera!
     var movieInput: MovieInput!
@@ -112,13 +115,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         // Dispose of any resources that can be recreated.
     }
     
-    @IBAction func photoViewSegue(gesture: UIGestureRecognizer) {
-//        print("photoViewSegue!")
-//        let destinationVC = self.storyboard?.instantiateViewController(withIdentifier: "PhotoEditViewController") as! PhotoEditViewController
-//        destinationVC.image = currentPhoto
-//        self.navigationController?.pushViewController(destinationVC, animated: true)
-    }
-    
 // MARK: - Element Click Actions ------------------------------------------------
     
     @IBAction func videoButtonClick(_ sender: UIButton) {
@@ -133,7 +129,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             directoryHandler.createDirectory(dirType: .videos)
             
-            fileURL = URL(string: "Videos/\(createTimestamp()).m4a", relativeTo: directoryHandler.getDocumentsPath())
+            fileURL = URL(string: "Videos/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
             
             do {
                 try FileManager.default.removeItem(at: fileURL!)
@@ -173,41 +169,52 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
-        //print("photo button clicked!!!")
+//        pictureOutput = PictureOutput()
+//        pictureOutput.encodedImageFormat = .png
+//        pictureOutput.imageAvailableCallback = { outputImage in
+//
+//            DispatchQueue.global().async {
+//                self.directoryHandler.createDirectory(dirType: .photos)
+//
+//                let outputPNG = UIImagePNGRepresentation(outputImage)
+//                let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
+//
+//                try! outputPNG?.write(to: fileURL)
+//            }
+//
+//            DispatchQueue.main.async {
+//                self.photoPreview.image = outputImage
+//                self.lastPictureImage = outputImage
+//
+//                self.pictureOutput = nil
+//
+//                if self.isVideoRecording == true {
+//                    self.updateSlideshowImage()
+//                }
+//
+//                self.flashScreen()
+//            }
+//
+//        }
+//
+//        blendFilter --> pictureOutput
         
-        pictureOutput = PictureOutput()
-        pictureOutput.encodedImageFormat = .png
-        pictureOutput.imageAvailableCallback = { outputImage in
-            
-            DispatchQueue.global().async {
-                self.directoryHandler.createDirectory(dirType: .photos)
 
-                let outputPNG = UIImagePNGRepresentation(outputImage)
-                let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
-
-                try! outputPNG?.write(to: fileURL)
-            }
-
+        self.takePhoto { (image) in
             DispatchQueue.main.async {
-                self.photoPreview.image = outputImage
-                self.lastPictureImage = outputImage
-
-                self.pictureOutput = nil
-
-                if self.isVideoRecording == true {
-                    self.updateSlideshowImage()
-                }
-                
                 self.flashScreen()
+                self.photoPreview.image = image
             }
             
+            self.lastPictureImage = image
+            
+            if self.isVideoRecording == true {
+                self.updateSlideshowImage()
+            }
         }
-        
-        blendFilter --> pictureOutput
     }
     
     @IBAction func slideshowButtonClick(_ sender: UIButton) {
-        //print("audio button clicked!")
         
         if isVideoRecording == false {
             isVideoRecording = true
@@ -216,33 +223,49 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
             
-            let blackRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-            UIGraphicsBeginImageContext(blackRect.size)
-            UIColor.black.setFill()
-            UIRectFill(blackRect)
+//            let blackRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+//            UIGraphicsBeginImageContext(blackRect.size)
+//            UIColor.black.setFill()
+//            UIRectFill(blackRect)
+//
+//            currentSlideshowInput = PictureInput(image: UIGraphicsGetImageFromCurrentImageContext()!)
+//            UIGraphicsEndImageContext()
             
-            currentSlideshowInput = PictureInput(image: UIGraphicsGetImageFromCurrentImageContext()!)
-            UIGraphicsEndImageContext()
             
-            slideShowBlendFilter = SourceOverBlend()
-            
-            directoryHandler.createDirectory(dirType: .slideshows)
-            fileURL = URL(fileURLWithPath: "Slideshows/\(createTimestamp()).m4a", relativeTo: directoryHandler.getDocumentsPath())
-            
-            do {
-                try FileManager.default.removeItem(at: fileURL!)
-            }
-            catch {
-                
-            }
-            
-            slideshowMovieOutput = try! MovieOutput(URL: fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
-            camera.audioEncodingTarget = slideshowMovieOutput
-            
-            camera --> slideShowBlendFilter
-            currentSlideshowInput --> slideShowBlendFilter --> slideshowMovieOutput
-            currentSlideshowInput.processImage()
-            slideshowMovieOutput.startRecording()
+            flashScreen()
+
+            self.takePhoto(completion: { (image) in
+                DispatchQueue.main.async {
+                    //self.flashScreen()
+                    self.photoPreview.image = image
+
+                    self.lastPictureImage = image
+
+                    self.currentSlideshowInput = PictureInput(image: self.lastPictureImage)
+
+                    self.slideShowBlendFilter = SourceOverBlend()
+
+                    self.directoryHandler.createDirectory(dirType: .slideshows)
+                    self.fileURL = URL(fileURLWithPath: "Slideshows/\(self.createTimestamp()).m4a", relativeTo: self.directoryHandler.getDocumentsPath())
+
+                    do {
+                        try FileManager.default.removeItem(at: self.fileURL!)
+                    }
+                    catch {
+
+                    }
+
+                    self.slideshowMovieOutput = try! MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+                    print("after 1")
+                    self.camera.audioEncodingTarget = self.slideshowMovieOutput
+
+                    self.camera --> self.slideShowBlendFilter
+                    self.currentSlideshowInput --> self.slideShowBlendFilter --> self.slideshowMovieOutput
+
+                    self.currentSlideshowInput.processImage()
+                    self.slideshowMovieOutput.startRecording()
+                }
+            })
         }
         else {
             isVideoRecording = false
@@ -262,6 +285,21 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.videoButton.isEnabled = true
         }
         
+    }
+    
+    @IBAction func filesButtonClick(_ sender: UIButton) {
+        let fileListController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileListController") as? FileListController
+        
+        fileListController?.passClientToMainView = { client in
+            print("Dropbox client passed back to MainView")
+            self.dropboxClient = client
+        }
+        
+        if let dropboxClient = dropboxClient {
+            fileListController?.dropboxClient = dropboxClient
+        }
+        
+        present(fileListController!, animated: true, completion: nil)
     }
     
     @IBAction func mapViewClick(_ sender: Any) {
@@ -415,9 +453,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         flashView.backgroundColor = UIColor.white
         self.view.addSubview(flashView)
         
-        UIView.animate(withDuration: 0.5, animations: {
+        UIView.animate(withDuration: 0.25, animations: {
             flashView.alpha = 0.0
-        }) { value in
+        }) { _ in
             flashView.removeFromSuperview()
         }
     }
@@ -477,6 +515,32 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let timestamp = timestampFormatter.string(from: Date())
         
         return timestamp
+    }
+    
+    func takePhoto(completion: @escaping (UIImage) -> Void) {
+        self.pictureOutput = PictureOutput()
+        self.pictureOutput.encodedImageFormat = .png
+        self.pictureOutput.imageAvailableCallback = { outputImage in
+            print("imageCallBack called!")
+            
+            //DispatchQueue.main.async {
+                completion(outputImage)
+            //}
+        
+            self.directoryHandler.createDirectory(dirType: .photos)
+            
+            let outputPNG = UIImagePNGRepresentation(outputImage)
+            let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
+            
+            try! outputPNG?.write(to: fileURL)
+            
+            self.pictureOutput = nil
+            
+            print("image saved!")
+
+        }
+        
+        self.blendFilter --> self.pictureOutput
     }
 }
 

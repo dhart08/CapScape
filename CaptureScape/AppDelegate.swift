@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import SwiftyDropbox
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,7 +17,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        DropboxClientsManager.setupWithAppKey("j0f6iqzg9qoe4yr")
+        return true
+    }
+    
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        print("redirect delegate called")
+        
+        if let authResult = DropboxClientsManager.handleRedirectURL(url) {
+            switch authResult {
+            case .success:
+                print("Success! User is logged into Dropbox")
+                NotificationCenter.default.post(name: .userWasLoggedIn, object: nil)
+            case .cancel:
+                print("User cancelled authorization.")
+            case .error(_, let description):
+                print("ERROR: \(description)")
+            }
+        }
+        
         return true
     }
 
