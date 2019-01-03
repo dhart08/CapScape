@@ -12,7 +12,6 @@ class CustomFileListCell: UITableViewCell {
 
     @IBOutlet weak var cellThumbnailImage: UIImageView!
     @IBOutlet weak var cellFilenameLabel: UILabel!
-    @IBOutlet weak var cellSwitch: UISwitch!
     
     override func awakeFromNib() {
         super.awakeFromNib()

@@ -139,7 +139,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 myCell.cellFilenameLabel.text = cellText
                 
                 if cellText == "..." {
-                    myCell.cellSwitch.isHidden = true
+                    //myCell.cellSwitch.isHidden = true
                     //tableView.cellForRow(at: IndexPath(row: 0, section: 0))?.selectionStyle = UITableViewCellSelectionStyle.none
                     myCell.selectionStyle = UITableViewCellSelectionStyle.none
                 }

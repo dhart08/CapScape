@@ -16,16 +16,18 @@ class FileViewController: UIViewController {
     
     @IBOutlet weak var backBarButton: UIBarButtonItem!
     @IBOutlet weak var previewView: CameraView!
-    @IBOutlet weak var loginButton: UIButton!
     @IBOutlet weak var filenameLabel: UILabel!
     @IBOutlet weak var fileSizeLabel: UILabel!
     @IBOutlet weak var fileCreationLabel: UILabel!
-    @IBOutlet weak var myButton: UIButton!
+    @IBOutlet weak var fileDropboxLabel: UILabel!
+    @IBOutlet weak var uploadButton: CustomButton!
     
+    var hasInternetConnection: Bool! = true
     var dropboxClient: DropboxClient!
     var fileURL: URL!
     private var cancelUpload: Bool = false
     var passClientToFileList: ((DropboxClient) -> Void)?
+    var executeOnLogin: (() -> Void)?
     
     // MARK: ViewController Functions --------------------------------------------------
     
@@ -52,18 +54,24 @@ class FileViewController: UIViewController {
         self.dismiss(animated: true, completion: nil)
     }
     
-    @IBAction func loginButtonClick(_ sender: UIButton) {
-        if dropboxClient == nil {
+    @IBAction func uploadButtonClick(_ sender: UIButton) {
+        if dropboxClient != nil {
+            let uploadFolder = "/\(fileURL.deletingLastPathComponent().lastPathComponent)"
+            
+            createDropboxFolder(name: uploadFolder)
+            uploadFileToDropbox(url: fileURL, folder: uploadFolder)
+        } else {
+            // TODO: need to make sure user has internet connection here
+            // TODO: check to see if file is already on dropbox before uploading
+            executeOnLogin = {
+                let uploadFolder = "/\(self.fileURL.deletingLastPathComponent().lastPathComponent)"
+                
+                self.createDropboxFolder(name: uploadFolder)
+                self.uploadFileToDropbox(url: self.fileURL, folder: uploadFolder)
+            }
+            
             startAuthorizationFlow()
-            return
         }
-        
-        print("User already logged in!")
-    }
-    
-    @IBAction func myButtonClick(_ sender: UIButton) {
-        createDropboxFolder(name: "/Photos")
-        uploadFileToDropbox(url: fileURL, folder: "/Photos")
     }
     
     // MARK: Helper Functions ----------------------------------------------------------
@@ -82,6 +90,12 @@ class FileViewController: UIViewController {
         print("createDropboxClient")
         dropboxClient = DropboxClientsManager.authorizedClient
         passClientToFileList?(dropboxClient)
+        
+        if executeOnLogin != nil {
+            executeOnLogin?()
+        }
+        
+        
     }
     
     func createDropboxFolder(name: String) {
@@ -125,6 +139,24 @@ class FileViewController: UIViewController {
         filenameLabel.text = fileURL.lastPathComponent
         fileSizeLabel.text = fileSize
         fileCreationLabel.text = fileCreationDate
+        
+        if hasInternetConnection && dropboxClient != nil {
+            isFileOnline(url: fileURL) { (exists) in
+                if exists {
+                    self.fileDropboxLabel.textColor = UIColor.green
+                    self.fileDropboxLabel.text = "Yes"
+                    self.uploadButton.isEnabled = false
+                    
+                } else {
+                    self.fileDropboxLabel.textColor = UIColor.red
+                    self.fileDropboxLabel.text = "No"
+                    self.uploadButton.isEnabled = true
+                }
+            }
+        } else {
+            self.fileDropboxLabel.textColor = UIColor.black
+            self.fileDropboxLabel.text = "N/A"
+        }
     }
     
     private func placeMediaInPlayerView() {
@@ -163,6 +195,35 @@ class FileViewController: UIViewController {
         }
         
         return
+    }
+    
+    func getOnlineFolderContents(folder: String) -> [String] {
+        return []
+    }
+    
+    func isFileOnline(url: URL, completion: @escaping (Bool) -> Void) {
+        let folderName = url.deletingLastPathComponent().lastPathComponent
+        let filename = url.lastPathComponent
+        
+        let _ = dropboxClient.files.listFolder(path: "/\(folderName)").response { (listFolderResult, error) in
+            if let listFolderResult = listFolderResult {
+                for entry in listFolderResult.entries {
+                    print(entry.name)
+                    if filename == entry.name {
+                        DispatchQueue.main.async {
+                            completion(true)
+                        }
+                        
+                        return
+                    }
+                }
+                
+                completion(false)
+            } else {
+                print("couldn't get folder contents")
+                print(error?.description as Any)
+            }
+        }
     }
 }
 

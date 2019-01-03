@@ -21,7 +21,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var mapView: MapView!
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
-    @IBOutlet weak var slideshowButton: ControlButton!
+    @IBOutlet weak var slideshowButton: CustomButton!
     @IBOutlet weak var photoPreview: UIImageView!
     @IBOutlet weak var filesButton: UIButton!
     
@@ -322,7 +322,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             UIView.animate(withDuration: 0.3, animations: {
                 self.mapView.frame = UIScreen.main.bounds
-            }, completion: { val in
+            }, completion: { _ in
                 self.view.addSubview(self.closeMapButton)
             })
         }
