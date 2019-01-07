@@ -38,6 +38,7 @@ class FileViewController: UIViewController {
         
         placeMediaInPlayerView()
         populateFileAttributes()
+        setUploadButtonLook()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -59,15 +60,24 @@ class FileViewController: UIViewController {
             let uploadFolder = "/\(fileURL.deletingLastPathComponent().lastPathComponent)"
             
             createDropboxFolder(name: uploadFolder)
-            uploadFileToDropbox(url: fileURL, folder: uploadFolder)
+            uploadFileToDropbox(url: fileURL, folder: uploadFolder) {
+                self.populateFileAttributes()
+                self.setUploadButtonLook()
+            }
         } else {
             // TODO: need to make sure user has internet connection here
             // TODO: check to see if file is already on dropbox before uploading
             executeOnLogin = {
-                let uploadFolder = "/\(self.fileURL.deletingLastPathComponent().lastPathComponent)"
+//                let uploadFolder = "/\(self.fileURL.deletingLastPathComponent().lastPathComponent)"
+//
+//                self.createDropboxFolder(name: uploadFolder)
+//                self.uploadFileToDropbox(url: self.fileURL, folder: uploadFolder) {
+//                    self.populateFileAttributes()
+//                    self.setUploadButtonLook()
+//                }
                 
-                self.createDropboxFolder(name: uploadFolder)
-                self.uploadFileToDropbox(url: self.fileURL, folder: uploadFolder)
+                self.populateFileAttributes()
+                self.setUploadButtonLook()
             }
             
             startAuthorizationFlow()
@@ -84,6 +94,8 @@ class FileViewController: UIViewController {
                 UIApplication.shared.open(url)
             }
         )
+        
+        // TODO: setUploadButtonLook() after login
     }
     
     @objc func createDropboxClient() {
@@ -110,7 +122,7 @@ class FileViewController: UIViewController {
         }
     }
     
-    func uploadFileToDropbox(url: URL, folder: String) {
+    func uploadFileToDropbox(url: URL, folder: String, completion: @escaping () -> Void) {
         print("uploadFileToDropbox")
         
         let dropboxPath = "\(folder)/\(url.lastPathComponent)"
@@ -118,6 +130,9 @@ class FileViewController: UIViewController {
         let request = dropboxClient.files.upload(path: dropboxPath, input: url).response { response, error in
             if let response = response {
                 print("\(response)")
+                DispatchQueue.main.async {
+                    completion()
+                }
             } else if let error = error {
                 print("ERROR: \(error)")
             }
@@ -145,8 +160,6 @@ class FileViewController: UIViewController {
                 if exists {
                     self.fileDropboxLabel.textColor = UIColor.green
                     self.fileDropboxLabel.text = "Yes"
-                    self.uploadButton.isEnabled = false
-                    
                 } else {
                     self.fileDropboxLabel.textColor = UIColor.red
                     self.fileDropboxLabel.text = "No"
@@ -154,12 +167,20 @@ class FileViewController: UIViewController {
                 }
             }
         } else {
-            self.fileDropboxLabel.textColor = UIColor.black
-            self.fileDropboxLabel.text = "N/A"
+            self.fileDropboxLabel.textColor = UIColor.red
+            self.fileDropboxLabel.text = "User Login Required"
         }
     }
     
-    private func placeMediaInPlayerView() {
+    func setUploadButtonLook() {
+        if dropboxClient != nil {
+            uploadButton.setTitle("Upload", for: .normal)
+        } else {
+            uploadButton.setTitle("Login", for: .normal)
+        }
+    }
+    
+    func placeMediaInPlayerView() {
         print("placeMediaInPreviewView")
         
         let fileType = fileURL.pathExtension

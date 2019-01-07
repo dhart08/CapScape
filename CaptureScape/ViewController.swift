@@ -307,6 +307,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             photoPreview.isHidden = true
             
             mapViewFrame = mapView.frame
+            mapView.userTrackingMode = .none
             
             closeMapButton = UIButton(type: .roundedRect)
             closeMapButton.frame = CGRect(x: UIScreen.main.bounds.width - 100,
@@ -341,6 +342,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.photoPreview.isHidden = false
         }
         
+        mapView.userTrackingMode = .follow
+        
         isMapFullScreen = false
     }
 
@@ -373,7 +376,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let latitude: NSString!
         let longitude: NSString!
         
-        guard locationFinder!.latitude != nil && locationFinder.longitude != nil else {
+        if locationFinder!.latitude == nil || locationFinder.longitude == nil {
             return
         }
         
@@ -430,7 +433,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     func updateMap() {
-        guard (locationFinder?.latitude != nil) && (locationFinder?.longitude != nil) else {
+        if locationFinder?.latitude == nil || locationFinder?.longitude == nil {
             return
         }
         
@@ -439,12 +442,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         if isMapFullScreen == false {
         
-        let regionRadius: CLLocationDistance = 25
-        let coordinateRegion = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2D(latitude: locationFinder.latitude, longitude: locationFinder.longitude), regionRadius, regionRadius)
-        mapView.setRegion(coordinateRegion, animated: true)
+            let regionRadius: CLLocationDistance = 25
+            let coordinateRegion = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2D(latitude: locationFinder.latitude, longitude: locationFinder.longitude), regionRadius, regionRadius)
+            mapView.setRegion(coordinateRegion, animated: true)
         }
         else {
-            //mapView.userLocation =
+            //mapView.userTrackingMode = .none
         }
     }
     
@@ -553,5 +556,11 @@ extension ViewController: AVAudioRecorderDelegate {
     
     func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         print("ERROR: Audio recorder experienced error in encoding!!!!!!!!")
+    }
+}
+
+extension ViewController: MKMapViewDelegate {
+    func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
+        popupMessage(message: "Map was loaded!")
     }
 }

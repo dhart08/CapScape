@@ -13,8 +13,25 @@ import SwiftyDropbox
 
 class FileListController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIGestureRecognizerDelegate {
     
+    @IBOutlet weak var navigationbar: UINavigationBar!
     @IBOutlet weak var backButton: UIBarButtonItem!
-    @IBOutlet weak var selectbutton: UIBarButtonItem!
+    @IBOutlet weak var selectAllButton: UIBarButtonItem! {
+        didSet {
+            let myBarButton = UIButton(frame: CGRect(x: 0, y: 0, width: 0, height: 44))
+            myBarButton.backgroundColor = UIColor.clear
+            myBarButton.setTitle("Select All", for: .normal)
+            myBarButton.setTitleColor(UIColor.init(red: 0, green: 0.478431, blue: 1.0, alpha: 1.0), for: .normal)
+            myBarButton.alpha = 0.0
+            //myBarButton.addTarget(self, action: #selector(self.selectAllButtonClick), for: .touchUpOutside)
+            
+            let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.selectAllButtonClick))
+            tapGestureRecognizer.cancelsTouchesInView = false
+            myBarButton.addGestureRecognizer(tapGestureRecognizer)
+            
+            selectAllButton.customView = myBarButton
+        }
+    }
+    @IBOutlet weak var selectButton: UIBarButtonItem!
     @IBOutlet weak var tableView: UITableView!
     
     let thumbnailCache = NSCache<NSString, UIImage>()
@@ -61,14 +78,32 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         if sender.title == "Select" {
             sender.title = "Cancel"
             
+            UIView.animate(withDuration: 0.5) {
+                self.selectAllButton.customView?.alpha = 1.0
+            }
             
             tableView.allowsMultipleSelection = true
             inSelectMode = true
         } else {
             sender.title = "Select"
             
+            UIView.animate(withDuration: 0.5) {
+                self.selectAllButton.customView?.alpha = 0.0
+            }
+            
+            print(tableView.indexPathsForSelectedRows)
+            
             tableView.allowsMultipleSelection = false
             inSelectMode = false
+        }
+    }
+    
+    @objc func selectAllButtonClick() {
+        print("selectAllButton clicked!")
+        
+        for row in 0 ... tableView.numberOfRows(inSection: 0) - 1 {
+            print("selecting row: \(row)")
+            tableView.selectRow(at: IndexPath(row: row, section: 0), animated: false, scrollPosition: .none)
         }
     }
     
@@ -127,29 +162,29 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         
         let myCell = cell as! CustomFileListCell
-        myCell.alpha = 0
+        myCell.cellThumbnailImage.alpha = 0.0
+        
+        let cellText = self.contentsList[indexPath.row]
+        myCell.cellFilenameLabel.text = cellText
+        
+        if cellText == "..." {
+            myCell.selectionStyle = UITableViewCellSelectionStyle.none
+        }
         
         var thumbnailImage: UIImage!
         DispatchQueue.global().async() {
             thumbnailImage = self.getThumbnail(url: self.directoryHandler.currentDirectory.appendingPathComponent(self.contentsList[indexPath.row]))
             
-            DispatchQueue.main.async {
+            DispatchQueue.main.sync {
                 myCell.cellThumbnailImage.image = thumbnailImage
-                let cellText = self.contentsList[indexPath.row]
-                myCell.cellFilenameLabel.text = cellText
-                
-                if cellText == "..." {
-                    //myCell.cellSwitch.isHidden = true
-                    //tableView.cellForRow(at: IndexPath(row: 0, section: 0))?.selectionStyle = UITableViewCellSelectionStyle.none
-                    myCell.selectionStyle = UITableViewCellSelectionStyle.none
-                }
                 
                 UIView.animate(withDuration: 0.2, animations: {
-                    myCell.alpha = 1
+                    myCell.cellThumbnailImage.alpha = 1.0
                 })
             }
         }
         
+        // TODO: Make all selected cells greyed out while scrolling
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -187,11 +222,26 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
     
+//    func tableView(_ tableView: UITableView, willDeselectRowAt indexPath: IndexPath) -> IndexPath? {
+//        if let selectedRows = tableView.indexPathsForSelectedRows {
+//            for row in selectedRows {
+//                if row == indexPath {
+//                    print("found my row \(row) \(indexPath)")
+//                    //return nil
+//                    tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
+//                    return nil
+//                }
+//            }
+//        }
+//
+//        return indexPath
+//    }
+    
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        let isSelected = tableView.indexPathsForSelectedRows
+        let cellsSelected = tableView.indexPathsForSelectedRows
         
-        if isSelected == nil {
-            selectbutton.title = "Select"
+        if cellsSelected == nil {
+            selectButton.title = "Select"
             inSelectMode = false
         }
     }
