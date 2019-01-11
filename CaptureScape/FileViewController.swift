@@ -23,18 +23,14 @@ class FileViewController: UIViewController {
     @IBOutlet weak var uploadButton: CustomButton!
     
     var hasInternetConnection: Bool! = true
-    var dropboxClient: DropboxClient!
+    var dropboxUploader: DropboxUploader!
     var fileURL: URL!
-    private var cancelUpload: Bool = false
-    var passClientToFileList: ((DropboxClient) -> Void)?
-    var executeOnLogin: (() -> Void)?
+    var passUploaderToFileList: ((DropboxUploader) -> Void)?
     
     // MARK: ViewController Functions --------------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(createDropboxClient), name: .userWasLoggedIn, object: nil)
         
         placeMediaInPlayerView()
         populateFileAttributes()
@@ -56,94 +52,35 @@ class FileViewController: UIViewController {
     }
     
     @IBAction func uploadButtonClick(_ sender: UIButton) {
-        if dropboxClient != nil {
+        if dropboxUploader != nil {
+            
+            //TODO: Check if file already exists on Dropbox
+            
             let uploadFolder = "/\(fileURL.deletingLastPathComponent().lastPathComponent)"
             
-            createDropboxFolder(name: uploadFolder)
-            uploadFileToDropbox(url: fileURL, folder: uploadFolder) {
+            dropboxUploader.createDropboxFolder(name: uploadFolder)
+            dropboxUploader.uploadFileToDropbox(url: fileURL, folder: uploadFolder) {
                 self.populateFileAttributes()
                 self.setUploadButtonLook()
             }
         } else {
             // TODO: need to make sure user has internet connection here
-            // TODO: check to see if file is already on dropbox before uploading
-            executeOnLogin = {
-//                let uploadFolder = "/\(self.fileURL.deletingLastPathComponent().lastPathComponent)"
-//
-//                self.createDropboxFolder(name: uploadFolder)
-//                self.uploadFileToDropbox(url: self.fileURL, folder: uploadFolder) {
-//                    self.populateFileAttributes()
-//                    self.setUploadButtonLook()
-//                }
+            
+            let uploader = DropboxUploader()
+            
+            uploader.executeUponLogin = {
+                self.dropboxUploader = uploader
+                self.passUploaderToFileList?(self.dropboxUploader)
                 
                 self.populateFileAttributes()
                 self.setUploadButtonLook()
             }
             
-            startAuthorizationFlow()
+            uploader.startAuthorizationFlow(controller: self)
         }
     }
     
     // MARK: Helper Functions ----------------------------------------------------------
-    
-    func startAuthorizationFlow() {
-        print("startAuthorizationFlow")
-        
-        DropboxClientsManager.authorizeFromController(UIApplication.shared, controller: self, openURL: { (url) in
-                print("opening URL...")
-                UIApplication.shared.open(url)
-            }
-        )
-        
-        // TODO: setUploadButtonLook() after login
-    }
-    
-    @objc func createDropboxClient() {
-        print("createDropboxClient")
-        dropboxClient = DropboxClientsManager.authorizedClient
-        passClientToFileList?(dropboxClient)
-        
-        if executeOnLogin != nil {
-            executeOnLogin?()
-        }
-        
-        
-    }
-    
-    func createDropboxFolder(name: String) {
-        print("createDropboxFolder")
-        
-        dropboxClient.files.createFolderV2(path: name).response { response, error in
-            if let response = response {
-                print(response)
-            } else if let error = error {
-                print(error)
-            }
-        }
-    }
-    
-    func uploadFileToDropbox(url: URL, folder: String, completion: @escaping () -> Void) {
-        print("uploadFileToDropbox")
-        
-        let dropboxPath = "\(folder)/\(url.lastPathComponent)"
-        
-        let request = dropboxClient.files.upload(path: dropboxPath, input: url).response { response, error in
-            if let response = response {
-                print("\(response)")
-                DispatchQueue.main.async {
-                    completion()
-                }
-            } else if let error = error {
-                print("ERROR: \(error)")
-            }
-        }.progress { progressData in
-                print(progressData)
-        }
-        
-        if cancelUpload {
-            request.cancel()
-        }
-    }
     
     func populateFileAttributes() {
         let fileDictionary = try! FileManager.default.attributesOfItem(atPath: fileURL.path)
@@ -155,8 +92,8 @@ class FileViewController: UIViewController {
         fileSizeLabel.text = fileSize
         fileCreationLabel.text = fileCreationDate
         
-        if hasInternetConnection && dropboxClient != nil {
-            isFileOnline(url: fileURL) { (exists) in
+        if hasInternetConnection && dropboxUploader != nil {
+            dropboxUploader.isFileOnline(url: fileURL) { (exists) in
                 if exists {
                     self.fileDropboxLabel.textColor = UIColor.green
                     self.fileDropboxLabel.text = "Yes"
@@ -173,7 +110,7 @@ class FileViewController: UIViewController {
     }
     
     func setUploadButtonLook() {
-        if dropboxClient != nil {
+        if dropboxUploader != nil {
             uploadButton.setTitle("Upload", for: .normal)
         } else {
             uploadButton.setTitle("Login", for: .normal)
@@ -218,36 +155,4 @@ class FileViewController: UIViewController {
         return
     }
     
-    func getOnlineFolderContents(folder: String) -> [String] {
-        return []
-    }
-    
-    func isFileOnline(url: URL, completion: @escaping (Bool) -> Void) {
-        let folderName = url.deletingLastPathComponent().lastPathComponent
-        let filename = url.lastPathComponent
-        
-        let _ = dropboxClient.files.listFolder(path: "/\(folderName)").response { (listFolderResult, error) in
-            if let listFolderResult = listFolderResult {
-                for entry in listFolderResult.entries {
-                    print(entry.name)
-                    if filename == entry.name {
-                        DispatchQueue.main.async {
-                            completion(true)
-                        }
-                        
-                        return
-                    }
-                }
-                
-                completion(false)
-            } else {
-                print("couldn't get folder contents")
-                print(error?.description as Any)
-            }
-        }
-    }
-}
-
-extension Notification.Name {
-    static let userWasLoggedIn = Notification.Name("userWasLoggedin")
 }

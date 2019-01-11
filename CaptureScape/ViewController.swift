@@ -33,7 +33,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     var directoryHandler: DirectoryHandler!
     
-    var dropboxClient: DropboxClient! = nil
+    //var dropboxClient: DropboxClient! = nil
+    var dropboxUploader: DropboxUploader!
     
     var camera: Camera!
     var movieInput: MovieInput!
@@ -290,13 +291,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBAction func filesButtonClick(_ sender: UIButton) {
         let fileListController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileListController") as? FileListController
         
-        fileListController?.passClientToMainView = { client in
+        fileListController?.passUploaderToMainView = { uploader in
             print("Dropbox client passed back to MainView")
-            self.dropboxClient = client
+            self.dropboxUploader = uploader
         }
         
-        if let dropboxClient = dropboxClient {
-            fileListController?.dropboxClient = dropboxClient
+        if let uploader = dropboxUploader {
+            fileListController?.dropboxUploader = uploader
         }
         
         present(fileListController!, animated: true, completion: nil)
