@@ -13,6 +13,7 @@ final class DropboxUploader {
     var dropboxClient: DropboxClient!
     private var fileUploadRequest: UploadRequest<Files.FileMetadataSerializer, Files.UploadErrorSerializer>!
     private var batchUploadRequest: BatchUploadTask!
+    private var cancelledBatchUpload: Bool! = false
     var executeUponLogin: (() -> Void)?
     
     init() {
@@ -84,37 +85,61 @@ final class DropboxUploader {
     }
     
     func uploadBatchFilesToDropBox(urls: [URL], folder: String, completion: (() -> Void)?) {
-        // TODO: clean up this code
-        var filesCommitInfo: [URL: Files.CommitInfo] = [:]
+        let topController = UIApplication.shared.keyWindow?.rootViewController?.presentedViewController
         
-        for url in urls {
-            
-            print("URL: \(url)")
-            let filename = url.lastPathComponent
-            
-//            var commitInfo: CustomStringConvertible = [
-//                "path": "\(folder)/\(filename)",
-//                "mode": "add",
-//                "autorename": true,
-//                "mute": false,
-//                "strict_conflict": false
-//            ]
-            
-            let commitInfo = Files.CommitInfo(path: "\(folder)/\(filename)")
-            
-            filesCommitInfo[url] = commitInfo
+        let tpv = TransferProgressView(controller: topController!, title: "Uploading \(urls.count) File(s)", message: "Uploading:")
+        tpv.onCancelClick = { self.cancelFileUpload() }
+        tpv.show()
+
+        var fileCount = urls.count
+        let uploadGroup = DispatchGroup()
+        
+        // TODO: Works, but needs to be refined and looked at for errors.
+        
+        DispatchQueue.global().async {
+            for url in urls {
+                
+                uploadGroup.enter()
+                
+                if self.cancelledBatchUpload {
+                    uploadGroup.leave()
+                    continue
+                }
+
+                let dropboxPath = "\(folder)/\(url.lastPathComponent)"
+                
+                DispatchQueue.main.async {
+                    tpv.setTitle(title: "Uploading \(fileCount) File(s)")
+                    tpv.setMessage(message: "Uploading: \(url.lastPathComponent)")
+                }
+                
+                self.fileUploadRequest = self.dropboxClient.files.upload(path: dropboxPath, input: url).response { response, error in
+                    if let _ = response {
+                        //runs after uploading complete
+                        fileCount = fileCount - 1
+                        uploadGroup.leave()
+                    } else if let error = error {
+                        print("ERROR: \(error)")
+                    }
+                }
+                
+                self.fileUploadRequest.progress { progressData in
+                    tpv.setProgress(progress: progressData.fractionCompleted)
+                }
+                
+                uploadGroup.wait()
+                
+                if fileCount == 0 {
+                    DispatchQueue.main.async {
+                        tpv.close()
+                    }
+                    
+                    self.cancelledBatchUpload = false
+                }
+                
+                //end of for url in urls
+            }
         }
-        
-        
-        batchUploadRequest = dropboxClient.files.batchUploadFiles(fileUrlsToCommitInfo: filesCommitInfo, queue: nil, progressBlock:
-        { progressData in
-            // TODO: make this code work (progressData does not show)
-            print(progressData.fractionCompleted)
-        }){ _, _, _ in
-            //this is the request area
-            //put things here after batch upload is done
-        }
-        
     }
     
     func cancelFileUpload() {
@@ -122,7 +147,8 @@ final class DropboxUploader {
     }
     
     func cancelBatchUpload() {
-        batchUploadRequest.cancel()
+        fileUploadRequest.cancel()
+        cancelledBatchUpload = true
     }
     
     func isFileOnline(url: URL, completion: @escaping (Bool) -> Void) {

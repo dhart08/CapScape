@@ -70,4 +70,8 @@ class TransferProgressView {
     func setMessage(message: String) {
         popUpController.message = message
     }
+    
+    func setTitle(title: String) {
+        popUpController.title = title
+    }
 }
