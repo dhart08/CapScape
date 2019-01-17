@@ -14,14 +14,16 @@ final class DropboxUploader {
     private var fileUploadRequest: UploadRequest<Files.FileMetadataSerializer, Files.UploadErrorSerializer>!
     private var batchUploadRequest: BatchUploadTask!
     private var cancelledBatchUpload: Bool! = false
-    var executeUponLogin: (() -> Void)?
+    private var executeUponLogin: (() -> Void)?
     
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(createDropboxClient), name: .userWasLoggedIn, object: nil)
     }
     
-    func startAuthorizationFlow(controller: UIViewController) {
+    func startAuthorizationFlow(controller: UIViewController, uponLogin: (() -> Void)? = nil) {
         print("startAuthorizationFlow")
+        
+        executeUponLogin = uponLogin
         
         DropboxClientsManager.authorizeFromController(
             UIApplication.shared,
@@ -54,14 +56,14 @@ final class DropboxUploader {
         }
     }
     
-    func uploadFileToDropbox(url: URL, folder: String, completion: @escaping () -> Void) {
+    func uploadFileToDropbox(controller: UIViewController, url: URL, folder: String, completion: @escaping () -> Void) {
         print("uploadFileToDropbox")
         
         let dropboxPath = "\(folder)/\(url.lastPathComponent)"
         
-        let topController = UIApplication.shared.keyWindow?.rootViewController?.presentedViewController
+        //let topController = UIApplication.shared.keyWindow?.rootViewController?.presentedViewController
         
-        let tpv = TransferProgressView(controller: topController!, title: "1 File(s)", message: "Uploading: \(url.lastPathComponent)")
+        let tpv = TransferProgressView(controller: controller, title: "1 File(s)", message: "Uploading: \(url.lastPathComponent)")
         tpv.onCancelClick = { self.cancelFileUpload() }
         tpv.show()
         
@@ -84,10 +86,9 @@ final class DropboxUploader {
         }
     }
     
-    func uploadBatchFilesToDropBox(urls: [URL], folder: String, completion: (() -> Void)?) {
-        let topController = UIApplication.shared.keyWindow?.rootViewController?.presentedViewController
+    func uploadBatchFilesToDropBox(controller: UIViewController, urls: [URL], folder: String, completion: (() -> Void)?) {
         
-        let tpv = TransferProgressView(controller: topController!, title: "Uploading \(urls.count) File(s)", message: "Uploading:")
+        let tpv = TransferProgressView(controller: controller, title: "Uploading \(urls.count) File(s)", message: "Uploading:")
         tpv.onCancelClick = { self.cancelFileUpload() }
         tpv.show()
 
@@ -98,7 +99,6 @@ final class DropboxUploader {
         
         DispatchQueue.global().async {
             for url in urls {
-                
                 uploadGroup.enter()
                 
                 if self.cancelledBatchUpload {
@@ -107,7 +107,6 @@ final class DropboxUploader {
                 }
 
                 let dropboxPath = "\(folder)/\(url.lastPathComponent)"
-                
                 DispatchQueue.main.async {
                     tpv.setTitle(title: "Uploading \(fileCount) File(s)")
                     tpv.setMessage(message: "Uploading: \(url.lastPathComponent)")
@@ -136,9 +135,9 @@ final class DropboxUploader {
                     
                     self.cancelledBatchUpload = false
                 }
-                
-                //end of for url in urls
+                //end of single url
             }
+            //end of for url in urls
         }
     }
     

@@ -6,7 +6,7 @@
 //  Copyright © 2019 David Hartzog. All rights reserved.
 //
 
-import Foundation
+//import Foundation
 import UIKit
 
 class TransferProgressView {
@@ -31,15 +31,15 @@ class TransferProgressView {
     }
     
     func show() {
-        var controller: UIViewController!
-        if var topController = UIApplication.shared.keyWindow?.rootViewController {
-            while let presentedViewController = topController.presentedViewController {
-                topController = presentedViewController
-            }
-            controller = topController
-        }
+//        var controller: UIViewController!
+//        if var topController = UIApplication.shared.keyWindow?.rootViewController {
+//            while let presentedViewController = topController.presentedViewController {
+//                topController = presentedViewController
+//            }
+//            controller = topController
+//        }
         
-        controller.present(popUpController, animated: true) {
+        forController!.present(popUpController, animated: true) {
             self.progressView = self.createProgressBar()
             self.popUpController.view.addSubview(self.progressView)
     
@@ -64,7 +64,7 @@ class TransferProgressView {
     }
     
     func setProgress(progress: Double) {
-        progressView.setProgress(Float(progress), animated: true)
+        progressView.setProgress(Float(progress), animated: false)
     }
     
     func setMessage(message: String) {

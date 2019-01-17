@@ -59,7 +59,7 @@ class FileViewController: UIViewController {
             let uploadFolder = "/\(fileURL.deletingLastPathComponent().lastPathComponent)"
             
             dropboxUploader.createDropboxFolder(name: uploadFolder)
-            dropboxUploader.uploadFileToDropbox(url: fileURL, folder: uploadFolder) {
+            dropboxUploader.uploadFileToDropbox(controller: self, url: fileURL, folder: uploadFolder) {
                 self.populateFileAttributes()
                 self.setUploadButtonLook()
             }
@@ -68,15 +68,21 @@ class FileViewController: UIViewController {
             
             let uploader = DropboxUploader()
             
-            uploader.executeUponLogin = {
+//            uploader.executeUponLogin = {
+//                self.dropboxUploader = uploader
+//                self.passUploaderToFileList?(self.dropboxUploader)
+//
+//                self.populateFileAttributes()
+//                self.setUploadButtonLook()
+//            }
+            
+            uploader.startAuthorizationFlow(controller: self) {
                 self.dropboxUploader = uploader
                 self.passUploaderToFileList?(self.dropboxUploader)
                 
                 self.populateFileAttributes()
                 self.setUploadButtonLook()
             }
-            
-            uploader.startAuthorizationFlow(controller: self)
         }
     }
     

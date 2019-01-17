@@ -38,7 +38,6 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     var directoryHandler: DirectoryHandler!
     var contentsList: [String] = []
     var inSelectMode = false
-    //var dropboxClient: DropboxClient! = nil
     var dropboxUploader: DropboxUploader! = nil
     var passUploaderToMainView: ((DropboxUploader) -> Void)?
     
@@ -67,6 +66,12 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     
     override func viewWillDisappear(_ animated: Bool) {
         print("FileListController: viewWillDisappear")
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        print("FileListController: viewDidAppear")
+        
+        // fire off batch upload
     }
     
     // MARK: Element Action Functions -------------------------------------------------
@@ -125,21 +130,28 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
             popupMenu.addAction(UIAlertAction(title: "Upload", style: .default, handler:{ _ in
                 print("Upload button pressed")
                 
-                // TODO: allow uploading of batch files
-                let folder = "/\(self.directoryHandler.currentDirectory.lastPathComponent)"
-                var urlList: [URL]! = []
-                
-                for indexPath in currentSelection! {
-                    //print(indexPath)
-                    let url = URL(string: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[indexPath.row])")!
-                    urlList.append(url)
+                let uploadBatchFiles = {
+                    let folder = "/\(self.directoryHandler.currentDirectory.lastPathComponent)"
+                    var urlList: [URL]! = []
+                    
+                    for indexPath in currentSelection! {
+                        //print(indexPath)
+                        let url = URL(string: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[indexPath.row])")!
+                        urlList.append(url)
+                    }
+                    
+                    self.dropboxUploader.uploadBatchFilesToDropBox(controller: self, urls: urlList, folder: folder, completion: nil)
                 }
                 
-                //print(urlList)
-                
-                print(folder)
-                
-                self.dropboxUploader.uploadBatchFilesToDropBox(urls: urlList, folder: folder, completion: nil)
+                if self.dropboxUploader == nil || self.dropboxUploader.dropboxClient == nil {
+                    self.dropboxUploader = DropboxUploader()
+                    self.dropboxUploader.startAuthorizationFlow(controller: self) {
+                        self.passUploaderToMainView?(self.dropboxUploader)
+                        uploadBatchFiles()
+                    }
+                } else {
+                    uploadBatchFiles()
+                }
             }))
             popupMenu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in
                 print("Delete button pressed")
@@ -220,7 +232,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 openDirectory(url: directoryHandler.currentDirectory)
             }
         }
-        else {
+        else if !inSelectMode {
             let fileViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileViewController") as? FileViewController
             fileViewController?.fileURL = selectedCellURL
             fileViewController?.passUploaderToFileList = { uploader in
