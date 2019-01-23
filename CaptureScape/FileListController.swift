@@ -37,6 +37,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     let thumbnailCache = NSCache<NSString, UIImage>()
     var directoryHandler: DirectoryHandler!
     var contentsList: [String] = []
+    var selectedIndexes: [IndexPath]! = []
     var inSelectMode = false
     var dropboxUploader: DropboxUploader! = nil
     var passUploaderToMainView: ((DropboxUploader) -> Void)?
@@ -196,6 +197,12 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         let cellText = self.contentsList[indexPath.row]
         myCell.cellFilenameLabel.text = cellText
         
+        //doesn't work for bottom rows
+        if selectedIndexes.contains(indexPath) {
+            print("reselecting cell")
+            myCell.isSelected = true
+        }
+        
         if cellText == "..." {
             myCell.selectionStyle = UITableViewCellSelectionStyle.none
         }
@@ -220,9 +227,11 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         var selectedCellURL: URL = directoryHandler.currentDirectory
         selectedCellURL.appendPathComponent(contentsList[indexPath.row])
         
+        // if directory is selected
         if directoryHandler.isDirectory(url: selectedCellURL) {
             openDirectory(url: selectedCellURL)
         }
+        // if directory up is selected
         else if contentsList[indexPath.row] == "..." {
             if inSelectMode {
                 tableView.deselectRow(at: indexPath, animated: false)
@@ -232,6 +241,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 openDirectory(url: directoryHandler.currentDirectory)
             }
         }
+        // if selecting a single cell
         else if !inSelectMode {
             let fileViewController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileViewController") as? FileViewController
             fileViewController?.fileURL = selectedCellURL
@@ -249,22 +259,14 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
             
             present(fileViewController!, animated: true, completion: nil)
         }
+        // if in multi-select mode
+        else {
+            print("inSelectMode = true: selected row")
+            if !selectedIndexes.contains(indexPath) {
+                selectedIndexes.append(indexPath)
+            }
+        }
     }
-    
-//    func tableView(_ tableView: UITableView, willDeselectRowAt indexPath: IndexPath) -> IndexPath? {
-//        if let selectedRows = tableView.indexPathsForSelectedRows {
-//            for row in selectedRows {
-//                if row == indexPath {
-//                    print("found my row \(row) \(indexPath)")
-//                    //return nil
-//                    tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-//                    return nil
-//                }
-//            }
-//        }
-//
-//        return indexPath
-//    }
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         let cellsSelected = tableView.indexPathsForSelectedRows
@@ -272,6 +274,11 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         if cellsSelected == nil {
             selectButton.title = "Select"
             inSelectMode = false
+        }
+        
+        if selectedIndexes.contains(indexPath) {
+            selectedIndexes.remove(at: selectedIndexes.firstIndex(of: indexPath)!)
+            //print("deselected row!!!")
         }
     }
     

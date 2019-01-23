@@ -22,7 +22,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
     @IBOutlet weak var slideshowButton: CustomButton!
-    @IBOutlet weak var photoPreview: UIImageView!
+    //@IBOutlet weak var photoPreview: UIImageView!
     @IBOutlet weak var filesButton: UIButton!
     
     
@@ -57,6 +57,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var isMapFullScreen: Bool = false
     var mapViewFrame: CGRect!
     var closeMapButton: UIButton!
+    
+    var lastZoomFactor: CGFloat = 1.0
 
 // MARK: - ViewController Methods ---------------------------------------------
     
@@ -204,7 +206,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         self.takePhoto { (image) in
             DispatchQueue.main.async {
                 self.flashScreen()
-                self.photoPreview.image = image
+                //self.photoPreview.image = image
             }
             
             self.lastPictureImage = image
@@ -238,7 +240,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.takePhoto(completion: { (image) in
                 DispatchQueue.main.async {
                     //self.flashScreen()
-                    self.photoPreview.image = image
+                    //self.photoPreview.image = image
 
                     self.lastPictureImage = image
 
@@ -305,7 +307,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     @IBAction func mapViewClick(_ sender: Any) {
         if isMapFullScreen == false {
-            photoPreview.isHidden = true
+            //photoPreview.isHidden = true
             
             mapViewFrame = mapView.frame
             mapView.userTrackingMode = .none
@@ -340,7 +342,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         UIView.animate(withDuration: 0.3, animations: {
             self.mapView.frame = self.mapViewFrame
         }) { (Bool) in
-            self.photoPreview.isHidden = false
+            //self.photoPreview.isHidden = false
         }
         
         mapView.userTrackingMode = .follow
@@ -348,7 +350,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         isMapFullScreen = false
     }
 
-// MARK: - Push Notifications ----------------------------------------------------
+    @IBAction func cameraPreviewPinch(_ sender: UIPinchGestureRecognizer) {
+        pinchZoomCamera(sender)
+    }
+    
+    // MARK: - Push Notifications ----------------------------------------------------
     
     @objc func onDeviceRotation() {
         if UIDeviceOrientationIsPortrait(UIDevice.current.orientation) {
@@ -545,6 +551,44 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         self.blendFilter --> self.pictureOutput
+    }
+    
+    @IBAction func pinchZoomCamera(_ sender: UIPinchGestureRecognizer) {
+        guard let device = camera.inputCamera else { return }
+        
+        let minFactor = device.minAvailableVideoZoomFactor
+        let maxFactor = device.maxAvailableVideoZoomFactor
+        
+        let factorDiff = sender.scale - 1.0
+        var newFactor = lastZoomFactor + (factorDiff * 1.5)
+        //var newFactor = lastZoomFactor + pow(lastZoomFactor, factorDiff)
+        
+        if newFactor < minFactor {
+            newFactor = 1.0
+        } else if newFactor > 10.0 {
+            newFactor = 10.0
+        }
+
+        let zoom = {
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                
+                device.videoZoomFactor = newFactor
+                
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        
+        switch sender.state {
+            case .began: break
+            case .changed: zoom()
+            case .ended: zoom()
+                lastZoomFactor = device.videoZoomFactor
+                print(lastZoomFactor)
+            default: break
+        }
     }
 }
 

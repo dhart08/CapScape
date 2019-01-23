@@ -58,22 +58,6 @@
                             <view contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="5yg-yQ-tOy" customClass="CameraView" customModule="CaptureScape" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="630"/>
                                 <subviews>
-                                    <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="gEl-Np-YiC" customClass="MapView" customModule="CaptureScape" customModuleProvider="target">
-                                        <rect key="frame" x="306" y="522" width="100" height="100"/>
-                                        <gestureRecognizers/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="100" id="u3v-lf-Cjt"/>
-                                            <constraint firstAttribute="height" constant="100" id="x72-af-OvG"/>
-                                        </constraints>
-                                        <userDefinedRuntimeAttributes>
-                                            <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
-                                                <real key="value" value="10"/>
-                                            </userDefinedRuntimeAttribute>
-                                        </userDefinedRuntimeAttributes>
-                                        <connections>
-                                            <outletCollection property="gestureRecognizers" destination="ku2-4S-ld4" appends="YES" id="4hb-uF-Kdy"/>
-                                        </connections>
-                                    </mapView>
                                     <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1uZ-F3-HrK">
                                         <rect key="frame" x="336" y="39" width="55" height="62"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -84,52 +68,54 @@
                                     </button>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <constraints>
-                                    <constraint firstAttribute="trailing" secondItem="gEl-Np-YiC" secondAttribute="trailing" constant="8" id="Q0b-a3-pe2"/>
-                                    <constraint firstAttribute="bottom" secondItem="gEl-Np-YiC" secondAttribute="bottom" constant="8" id="Sfn-6e-kyR"/>
-                                </constraints>
+                                <gestureRecognizers/>
                                 <userDefinedRuntimeAttributes>
                                     <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
                                         <real key="value" value="20"/>
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="sBA-wK-lxU" appends="YES" id="PeN-dI-Mgp"/>
+                                </connections>
                             </view>
-                            <imageView contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Yz5-q9-bgp">
-                                <rect key="frame" x="334" y="656" width="60" height="60"/>
-                                <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="gEl-Np-YiC" customClass="MapView" customModule="CaptureScape" customModuleProvider="target">
+                                <rect key="frame" x="334" y="658" width="60" height="60"/>
                                 <gestureRecognizers/>
-                                <constraints>
-                                    <constraint firstAttribute="width" secondItem="Yz5-q9-bgp" secondAttribute="height" multiplier="1:1" id="SPf-6v-yws"/>
-                                </constraints>
-                            </imageView>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
+                                        <real key="value" value="10"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="ku2-4S-ld4" appends="YES" id="4hb-uF-Kdy"/>
+                                </connections>
+                            </mapView>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="Yz5-q9-bgp" firstAttribute="leading" secondItem="ESc-Qd-rB9" secondAttribute="trailing" constant="29" id="3vY-Bk-MJI"/>
+                            <constraint firstItem="gEl-Np-YiC" firstAttribute="bottom" secondItem="ESc-Qd-rB9" secondAttribute="bottom" id="2Zw-hs-ovC"/>
                             <constraint firstItem="5yg-yQ-tOy" firstAttribute="leading" secondItem="CAz-PT-Ryt" secondAttribute="leading" id="AA7-0p-Gnl"/>
                             <constraint firstItem="FWt-JQ-kdY" firstAttribute="height" secondItem="Sie-Cp-cW6" secondAttribute="height" id="AGj-Ki-obf"/>
                             <constraint firstItem="ESc-Qd-rB9" firstAttribute="leading" secondItem="FWt-JQ-kdY" secondAttribute="trailing" constant="40" id="E9t-XO-q6T"/>
                             <constraint firstItem="FWt-JQ-kdY" firstAttribute="baseline" secondItem="ESc-Qd-rB9" secondAttribute="baseline" id="GZ4-ix-uJ4"/>
                             <constraint firstItem="5yg-yQ-tOy" firstAttribute="trailing" secondItem="CAz-PT-Ryt" secondAttribute="trailing" id="GuK-gT-Gdb"/>
+                            <constraint firstItem="gEl-Np-YiC" firstAttribute="top" secondItem="ESc-Qd-rB9" secondAttribute="top" id="HMS-bZ-HM0"/>
                             <constraint firstItem="CAz-PT-Ryt" firstAttribute="bottom" secondItem="Sie-Cp-cW6" secondAttribute="bottom" constant="18" id="LnY-5y-NbW"/>
                             <constraint firstItem="5yg-yQ-tOy" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="NLf-YQ-0iW"/>
                             <constraint firstItem="FWt-JQ-kdY" firstAttribute="width" secondItem="Sie-Cp-cW6" secondAttribute="width" id="O2w-dZ-2Fk"/>
                             <constraint firstItem="FWt-JQ-kdY" firstAttribute="top" secondItem="ESc-Qd-rB9" secondAttribute="top" id="Pbo-Xz-QgJ"/>
-                            <constraint firstAttribute="bottom" secondItem="Yz5-q9-bgp" secondAttribute="bottom" constant="20" symbolic="YES" id="Qd7-72-FhM"/>
                             <constraint firstItem="Sie-Cp-cW6" firstAttribute="top" secondItem="FWt-JQ-kdY" secondAttribute="top" id="RBH-YC-SIq"/>
                             <constraint firstItem="Sie-Cp-cW6" firstAttribute="leading" secondItem="CAz-PT-Ryt" secondAttribute="leading" constant="38" id="Ted-9n-hfB"/>
                             <constraint firstItem="ESc-Qd-rB9" firstAttribute="width" secondItem="Sie-Cp-cW6" secondAttribute="width" id="W3B-mk-UrZ"/>
                             <constraint firstItem="Sie-Cp-cW6" firstAttribute="baseline" secondItem="FWt-JQ-kdY" secondAttribute="baseline" id="XSI-e7-OJw"/>
-                            <constraint firstItem="Yz5-q9-bgp" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="Zfr-QB-55m"/>
+                            <constraint firstItem="gEl-Np-YiC" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="bo9-YO-LVP"/>
                             <constraint firstItem="5yg-yQ-tOy" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="fAS-xM-UhG"/>
                             <constraint firstAttribute="trailing" secondItem="5yg-yQ-tOy" secondAttribute="trailing" id="iuP-iU-AwV"/>
                             <constraint firstItem="Sie-Cp-cW6" firstAttribute="top" secondItem="5yg-yQ-tOy" secondAttribute="bottom" constant="28" id="k9J-xL-sEd"/>
-                            <constraint firstItem="Yz5-q9-bgp" firstAttribute="width" secondItem="Sie-Cp-cW6" secondAttribute="width" id="oWH-WI-7fP"/>
                             <constraint firstItem="FWt-JQ-kdY" firstAttribute="leading" secondItem="Sie-Cp-cW6" secondAttribute="trailing" constant="47" id="ph9-SM-8Al"/>
                             <constraint firstItem="ESc-Qd-rB9" firstAttribute="height" secondItem="Sie-Cp-cW6" secondAttribute="height" id="qAs-vu-lP2"/>
+                            <constraint firstItem="gEl-Np-YiC" firstAttribute="leading" secondItem="ESc-Qd-rB9" secondAttribute="trailing" constant="29" id="rwT-18-mNo"/>
                             <constraint firstItem="5yg-yQ-tOy" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="thY-gy-PtY"/>
-                            <constraint firstItem="Yz5-q9-bgp" firstAttribute="top" secondItem="5yg-yQ-tOy" secondAttribute="bottom" constant="26" id="xlt-X6-AZn"/>
-                            <constraint firstItem="Yz5-q9-bgp" firstAttribute="height" secondItem="Sie-Cp-cW6" secondAttribute="height" id="yhm-lk-PBn"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="CAz-PT-Ryt"/>
                     </view>
@@ -145,7 +131,6 @@
                         <outlet property="filesButton" destination="1uZ-F3-HrK" id="BsR-ZF-0Py"/>
                         <outlet property="mapView" destination="gEl-Np-YiC" id="23Z-Gq-W4W"/>
                         <outlet property="photoButton" destination="FWt-JQ-kdY" id="cxF-3i-nWS"/>
-                        <outlet property="photoPreview" destination="Yz5-q9-bgp" id="zlz-aL-5FX"/>
                         <outlet property="slideshowButton" destination="ESc-Qd-rB9" id="nrw-mr-Gor"/>
                         <outlet property="videoButton" destination="Sie-Cp-cW6" id="ecp-Lf-BRO"/>
                     </connections>
@@ -156,6 +141,11 @@
                         <action selector="mapViewClick:" destination="BYZ-38-t0r" id="bLo-65-kN5"/>
                     </connections>
                 </tapGestureRecognizer>
+                <pinchGestureRecognizer id="sBA-wK-lxU">
+                    <connections>
+                        <action selector="cameraPreviewPinch:" destination="BYZ-38-t0r" id="0L6-ST-XgT"/>
+                    </connections>
+                </pinchGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="117.39130434782609" y="192.39130434782609"/>
         </scene>

@@ -22,6 +22,7 @@
 		6355C70621BF8D0200E5AB55 /* CustomButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6355C70521BF8D0200E5AB55 /* CustomButton.swift */; };
 		6357188021BF77E100655BCB /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6357187F21BF77E100655BCB /* CameraView.swift */; };
 		6357188521BF7C7500655BCB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6357188421BF7C7500655BCB /* MapView.swift */; };
+		6380A10D21F848C900628B4E /* CustomSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6380A10C21F848C900628B4E /* CustomSlider.swift */; };
 		638FB6B4219E8A03006112D5 /* GPUImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 638FB6AE219E89CE006112D5 /* GPUImage.framework */; };
 		638FB6B6219E8A2B006112D5 /* GPUImage.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 638FB6AE219E89CE006112D5 /* GPUImage.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		639C39CC21AAB7D7008B59E1 /* DirectoryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */; };
@@ -100,6 +101,7 @@
 		6355C70521BF8D0200E5AB55 /* CustomButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomButton.swift; sourceTree = "<group>"; };
 		6357187F21BF77E100655BCB /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		6357188421BF7C7500655BCB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		6380A10C21F848C900628B4E /* CustomSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSlider.swift; sourceTree = "<group>"; };
 		638FB6A2219E89CE006112D5 /* GPUImage.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GPUImage.xcodeproj; path = "../../../Downloads/GPUImage2-master/framework/GPUImage.xcodeproj"; sourceTree = "<group>"; };
 		639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryHandler.swift; sourceTree = "<group>"; };
 		63E71436215DB1C500CC417E /* VideoCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCapture.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				630B6E0F21CA4F0200AE1CBF /* CustomFileListCell.swift */,
 				63005CED21E34497007092CA /* DropboxUploader.swift */,
 				63005CF821E48F77007092CA /* TransferProgressView.swift */,
+				6380A10C21F848C900628B4E /* CustomSlider.swift */,
 			);
 			path = CaptureScape;
 			sourceTree = "<group>";
@@ -371,6 +374,7 @@
 				639C39CC21AAB7D7008B59E1 /* DirectoryHandler.swift in Sources */,
 				630B6E0821C6949500AE1CBF /* FileListController.swift in Sources */,
 				6357188521BF7C7500655BCB /* MapView.swift in Sources */,
+				6380A10D21F848C900628B4E /* CustomSlider.swift in Sources */,
 				63436CA1214374F3002A6EC6 /* CaptureScape.xcdatamodeld in Sources */,
 				63005CF921E48F77007092CA /* TransferProgressView.swift in Sources */,
 				6354DABF21D5049300D2A72C /* FileViewController.swift in Sources */,
