@@ -559,9 +559,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let minFactor = device.minAvailableVideoZoomFactor
         let maxFactor = device.maxAvailableVideoZoomFactor
         
-        let factorDiff = sender.scale - 1.0
-        var newFactor = lastZoomFactor + (factorDiff * 1.5)
-        //var newFactor = lastZoomFactor + pow(lastZoomFactor, factorDiff)
+        var factorDiff = sender.scale - 1.0
+        
+        if factorDiff < 0 { factorDiff = factorDiff * 3 }
+        
+        var newFactor = lastZoomFactor + factorDiff
         
         if newFactor < minFactor {
             newFactor = 1.0
