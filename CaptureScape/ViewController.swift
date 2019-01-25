@@ -75,8 +75,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
         
-        do {
-            camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: getCaptureDevice(), location: .backFacing, captureAsYUV: true)
+//        do {
+//            camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: getCaptureDevice(), location: .backFacing, captureAsYUV: true)
+        
+            setCameraDevice()
             
             renderView = RenderView(frame: cameraView.bounds)
             renderView.fillMode = .stretch
@@ -93,10 +95,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             coordinatesOverlay.processImage()
             //camera.startCapture()
-        }
-        catch {
-            popupMessage(message: "Could not get camera started in ViewDidLoad")
-        }
+//        }
+//        catch {
+//            popupMessage(message: "Could not get camera started in ViewDidLoad")
+//        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -159,7 +161,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.camera.audioEncodingTarget = nil
                 self.movieOutput = nil
                 
-                self.popupMessage(message: "Video Saved")
+                self.popupMessage(message: "Video Saved", duration: 500)
                 //self.flashScreen()
             }
             
@@ -172,37 +174,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
-//        pictureOutput = PictureOutput()
-//        pictureOutput.encodedImageFormat = .png
-//        pictureOutput.imageAvailableCallback = { outputImage in
-//
-//            DispatchQueue.global().async {
-//                self.directoryHandler.createDirectory(dirType: .photos)
-//
-//                let outputPNG = UIImagePNGRepresentation(outputImage)
-//                let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
-//
-//                try! outputPNG?.write(to: fileURL)
-//            }
-//
-//            DispatchQueue.main.async {
-//                self.photoPreview.image = outputImage
-//                self.lastPictureImage = outputImage
-//
-//                self.pictureOutput = nil
-//
-//                if self.isVideoRecording == true {
-//                    self.updateSlideshowImage()
-//                }
-//
-//                self.flashScreen()
-//            }
-//
-//        }
-//
-//        blendFilter --> pictureOutput
-        
-
         self.takePhoto { (image) in
             DispatchQueue.main.async {
                 self.flashScreen()
@@ -225,15 +196,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             slideshowButton.setImage(UIImage(named: "audio_stop"), for: .normal)
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
-            
-//            let blackRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-//            UIGraphicsBeginImageContext(blackRect.size)
-//            UIColor.black.setFill()
-//            UIRectFill(blackRect)
-//
-//            currentSlideshowInput = PictureInput(image: UIGraphicsGetImageFromCurrentImageContext()!)
-//            UIGraphicsEndImageContext()
-            
             
             flashScreen()
 
@@ -279,7 +241,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
                 
-                self.popupMessage(message: "Slideshow Saved")
+                self.popupMessage(message: "Slideshow Saved", duration: 500)
                 //self.flashScreen()
             }
 
@@ -312,22 +274,29 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             mapViewFrame = mapView.frame
             mapView.userTrackingMode = .none
             
-            closeMapButton = UIButton(type: .roundedRect)
-            closeMapButton.frame = CGRect(x: UIScreen.main.bounds.width - 100,
-                                          y: UIScreen.main.bounds.height - 50,
-                                          width: 100,
-                                          height: 50)
-            closeMapButton.layer.cornerRadius = 10
-            
-            closeMapButton.backgroundColor = UIColor.white
-            closeMapButton.alpha = 0.5
-            closeMapButton.setTitle("Close", for: .normal)
-            closeMapButton.addTarget(self, action: #selector(ViewController.closeMapButtonClick), for: .touchUpInside)
+            closeMapButton = {
+                let button = UIButton(type: .roundedRect)
+                button.frame = CGRect(x: UIScreen.main.bounds.width - 100,
+                                              y: UIScreen.main.bounds.height - 50,
+                                              width: 100,
+                                              height: 50)
+                button.layer.cornerRadius = 10
+                
+                button.backgroundColor = UIColor.white
+                button.alpha = 0
+                button.setTitle("Close", for: .normal)
+                button.addTarget(self, action: #selector(ViewController.closeMapButtonClick), for: .touchUpInside)
+                
+                return button
+            }()
             
             UIView.animate(withDuration: 0.3, animations: {
                 self.mapView.frame = UIScreen.main.bounds
             }, completion: { _ in
-                self.view.addSubview(self.closeMapButton)
+                self.mapView.addSubview(self.closeMapButton)
+                UIView.animate(withDuration: 0.3, animations: {
+                    self.closeMapButton.alpha = 1
+                })
             })
         }
         
@@ -335,7 +304,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @objc func closeMapButtonClick() {
-        print("closeMapButton Clicked!")
+        //print("closeMapButton Clicked!")
         
         closeMapButton.removeFromSuperview()
         
@@ -482,7 +451,18 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         //print("updated slideshow image!!!")
     }
     
-    func getCaptureDevice() -> AVCaptureDevice {
+    func setCameraDevice() {
+        var device: AVCaptureDevice?
+        
+        func setCameraObject(device: AVCaptureDevice) {
+            do {
+                self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, captureAsYUV: true)
+            } catch {
+                popupMessage(message: "setCameraObject: Could not create camera object.", duration: nil)
+                fatalError("ERROR: Could not create camera object.")
+            }
+        }
+        
         if let device = AVCaptureDevice.default(.builtInDualCamera, for: AVMediaType.video, position: .back) {
             
             if device.isSmoothAutoFocusSupported == true {
@@ -491,7 +471,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 device.unlockForConfiguration()
             }
             
-            return device
+            setCameraObject(device: device)
+            
+            //return device
         }
         else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .back) {
             
@@ -501,20 +483,29 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 device.unlockForConfiguration()
             }
             
-            return device
+            setCameraObject(device: device)
+            //return device
         }
         else {
-            popupMessage(message: "getCaptureDevice() could not get a device!")
+            popupMessage(message: "setCameraDevice() could not get a device!", duration: nil)
             fatalError("ERROR: Could not get capture device!")
         }
         
     }
     
-    func popupMessage(message: String) {
+    func popupMessage(message: String, duration: Int?) {
         let alert = UIAlertController(title: message, message: nil, preferredStyle: .alert)
+        
+        if duration == nil {
+            let action = UIAlertAction(title: "OK", style: .default, handler: nil)
+            alert.addAction(action)
+        }
+        
         present(alert, animated: true) {
-            usleep(1000 * 500)
-            alert.dismiss(animated: true, completion: nil)
+            if duration != nil {
+                usleep(useconds_t(1000 * duration!))
+                alert.dismiss(animated: true, completion: nil)
+            }
         }
     }
     
@@ -608,6 +599,6 @@ extension ViewController: AVAudioRecorderDelegate {
 
 extension ViewController: MKMapViewDelegate {
     func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
-        popupMessage(message: "Map was loaded!")
+        popupMessage(message: "Map was loaded!", duration: 500)
     }
 }
