@@ -19,11 +19,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     @IBOutlet weak var cameraView: CameraView!
     @IBOutlet weak var mapView: MapView!
+    @IBOutlet weak var controlsContainer: UIView!
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
     @IBOutlet weak var slideshowButton: CustomButton!
     //@IBOutlet weak var photoPreview: UIImageView!
     @IBOutlet weak var filesButton: UIButton!
+    @IBOutlet weak var zoomLabel: UILabel!
     
     
 // MARK: - APP Variables ------------------------------------------------------
@@ -211,7 +213,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     self.slideShowBlendFilter = SourceOverBlend()
 
                     self.directoryHandler.createDirectory(dirType: .slideshows)
-                    self.fileURL = URL(fileURLWithPath: "Slideshows/\(self.createTimestamp()).m4a", relativeTo: self.directoryHandler.getDocumentsPath())
+                    self.fileURL = URL(fileURLWithPath: "Slideshows/\(self.createTimestamp()).mp4", relativeTo: self.directoryHandler.getDocumentsPath())
 
                     do {
                         try FileManager.default.removeItem(at: self.fileURL!)
@@ -276,8 +278,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             closeMapButton = {
                 let button = UIButton(type: .roundedRect)
-                button.frame = CGRect(x: UIScreen.main.bounds.width - 100,
-                                              y: UIScreen.main.bounds.height - 50,
+                button.frame = CGRect(x: mapView.superview!.bounds.width - 100,
+                                              y: mapView.superview!.bounds.height - 50,
                                               width: 100,
                                               height: 50)
                 button.layer.cornerRadius = 10
@@ -290,8 +292,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 return button
             }()
             
+            controlsContainer.isUserInteractionEnabled = false
+            
             UIView.animate(withDuration: 0.3, animations: {
-                self.mapView.frame = UIScreen.main.bounds
+                self.mapView.frame = self.mapView.superview!.bounds
+                self.controlsContainer.alpha = 0.25
             }, completion: { _ in
                 self.mapView.addSubview(self.closeMapButton)
                 UIView.animate(withDuration: 0.3, animations: {
@@ -308,8 +313,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         closeMapButton.removeFromSuperview()
         
+        controlsContainer.isUserInteractionEnabled = true
+        
         UIView.animate(withDuration: 0.3, animations: {
             self.mapView.frame = self.mapViewFrame
+            self.controlsContainer.alpha = 1.0
         }) { (Bool) in
             //self.photoPreview.isHidden = false
         }
@@ -569,6 +577,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 device.videoZoomFactor = newFactor
                 
+                self.zoomLabel.text = String(format: "Zoom x%0.1f", newFactor)
             } catch {
                 print(error.localizedDescription)
             }
@@ -579,7 +588,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             case .changed: zoom()
             case .ended: zoom()
                 lastZoomFactor = device.videoZoomFactor
-                print(lastZoomFactor)
+                //print(lastZoomFactor)
             default: break
         }
     }
