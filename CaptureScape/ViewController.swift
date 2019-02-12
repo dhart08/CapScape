@@ -27,6 +27,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var filesButton: UIButton!
     @IBOutlet weak var zoomLabel: UILabel!
     
+    @IBOutlet weak var splashScreenContainer: UIView!
+    @IBOutlet weak var landscapeImage: UIImageView!
+    @IBOutlet weak var appNameImage: UIImageView!
     
 // MARK: - APP Variables ------------------------------------------------------
     
@@ -67,6 +70,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        animateSplashScreen()
+        
         NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
         locationFinder = LocationFinder()
@@ -76,38 +81,62 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
         
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
-        
-//        do {
-//            camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: getCaptureDevice(), location: .backFacing, captureAsYUV: true)
+
+        //DispatchQueue.global().async {
         
             setCameraDevice()
-            
+
             renderView = RenderView(frame: cameraView.bounds)
             renderView.fillMode = .stretch
             cameraView.addSubview(renderView)
             cameraView.bringSubview(toFront: mapView)
             cameraView.bringSubview(toFront: filesButton)
-            
+
             blendFilter = SourceOverBlend()
             chromaFilter = ChromaKeying()
             chromaFilter.colorToReplace = Color.green
-            
+
             camera --> blendFilter
             coordinatesOverlay --> chromaFilter --> blendFilter --> renderView
-            
+
             coordinatesOverlay.processImage()
-            //camera.startCapture()
-//        }
-//        catch {
-//            popupMessage(message: "Could not get camera started in ViewDidLoad")
+        
+//            self.setCameraDevice()
+//
+//            self.renderView = RenderView(frame: self.cameraView.bounds)
+//            self.renderView.fillMode = .stretch
+//            self.cameraView.addSubview(self.renderView)
+//            self.cameraView.bringSubview(toFront: self.mapView)
+//            self.cameraView.bringSubview(toFront: self.filesButton)
+//
+//            self.blendFilter = SourceOverBlend()
+//            self.chromaFilter = ChromaKeying()
+//            self.chromaFilter.colorToReplace = Color.green
+//
+//            self.camera --> self.blendFilter
+//            self.coordinatesOverlay --> self.chromaFilter --> self.blendFilter --> self.renderView
+//
+//            self.coordinatesOverlay.processImage()
+//
+//            self.camera.startCapture()
+//
 //        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        print("ViewController: viewWillAppear")
         NotificationCenter.default.addObserver(self, selector: #selector(onDeviceRotation), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
         
         locationFinder.startFindingLocation()
         camera.startCapture()
+        
+//        appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
+//
+//        UIView.animate(withDuration: 2.0, animations: {
+//            self.appNameImage.transform = CGAffineTransform(scaleX: 1, y: 1)
+//        }) { _ in
+//            print("Animation done!")
+//        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -241,7 +270,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.camera.audioEncodingTarget = nil
                 self.slideshowMovieOutput = nil
                 
-                UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
+                //UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
                 
                 self.popupMessage(message: "Slideshow Saved", duration: 500)
                 //self.flashScreen()
@@ -338,7 +367,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.portrait)
             print("orientation: portrait")
             
-            renderView.frame = cameraView.bounds
+            if let cameraView = cameraView, let renderView = renderView {
+                renderView.frame = cameraView.bounds
+            }
         }
         else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
             //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.landscapeRight)
@@ -591,6 +622,27 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 //print(lastZoomFactor)
             default: break
         }
+    }
+    
+    func animateSplashScreen() {
+        appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
+        
+        UIView.animate(withDuration: 0.5, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 10, options: .curveEaseOut, animations: {
+            self.appNameImage.transform = CGAffineTransform(scaleX: 1, y: 1)
+        }, completion: { _ in
+            DispatchQueue.global().async {
+                usleep(1000 * 3000)
+                
+                DispatchQueue.main.async {
+                    UIView.animate(withDuration: 0.3, animations: {
+                        self.splashScreenContainer.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                        self.splashScreenContainer.alpha = 0.1
+                    }, completion: { _ in
+                        self.splashScreenContainer.isHidden = true
+                    })
+                }
+            }
+        })
     }
 }
 
