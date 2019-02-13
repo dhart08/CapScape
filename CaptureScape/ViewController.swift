@@ -129,14 +129,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         locationFinder.startFindingLocation()
         camera.startCapture()
-        
-//        appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
-//
-//        UIView.animate(withDuration: 2.0, animations: {
-//            self.appNameImage.transform = CGAffineTransform(scaleX: 1, y: 1)
-//        }) { _ in
-//            print("Animation done!")
-//        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -627,7 +619,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     func animateSplashScreen() {
         appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
         
-        UIView.animate(withDuration: 0.5, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 10, options: .curveEaseOut, animations: {
+        UIView.animate(withDuration: 0.75, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 10, options: .curveEaseOut, animations: {
             self.appNameImage.transform = CGAffineTransform(scaleX: 1, y: 1)
         }, completion: { _ in
             DispatchQueue.global().async {

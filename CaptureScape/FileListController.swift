@@ -129,7 +129,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
             let popupMenu = UIAlertController(title: "\(currentSelection!.count) File(s) Selected", message: nil, preferredStyle: .actionSheet)
             
             popupMenu.addAction(UIAlertAction(title: "Upload", style: .default, handler:{ _ in
-                print("Upload button pressed")
+                //print("Upload button pressed")
                 
                 let uploadBatchFiles = {
                     let folder = "/\(self.directoryHandler.currentDirectory.lastPathComponent)"
@@ -155,12 +155,21 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 }
             }))
             popupMenu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in
-                print("Delete button pressed")
+                //print("Delete button pressed")
+                
+                for indexPath in currentSelection! {
+                    let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[indexPath.row])")
+                    
+                    self.deleteFile(fileURL: fileURL)
+                }
             }))
             
             if currentSelection?.count == 1 {
                 popupMenu.addAction(UIAlertAction(title: "Rename", style: .default, handler: { _ in
-                    print("Rename button pressed")
+                    //print("Rename button pressed")
+                    
+                    let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[currentSelection![0].row])")
+                    self.renameFile(fileURL: fileURL)
                 }))
             }
             
@@ -352,4 +361,43 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         tableView.reloadData()
     }
     
+    func deleteFile(fileURL: URL) {
+        do {
+            let fileManager = FileManager.default
+            fileManager.changeCurrentDirectoryPath(directoryHandler.currentDirectory.path)
+            try fileManager.removeItem(atPath: fileURL.lastPathComponent)
+            
+            self.openDirectory(url: self.directoryHandler.currentDirectory)
+        } catch {
+            print(error.localizedDescription)
+        }
+    }
+    
+    func renameFile(fileURL: URL) {
+        let alertController = UIAlertController(title: "Rename File", message: "Enter the new filename:", preferredStyle: .alert)
+        alertController.addTextField { (textField) in
+            textField.placeholder = "New file name"
+        }
+        
+        let okAction = UIAlertAction(title: "OK", style: .default) { (_) in
+            do {
+                let newFilename = alertController.textFields![0].text!
+                
+                let fileManager = FileManager.default
+                fileManager.changeCurrentDirectoryPath(self.directoryHandler.currentDirectory.absoluteString)
+                try fileManager.moveItem(atPath: fileURL.lastPathComponent, toPath: newFilename)
+                
+                self.openDirectory(url: self.directoryHandler.currentDirectory)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alertController.addAction(okAction)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true, completion: nil)
+    }
 }
