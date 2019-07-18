@@ -92,12 +92,15 @@ final class DropboxUploader {
         tpv.onCancelClick = { self.cancelFileUpload() }
         tpv.show()
 
-        var fileCount = urls.count
+        let fileCount = urls.count
         let uploadGroup = DispatchGroup()
         
         // TODO: Works, but needs to be refined and looked at for errors.
         
         DispatchQueue.global().async {
+            
+            var fileNum = 0
+            
             for url in urls {
                 uploadGroup.enter()
                 
@@ -108,14 +111,15 @@ final class DropboxUploader {
 
                 let dropboxPath = "\(folder)/\(url.lastPathComponent)"
                 DispatchQueue.main.async {
-                    tpv.setTitle(title: "Uploading \(fileCount) File(s)")
+                    fileNum = fileNum + 1
+                    tpv.setTitle(title: "Uploading file \(fileNum) of \(fileCount) File(s)")
                     tpv.setMessage(message: "Uploading: \(url.lastPathComponent)")
                 }
                 
                 self.fileUploadRequest = self.dropboxClient.files.upload(path: dropboxPath, input: url).response { response, error in
                     if let _ = response {
                         //runs after uploading complete
-                        fileCount = fileCount - 1
+                        //fileCount = fileCount - 1
                         uploadGroup.leave()
                     } else if let error = error {
                         print("ERROR: \(error)")
@@ -128,7 +132,7 @@ final class DropboxUploader {
                 
                 uploadGroup.wait()
                 
-                if fileCount == 0 {
+                if fileNum == fileCount {
                     DispatchQueue.main.async {
                         tpv.close()
                     }

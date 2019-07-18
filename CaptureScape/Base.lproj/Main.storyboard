@@ -133,7 +133,7 @@
                                         </connections>
                                     </mapView>
                                 </subviews>
-                                <color key="backgroundColor" red="0.0" green="0.97680455450000003" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="backgroundColor" red="0.0" green="0.56904578210000001" blue="0.57461684940000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <gestureRecognizers/>
                                 <constraints>
                                     <constraint firstItem="1uZ-F3-HrK" firstAttribute="top" secondItem="5yg-yQ-tOy" secondAttribute="top" constant="8" id="57j-TH-SUO"/>
@@ -257,7 +257,7 @@
                                 <rect key="frame" x="0.0" y="64" width="414" height="672"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <prototypes>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="cellReuseIdentifier" rowHeight="60" id="SWe-kj-hD1" customClass="CustomFileListCell" customModule="CaptureScape" customModuleProvider="target">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="customFileListCell" rowHeight="60" id="SWe-kj-hD1" customClass="CustomFileListCell" customModule="CaptureScape" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="28" width="414" height="60"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" restorationIdentifier="cellReuseIdentifier" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="SWe-kj-hD1" id="Wi4-3o-nSC">
@@ -265,7 +265,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="hZy-B5-pGi">
-                                                    <rect key="frame" x="9" y="0.0" width="60" height="59.666666666666664"/>
+                                                    <rect key="frame" x="13" y="0.0" width="60" height="59.666666666666664"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="60" id="9Aq-tK-zfx"/>
                                                     </constraints>

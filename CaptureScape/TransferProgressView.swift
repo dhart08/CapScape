@@ -27,18 +27,10 @@ class TransferProgressView {
         
         popUpController = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
         
-        progressView = UIProgressView(progressViewStyle: UIProgressViewStyle.default)
+        //progressView = UIProgressView(progressViewStyle: UIProgressViewStyle.default)
     }
     
     func show() {
-//        var controller: UIViewController!
-//        if var topController = UIApplication.shared.keyWindow?.rootViewController {
-//            while let presentedViewController = topController.presentedViewController {
-//                topController = presentedViewController
-//            }
-//            controller = topController
-//        }
-        
         forController!.present(popUpController, animated: true) {
             self.progressView = self.createProgressBar()
             self.popUpController.view.addSubview(self.progressView)
@@ -54,16 +46,19 @@ class TransferProgressView {
     }
     
     private func createProgressBar() -> UIProgressView {
-        let pb = UIProgressView(frame: CGRect(
+        let progressBar = UIProgressView(frame: CGRect(
             x: 0,
             y: popUpController.view.frame.height,
             width: popUpController.view.frame.width,
             height: 2))
         
-        return pb
+        return progressBar
     }
     
     func setProgress(progress: Double) {
+        
+        guard let progressView = progressView else { return }
+        
         progressView.setProgress(Float(progress), animated: false)
     }
     

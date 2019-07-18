@@ -91,11 +91,13 @@ class FileViewController: UIViewController {
     func populateFileAttributes() {
         let fileDictionary = try! FileManager.default.attributesOfItem(atPath: fileURL.path)
         let fileSize = String(describing: fileDictionary[FileAttributeKey.size]!)
-        let fileCreationDate = String(describing: fileDictionary[FileAttributeKey.creationDate]!)
         
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+        let fileCreationDate = dateFormatter.string(from: fileDictionary[FileAttributeKey.creationDate]! as! Date)
         
         filenameLabel.text = fileURL.lastPathComponent
-        fileSizeLabel.text = fileSize
+        fileSizeLabel.text = "\(Int(fileSize)! / 1024) KB"
         fileCreationLabel.text = fileCreationDate
         
         if hasInternetConnection && dropboxUploader != nil {

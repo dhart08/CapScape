@@ -45,9 +45,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var movieInput: MovieInput!
     var movieOutput: MovieOutput!
     var renderView: RenderView!
-    var blendFilter: SourceOverBlend!
+    var cameraOverlayBlendFilter: SourceOverBlend!
+    //var cameraBlender: SourceOverBlend!
+    //var overlayBlender: SourceOverBlend!
     var chromaFilter: ChromaKeying!
     var coordinatesOverlay: PictureInput!
+    var compassNeedlePictureInput: PictureInput!
     var pictureOutput: PictureOutput!
     var lastPictureImage: UIImage!
     var audioRecorder: AVAudioRecorder!
@@ -70,6 +73,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
         animateSplashScreen()
         
         NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
@@ -80,8 +84,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         directoryHandler = DirectoryHandler()
         directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
         
-        updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...")
-
+        updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...", cardinalDirection: "NA")
+        
         //DispatchQueue.global().async {
         
             setCameraDevice()
@@ -92,14 +96,17 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             cameraView.bringSubview(toFront: mapView)
             cameraView.bringSubview(toFront: filesButton)
 
-            blendFilter = SourceOverBlend()
+            cameraOverlayBlendFilter = SourceOverBlend()
+            //overlayBlender = SourceOverBlend()
+            //cameraBlender = SourceOverBlend()
             chromaFilter = ChromaKeying()
             chromaFilter.colorToReplace = Color.green
 
-            camera --> blendFilter
-            coordinatesOverlay --> chromaFilter --> blendFilter --> renderView
+            camera --> cameraOverlayBlendFilter
+            coordinatesOverlay --> chromaFilter --> cameraOverlayBlendFilter --> renderView
 
             coordinatesOverlay.processImage()
+            camera.startCapture()
         
 //            self.setCameraDevice()
 //
@@ -170,7 +177,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             self.movieOutput = try!  MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
             
-            self.blendFilter --> self.movieOutput
+            //self.blendFilter --> self.movieOutput
+            self.cameraOverlayBlendFilter --> self.movieOutput
             
             self.camera.audioEncodingTarget = self.movieOutput
             
@@ -197,10 +205,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
+        print("photo button clicked")
         self.takePhoto { (image) in
             DispatchQueue.main.async {
                 self.flashScreen()
-                //self.photoPreview.image = image
             }
             
             self.lastPictureImage = image
@@ -224,9 +232,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
             self.takePhoto(completion: { (image) in
                 DispatchQueue.main.async {
-                    //self.flashScreen()
-                    //self.photoPreview.image = image
-
                     self.lastPictureImage = image
 
                     self.currentSlideshowInput = PictureInput(image: self.lastPictureImage)
@@ -277,22 +282,34 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     @IBAction func filesButtonClick(_ sender: UIButton) {
         let fileListController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileListController") as? FileListController
-        
+
         fileListController?.passUploaderToMainView = { uploader in
             print("Dropbox client passed back to MainView")
             self.dropboxUploader = uploader
         }
-        
+
         if let uploader = dropboxUploader {
             fileListController?.dropboxUploader = uploader
         }
-        
+
+        DropboxClientsManager.unlinkClients()
+
         present(fileListController!, animated: true, completion: nil)
+        
+//        let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+//        var myDocumentsDir = myDocumentsList[0]
+//        print(myDocumentsDir)
+//
+//        let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
+//        pickerController.allowsMultipleSelection = true
+//        pickerController.delegate = self
+//
+//
+//        present(pickerController, animated: true, completion: nil)
     }
     
     @IBAction func mapViewClick(_ sender: Any) {
         if isMapFullScreen == false {
-            //photoPreview.isHidden = true
             
             mapViewFrame = mapView.frame
             mapView.userTrackingMode = .none
@@ -380,63 +397,130 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @objc func onDidReceiveCoordinates(_ notification: Notification) {
-        let latitude: NSString!
-        let longitude: NSString!
         
         if locationFinder!.latitude == nil || locationFinder.longitude == nil {
             return
         }
         
-        let (latDeg, latMin, latSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.latitude!)
-        latitude = NSString(string: " Lat: \(latDeg) \(latMin)' \(latSec)''")
+        let (dmsLatitude, dmsLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
         
-        let (lonDeg, lonMin, lonSec) = locationFinder.decimalToDegrees(coordinate: locationFinder.longitude!)
-        longitude = NSString(string: " Lon: \(lonDeg) \(lonMin)' \(lonSec)''")
+        updateCoordinatesOverlay(latitude: NSString(string: dmsLatitude), longitude: NSString(string: dmsLongitude), cardinalDirection: locationFinder.getCardinalDirection())
         
-        updateCoordinatesOverlay(latitude: latitude, longitude: longitude)
+//        overlayBlender.removeSourceAtIndex(0)
+//        compassNeedlePictureInput.addTarget(overlayBlender)
+//        compassNeedlePictureInput.processImage()
+        
         chromaFilter.removeSourceAtIndex(0)
         coordinatesOverlay.addTarget(chromaFilter)
         coordinatesOverlay.processImage()
+        
+        print("heading: \(locationFinder.getCardinalDirection())")
         
         updateMap()
     }
     
 // MARK: - UI Updating -----------------------------------------------------------
     
-    func updateCoordinatesOverlay(latitude: NSString, longitude: NSString) {
-        let greenRect = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+    func updateCoordinatesOverlay(latitude: NSString, longitude: NSString, cardinalDirection: String!) {
+        // get phone screen measurements
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
+        // draw green screen on bitmap
+        let greenRect = CGRect(x: 0, y: 0, width: screenWidth, height: screenHeight)
         UIGraphicsBeginImageContext(greenRect.size)
         UIColor.green.setFill()
         UIRectFill(greenRect)
         
+        // create black rectangle for overlay
         let blackRect = CGRect(
             x: 0,
-            y: greenRect.height - (greenRect.height / 14),
-            width: greenRect.width / 1.75,
-            height: greenRect.height / 14
+            y: greenRect.height - (greenRect.height / 9),
+            width: greenRect.width / 1.7,
+            height: greenRect.height / 9
         )
         
+        // curve edges of black rectangle
         let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
         
+        // draw black rectangle on bitmap
         UIGraphicsGetCurrentContext()?.addPath(rectClipPath)
         UIGraphicsGetCurrentContext()?.setFillColor(UIColor.black.cgColor)
         UIGraphicsGetCurrentContext()?.closePath()
         UIGraphicsGetCurrentContext()?.fillPath()
         
+        // create time formatter for on-screen timestamp
+        let timeStampFormatter = DateFormatter()
+        timeStampFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+        let timestamp = timeStampFormatter.string(from: Date())
         
-        let fontAttrs = [
+        // set font for on-screen coordinates stamp
+        let coordinateFontAttrs = [
             NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
             NSAttributedString.Key.foregroundColor: UIColor.white
         ]
         
+        // draw coordinates on bitmap
+        latitude.draw(at: blackRect.origin, withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
+        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
         
-        latitude.draw(at: blackRect.origin, withAttributes: fontAttrs as [NSAttributedString.Key : Any])
-        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: fontAttrs as [NSAttributedString.Key : Any])
+        // set font for on-screen timestamp
+        let timestampFontAttrs = [
+            NSAttributedString.Key.font: UIFont(name: "Futura", size: 16),
+            NSAttributedString.Key.foregroundColor: UIColor.white
+        ]
         
-        let image = UIGraphicsGetImageFromCurrentImageContext()
+        // draw timestamp on bitmap
+        "  \(timestamp)".draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 52), withAttributes: timestampFontAttrs as [NSAttributedString.Key : Any])
+        
+        //set font for on-screen cardinal direction stamp
+        let directionFontAttr = [
+            NSAttributedString.Key.font: UIFont(name: "Futura", size: 32),
+            NSAttributedString.Key.foregroundColor: UIColor.white
+        ]
+        
+        // draw cardinal direction on bitmap
+        let direction = NSString(string: cardinalDirection)
+        let directionCGPoint = CGPoint(x: greenRect.origin.x + 25, y: greenRect.origin.y + 25)
+        direction.draw(at: directionCGPoint, withAttributes: directionFontAttr as [NSAttributedString.Key : Any])
+        
+        // get bitmap from the image context
+        let coordinatesImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
+        coordinatesOverlay = PictureInput(image: coordinatesImage!)
         
-        coordinatesOverlay = PictureInput(image: image!)
+        ///////
+        
+//        let divider: CGFloat = 4
+//        let compassInputImage = UIImage(named: "compass_needle")
+//        let compassInputImageRatio = CGFloat((compassInputImage?.size.width)!) / CGFloat((compassInputImage?.size.height)!)
+//        let compassImageNewSize = CGSize(width: screenHeight / divider * compassInputImageRatio, height: screenHeight / divider)
+//        let compassImageRect = CGRect(origin: CGPoint(x: 100, y: 100), size: compassImageNewSize)
+//        //let compassImageRect = CGRect(x: 0, y: 0, width: screenHeight / divider * compassInputImageRatio, height: screenHeight / divider)
+//        //let compassOrigin = CGPoint(x: screenHeight / divider * compassInputImageRatio / 2, y: screenHeight / divider / 2)
+//
+//        UIGraphicsBeginImageContext((compassInputImage?.size)!)
+//
+//        let context = UIGraphicsGetCurrentContext()
+//
+//        context?.rotate(by: CGFloat(locationFinder.heading * Double.pi / 180))
+//        context?.translateBy(x: compassImageRect.origin.x, y: compassImageRect.origin.y)
+//        //context?.translateBy(x: compassImageRect.size.width * 0.5, y: compassImageRect.size.height * 0.5)
+        
+        
+//-------> start here!
+        //"\(locationFinder.heading!)".dr
+        
+        
+        //compassInputImage?.draw(in: compassImageRect)
+
+
+        //let compassOutputImage = UIGraphicsGetImageFromCurrentImageContext()
+        //UIGraphicsEndImageContext()
+
+        //compassNeedlePictureInput = PictureInput(image: compassOutputImage!)
+        
+        
     }
     
     func updateMap() {
@@ -542,6 +626,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func createTimestamp() -> String {
         let timestampFormatter = DateFormatter()
+        timestampFormatter.timeZone = TimeZone.current
         timestampFormatter.dateFormat = "HHmmssMMddyyyy"
         
         let timestamp = timestampFormatter.string(from: Date())
@@ -560,11 +645,20 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //}
         
             self.directoryHandler.createDirectory(dirType: .photos)
-            
-            let outputPNG = UIImagePNGRepresentation(outputImage)
             let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
             
-            try! outputPNG?.write(to: fileURL)
+            let png = UIImagePNGRepresentation(outputImage)
+            try! png?.write(to: fileURL)
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+            dateFormatter.timeZone = TimeZone.current
+            let fileCreationDate = dateFormatter.string(from: Date())
+            
+            let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: "")
+            
+            let exifDataRaderWriter = EXIFDataReaderWriter()
+            exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
             
             self.pictureOutput = nil
             
@@ -572,7 +666,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
         }
         
-        self.blendFilter --> self.pictureOutput
+        //self.blendFilter --> self.pictureOutput
+        self.cameraOverlayBlendFilter --> self.pictureOutput
     }
     
     @IBAction func pinchZoomCamera(_ sender: UIPinchGestureRecognizer) {
@@ -611,7 +706,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             case .changed: zoom()
             case .ended: zoom()
                 lastZoomFactor = device.videoZoomFactor
-                //print(lastZoomFactor)
             default: break
         }
     }
@@ -619,8 +713,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     func animateSplashScreen() {
         appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
         
-        UIView.animate(withDuration: 0.75, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 10, options: .curveEaseOut, animations: {
-            self.appNameImage.transform = CGAffineTransform(scaleX: 1, y: 1)
+        UIView.animate(withDuration: 0.75, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 30, options: .curveEaseOut, animations: {
+            self.appNameImage.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
         }, completion: { _ in
             DispatchQueue.global().async {
                 usleep(1000 * 3000)
@@ -641,7 +735,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 extension ViewController: AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         
-        print("audioRecroder delegate called!")
         UISaveVideoAtPathToSavedPhotosAlbum(fileURL.path, nil, nil, nil)
     }
     
@@ -653,5 +746,12 @@ extension ViewController: AVAudioRecorderDelegate {
 extension ViewController: MKMapViewDelegate {
     func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
         popupMessage(message: "Map was loaded!", duration: 500)
+    }
+}
+
+extension ViewController: UIDocumentPickerDelegate {
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        
+        //deal with selected files here
     }
 }

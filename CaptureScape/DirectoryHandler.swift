@@ -17,6 +17,7 @@ final class DirectoryHandler {
         case photos = "Photos"
         case videos = "Videos"
         case slideshows = "Slideshows"
+        case kml = "KML"
         case specific
     }
     
@@ -35,15 +36,22 @@ final class DirectoryHandler {
             documentsDir = url
         }
         else if dirType == .appDocuments {
-            documentsDir = try! fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            fileManager.changeCurrentDirectoryPath(documentsDir.path)
+            do {
+                documentsDir = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            } catch {
+                print(error.localizedDescription)
+            }
         }
         else {
-            documentsDir = try! fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(dirType.rawValue)
+            do {
+                documentsDir = try fileManager.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(dirType.rawValue)
+                print("made ", dirType.rawValue)
+            } catch {
+                print(error.localizedDescription)
+            }
         }
         
         fileManager.changeCurrentDirectoryPath(documentsDir.path)
-        
         currentDirectory = documentsDir
     }
     

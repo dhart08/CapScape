@@ -14,6 +14,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     
     var latitude: Double!
     var longitude: Double!
+    var heading: Double! = 0
     
     override init() {
         super.init()
@@ -34,6 +35,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     func startFindingLocation() {
         if CLLocationManager.locationServicesEnabled() {
             locationManager.startUpdatingLocation()
+            locationManager.startUpdatingHeading()
         }
         
         print("LocationFinder:startFindingLocation")
@@ -41,6 +43,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     
     func stopFindingLocation() {
         locationManager.stopUpdatingLocation()
+        locationManager.stopUpdatingHeading()
         
         print("LocationFinder:stopFindingLocation")
     }
@@ -54,25 +57,62 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         NotificationCenter.default.post(name: .didReceiveCoordinates, object: nil, userInfo: nil)
     }
     
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        heading = newHeading.trueHeading
+    }
+    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Error:\(error)")
     }
     
-    func decimalToDegrees(coordinate: Double) -> (Int, Int, Double) {
-        var deg, min: Int
-        var sec, remainder: Double
+    func decimalToDMSString(latitude: Double, longitude: Double) -> (String, String) {
+        let latSuffix = latitude > 0.0 ? "N" : "S"
+        let latDegrees = abs(Int(latitude / 1))
+        var latRemainder = Double(latitude.truncatingRemainder(dividingBy: 1.0))
+        let latMin = abs(Int(latRemainder * 60))
+        latRemainder = latRemainder * 60
+        latRemainder = Double(latRemainder.truncatingRemainder(dividingBy: 1.0))
+        var latSec = abs(latRemainder * 60)
+        latSec = round(latSec*100)/100
         
-        deg = Int(coordinate / 1)
+        let lonSuffix = longitude < 0.0 ? "W" : "E"
+        let lonDegrees = abs(Int(longitude / 1))
+        var lonRemainder = Double(longitude.truncatingRemainder(dividingBy: 1.0))
+        let lonMin = abs(Int(lonRemainder * 60))
+        lonRemainder = lonRemainder * 60
+        lonRemainder = Double(lonRemainder.truncatingRemainder(dividingBy: 1.0))
+        var lonSec = abs(lonRemainder * 60)
+        lonSec = round(lonSec*100)/100
         
-        remainder = Double(coordinate.truncatingRemainder(dividingBy: 1.0))
-        min = Int(remainder * 60)
+        //return (deg, min, sec)
+        return ("\(latDegrees)° \(latMin)' \(latSec)\" \(latSuffix)", "\(lonDegrees)° \(lonMin)' \(lonSec)\" \(lonSuffix)")
+    }
+    
+    func getCardinalDirection() -> String {
+        var direction = ""
         
-        remainder = remainder * 60
-        remainder = Double(remainder.truncatingRemainder(dividingBy: 1.0))
-        sec = remainder * 60
-        sec = round(sec*100)/100
+        switch (heading) {
+        case let heading where heading! > 337.5:
+            direction = "N"
+        case let heading where heading! > 292.5:
+            direction = "NW"
+        case let heading where heading! > 247.5:
+            direction = "W"
+        case let heading where heading! > 202.5:
+            direction = "SW"
+        case let heading where heading! > 157.5:
+            direction = "S"
+        case let heading where heading! > 112.5:
+            direction = "SE"
+        case let heading where heading! > 67.5:
+            direction = "E"
+        case let heading where heading! > 22.5:
+            direction = "NE"
+        default:
+            direction = "N"
+        }
         
-        return (deg, min, sec)
+        return direction
     }
 }
 

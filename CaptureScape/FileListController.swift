@@ -37,7 +37,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     let thumbnailCache = NSCache<NSString, UIImage>()
     var directoryHandler: DirectoryHandler!
     var contentsList: [String] = []
-    var selectedIndexes: [IndexPath]! = []
+    //var selectedCellsDictionary: [String: Int?]
     var inSelectMode = false
     var dropboxUploader: DropboxUploader! = nil
     var passUploaderToMainView: ((DropboxUploader) -> Void)?
@@ -58,7 +58,8 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         
         directoryHandler = DirectoryHandler()
         directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
-        contentsList = directoryHandler.getDirectoryContents()
+        //contentsList = directoryHandler.getDirectoryContents()
+        openDirectory(url: directoryHandler.currentDirectory)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -98,8 +99,6 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 self.selectAllButton.customView?.alpha = 0.0
             }
             
-            //print(tableView.indexPathsForSelectedRows)
-            
             tableView.allowsMultipleSelection = false
             inSelectMode = false
         }
@@ -109,7 +108,7 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         print("selectAllButton clicked!")
         
         for row in 1 ... tableView.numberOfRows(inSection: 0) - 1 {
-            print("selecting row: \(row)")
+            //print("selecting row: \(row)")
             tableView.selectRow(at: IndexPath(row: row, section: 0), animated: false, scrollPosition: .none)
         }
     }
@@ -124,23 +123,25 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
             }
             
-            let currentSelection = tableView.indexPathsForSelectedRows
+            let selectedIndexes = tableView.indexPathsForSelectedRows            
             
-            let popupMenu = UIAlertController(title: "\(currentSelection!.count) File(s) Selected", message: nil, preferredStyle: .actionSheet)
+            let popupMenu = UIAlertController(title: "\(selectedIndexes!.count) File(s) Selected", message: nil, preferredStyle: .actionSheet)
+            
             
             popupMenu.addAction(UIAlertAction(title: "Upload", style: .default, handler:{ _ in
                 //print("Upload button pressed")
-                
+
                 let uploadBatchFiles = {
                     let folder = "/\(self.directoryHandler.currentDirectory.lastPathComponent)"
                     var urlList: [URL]! = []
                     
-                    for indexPath in currentSelection! {
-                        //print(indexPath)
-                        let url = URL(string: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[indexPath.row])")!
+                    for indexPath in selectedIndexes! {
+                        let filename = (self.tableView.cellForRow(at: indexPath) as! CustomFileListCell).cellFilenameLabel.text!
+                        let url = URL(string: "\(self.directoryHandler.currentDirectory!)\(filename)")!
                         urlList.append(url)
                     }
                     
+                    //here lies the problem with kristen's phone?
                     self.dropboxUploader.uploadBatchFilesToDropBox(controller: self, urls: urlList, folder: folder, completion: nil)
                 }
                 
@@ -154,21 +155,74 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                     uploadBatchFiles()
                 }
             }))
+            
+            popupMenu.addAction(UIAlertAction(title: "Audio -> Text", style: .default, handler: { (_) in
+                
+                let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[selectedIndexes![0].row])")
+                
+                AudioExtractor.extractAudioFromVideo(url: fileURL)
+                
+                //let speechRecognizer: SpeechRecognizer? = SpeechRecognizer()
+                //var transcribedText: String? = speechRecognizer?.transcribePrerecordedAudio(url: fileURL as NSURL)
+                
+                //if string is empty, throw error, else display
+                //print("Audio -> text: ", transcribedText)
+            }))
+            
+            /*
+            popupMenu.addAction(UIAlertAction(title: "Export To KML File", style: .default, handler: { _ in
+                
+                //this will only make a KML file from the first file in multi-select mode
+                //open photo file for exif reading
+                let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[selectedIndexes![0].row])")
+                
+                let exifDataReaderWriter = EXIFDataReaderWriter()
+                let exifParams = exifDataReaderWriter.readEXIFDataFromPhoto(fileURL: fileURL)
+                
+                print("!!!!!!!! metadata info read !!!!!!!!!!!!")
+                print(exifParams)
+                
+                //write kml file
+                
+//                let kmlFileBuilder: KMLFileBuilder = KMLFileBuilder()
+//
+//                kmlFileBuilder.showKMLExportAlertController(controller: self, onSave: { (placemarkName, description) in
+//
+//                    let fileContents = kmlFileBuilder.createKMLFile(placemarkName: placemarkName, description: description, latitude: "1", longitude: "2")
+//
+//                    let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[currentSelection![0].row])")
+//
+//                    kmlFileBuilder.saveKMLFile(contents: fileContents, filename: self.contentsList[currentSelection![0].row])
+//                })
+            }))
+        */
+            
             popupMenu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in
                 //print("Delete button pressed")
                 
-                for indexPath in currentSelection! {
+                for indexPath in selectedIndexes! {
+                    print("deleting(\(indexPath)): ", self.contentsList[indexPath.row])
+                    
                     let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[indexPath.row])")
                     
                     self.deleteFile(fileURL: fileURL)
+                    
+                    self.contentsList.remove(at: indexPath.row)
                 }
+                
+                self.tableView.reloadData()
             }))
             
-            if currentSelection?.count == 1 {
+            if selectedIndexes!.count == 1 {
                 popupMenu.addAction(UIAlertAction(title: "Rename", style: .default, handler: { _ in
                     //print("Rename button pressed")
                     
-                    let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[currentSelection![0].row])")
+                    let fileURL = URL(fileURLWithPath: "\(self.directoryHandler.currentDirectory!)\(self.contentsList[selectedIndexes![0].row])")
+                    
+//                    let fileManager = FileManager.default
+//                    let exists = fileManager.fileExists(atPath: fileURL.lastPathComponent)
+//                    print("exists: ", exists)
+                    
                     self.renameFile(fileURL: fileURL)
                 }))
             }
@@ -192,8 +246,21 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "customFileListCell") as! CustomFileListCell
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cellReuseIdentifier") as! CustomFileListCell
+        cell.cellFilenameLabel.text = contentsList[indexPath.row]
+        
+//        if let existingCellSelection = self.cellsSelectionDictionary[self.contentsList[indexPath.row]] {
+//            cell.isSelected = existingCellSelection
+//        } else {
+//            cell.isSelected = false
+//        }
+
+        if cell.cellFilenameLabel.text == "..." {
+            //cell.selectionStyle = UITableViewCellSelectionStyle.none
+        }
+        
+        //cellsSelectionDictionary[cell.cellFilenameLabel.text!] = cell.isSelected
         
         return cell
     }
@@ -203,18 +270,37 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         let myCell = cell as! CustomFileListCell
         myCell.cellThumbnailImage.alpha = 0.0
         
-        let cellText = self.contentsList[indexPath.row]
-        myCell.cellFilenameLabel.text = cellText
+//        if let dictionaryCell = cellsDictionary[myCell.cellFilenameLabel.text!] {
+//            myCell.setSelected(dictionaryCell.isSelected, animated: false)
+//
+//            //not fniding selected cells in below loop
+//            for (n, c) in cellsDictionary {
+//                print(n, c.isSelected ? "true" : "")
+//            }
+//
+//            print("found cell")
+//        }
+        
+        //let cellText = self.contentsList[indexPath.row]
+        //myCell.cellFilenameLabel.text = cellText
         
         //doesn't work for bottom rows
-        if selectedIndexes.contains(indexPath) {
-            print("reselecting cell")
-            myCell.isSelected = true
-        }
+//        if selectedIndexes.contains(indexPath) {
+//            //print("reselecting cell")
+//            myCell.isSelected = true
+//        }
         
-        if cellText == "..." {
-            myCell.selectionStyle = UITableViewCellSelectionStyle.none
-        }
+//        if let currentCell = cellsDictionary[myCell.cellFilenameLabel.text!] {
+//            myCell.isSelected = currentCell.isSelected
+//
+//            if currentCell.isSelected == true {
+//                print("cell IS selected: \(currentCell.cellFilenameLabel.text!)")
+//            }
+//        }
+        
+//        if cellText == "..." {
+//            myCell.selectionStyle = UITableViewCellSelectionStyle.none
+//        }
         
         var thumbnailImage: UIImage!
         DispatchQueue.global().async() {
@@ -228,8 +314,6 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
                 })
             }
         }
-        
-        // TODO: Make all selected cells greyed out while scrolling
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -270,25 +354,28 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         }
         // if in multi-select mode
         else {
-            print("inSelectMode = true: selected row")
-            if !selectedIndexes.contains(indexPath) {
-                selectedIndexes.append(indexPath)
-            }
+            //let cellText = contentsList[indexPath.row]
+            //cellsSelectionDictionary[cellText] = true
         }
     }
     
     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        let cellsSelected = tableView.indexPathsForSelectedRows
+        print("did deselect \((tableView.cellForRow(at: indexPath) as! CustomFileListCell).cellFilenameLabel.text!)")
+        //let cellsSelected = tableView.indexPathsForSelectedRows
         
-        if cellsSelected == nil {
-            selectButton.title = "Select"
-            inSelectMode = false
-        }
+//        if cellsSelected == nil {
+//            selectButton.title = "Select"
+//            inSelectMode = false
+//        }
         
-        if selectedIndexes.contains(indexPath) {
-            selectedIndexes.remove(at: selectedIndexes.firstIndex(of: indexPath)!)
-            //print("deselected row!!!")
-        }
+//        if selectedIndexes.contains(indexPath) {
+//            selectedIndexes.remove(at: selectedIndexes.firstIndex(of: indexPath)!)
+//            //print("deselected row!!!")
+//        }
+        
+        //let cellText = contentsList[indexPath.row]
+        //cellsDictionary[cellText]?.isSelected = false
+        //cellsSelectionDictionary[cellText] = false
     }
     
     // MARK: Helper Functions ---------------------------------------------------------
@@ -298,16 +385,13 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         let cachedImage: UIImage? = nil
         
         if let cachedImage = thumbnailCache.object(forKey: url.absoluteString as NSString) {
-            //print("Found picture in cache!")
             return cachedImage
         }
         
         if directoryHandler.isDirectory(url: url){
-            //print("dir")
             originalImage = UIImage(named: "folder_icon")!
         }
         else if url.pathExtension == "" {
-            //print("parent")
             originalImage = UIImage(named: "parent_directory_icon")
         }
         else if url.pathExtension == "mp4" {
@@ -326,7 +410,8 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
             }
         }
         else if url.pathExtension == "png" || url.pathExtension == "jpg" {
-            originalImage = UIImage(contentsOfFile: url.path)!
+            // code for errors if cant read a file thats not an image
+            originalImage = UIImage(contentsOfFile: url.path)
         }
         else {
             originalImage = UIImage(named: "file_icon")!
@@ -342,7 +427,6 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
         UIGraphicsEndImageContext()
         
         guard cachedImage != nil else {
-            //print("Storing picture in cache!")
             thumbnailCache.setObject(resizedImage!, forKey: url.absoluteString as NSString)
             return resizedImage
         }
@@ -351,8 +435,15 @@ class FileListController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
     func openDirectory(url: URL) {
+        print("openDirectory()")
+        
         directoryHandler.changeDirectory(dirType: .specific, url: url)
+        
         contentsList = directoryHandler.getDirectoryContents()
+        print(contentsList)
+        contentsList.sort { (s1, s2) -> Bool in
+            s1 < s2
+        }
         
         if directoryHandler.currentDirectory != directoryHandler.getDocumentsPath() {
             contentsList.insert("...", at: 0)
