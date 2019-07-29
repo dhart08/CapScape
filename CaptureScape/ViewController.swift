@@ -52,6 +52,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var coordinatesOverlay: PictureInput!
     var compassNeedlePictureInput: PictureInput!
     var pictureOutput: PictureOutput!
+    var imageOrientation: UIImageOrientation!
+    var videoOrientation: CGFloat!
     var lastPictureImage: UIImage!
     var audioRecorder: AVAudioRecorder!
     var currentSlideshowInput: PictureInput!
@@ -182,7 +184,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             self.camera.audioEncodingTarget = self.movieOutput
             
-            self.movieOutput.startRecording()
+            //self.movieOutput.startRecording()
+            self.movieOutput.startRecording(transform: CGAffineTransform(rotationAngle: self.videoOrientation))
             }
         }
         else {
@@ -281,31 +284,30 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @IBAction func filesButtonClick(_ sender: UIButton) {
-        let fileListController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileListController") as? FileListController
-
-        fileListController?.passUploaderToMainView = { uploader in
-            print("Dropbox client passed back to MainView")
-            self.dropboxUploader = uploader
-        }
-
-        if let uploader = dropboxUploader {
-            fileListController?.dropboxUploader = uploader
-        }
-
-        DropboxClientsManager.unlinkClients()
-
-        present(fileListController!, animated: true, completion: nil)
+//        let fileListController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileListController") as? FileListController
+//
+//        fileListController?.passUploaderToMainView = { uploader in
+//            print("Dropbox client passed back to MainView")
+//            self.dropboxUploader = uploader
+//        }
+//
+//        if let uploader = dropboxUploader {
+//            fileListController?.dropboxUploader = uploader
+//        }
+//
+//        DropboxClientsManager.unlinkClients()
+//
+//        present(fileListController!, animated: true, completion: nil)
         
-//        let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-//        var myDocumentsDir = myDocumentsList[0]
-//        print(myDocumentsDir)
-//
-//        let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
-//        pickerController.allowsMultipleSelection = true
-//        pickerController.delegate = self
-//
-//
-//        present(pickerController, animated: true, completion: nil)
+        let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        var myDocumentsDir = myDocumentsList[0]
+        print(myDocumentsDir)
+
+        let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
+        pickerController.allowsMultipleSelection = true
+        pickerController.delegate = self
+
+        present(pickerController, animated: true, completion: nil)
     }
     
     @IBAction func mapViewClick(_ sender: Any) {
@@ -373,24 +375,28 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     @objc func onDeviceRotation() {
         if UIDeviceOrientationIsPortrait(UIDevice.current.orientation) {
-            //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.portrait)
-            print("orientation: portrait")
-            
-            if let cameraView = cameraView, let renderView = renderView {
-                renderView.frame = cameraView.bounds
+            if UIDevice.current.orientation == UIDeviceOrientation.portrait {
+                imageOrientation = UIImageOrientation.up
+                videoOrientation = CGFloat(0)
+                print("orientation: portrait up")
+            }
+            else if UIDevice.current.orientation == UIDeviceOrientation.portraitUpsideDown {
+                imageOrientation = UIImageOrientation.down
+                videoOrientation = CGFloat(-Double.pi)
+                print("orientation portrait down")
             }
         }
         else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
-            //videoCapture.setVideoOrientation(orientation: AVCaptureVideoOrientation.landscapeRight)
-            print("orientation: landscape")
-            
-            renderView.frame = cameraView.bounds
             
             if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
-                //renderView.orientation = .landscapeLeft
+                imageOrientation = UIImageOrientation.left
+                videoOrientation = CGFloat(Double.pi / -2)
+                print("orientation: landscape left")
             }
             else if UIDevice.current.orientation == UIDeviceOrientation.landscapeRight {
-                //renderView.orientation = .landscapeRight
+                imageOrientation = UIImageOrientation.right
+                videoOrientation = CGFloat(Double.pi / 2)
+                print("orientation: landscape right")
             }
         }
         
@@ -571,7 +577,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         func setCameraObject(device: AVCaptureDevice) {
             do {
-                self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, captureAsYUV: true)
+                //self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, captureAsYUV: true)
+                self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, orientation: ImageOrientation.portrait, captureAsYUV: true)
+                
             } catch {
                 popupMessage(message: "setCameraObject: Could not create camera object.", duration: nil)
                 fatalError("ERROR: Could not create camera object.")
@@ -636,19 +644,21 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func takePhoto(completion: @escaping (UIImage) -> Void) {
         self.pictureOutput = PictureOutput()
-        self.pictureOutput.encodedImageFormat = .png
+        self.pictureOutput.encodedImageFormat = .jpeg
         self.pictureOutput.imageAvailableCallback = { outputImage in
-            print("imageCallBack called!")
+            
+            //set orientation of the output image
+            let image = UIImage(cgImage: outputImage.cgImage!, scale: 1.0, orientation: self.imageOrientation)
             
             //DispatchQueue.main.async {
                 completion(outputImage)
             //}
         
             self.directoryHandler.createDirectory(dirType: .photos)
-            let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
+            let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).jpg", relativeTo: self.directoryHandler.getDocumentsPath())
             
-            let png = UIImagePNGRepresentation(outputImage)
-            try! png?.write(to: fileURL)
+            let jpg = UIImageJPEGRepresentation(image, 1.0)
+            try! jpg?.write(to: fileURL)
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
@@ -658,7 +668,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: "")
             
             let exifDataRaderWriter = EXIFDataReaderWriter()
-            exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
+            exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: jpg!, exifDataParams: exifParams)
             
             self.pictureOutput = nil
             
@@ -751,7 +761,9 @@ extension ViewController: MKMapViewDelegate {
 
 extension ViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+
+        let ac = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+        present(ac, animated: true, completion: nil)
         
-        //deal with selected files here
     }
 }

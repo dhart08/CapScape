@@ -66,28 +66,33 @@ struct EXIFDataReaderWriter {
         var metadataAsMutable = metadata
         var EXIFDictionary = (metadataAsMutable?[(kCGImagePropertyExifDictionary as String)]) as? [AnyHashable: Any]
         var GPSDictionary = (metadataAsMutable?[(kCGImagePropertyGPSDictionary as String)]) as? [AnyHashable: Any]
+        //var TIFFDictionary = (metadataAsMutable?[(kCGImagePropertyTIFFDictionary as String)]) as? [AnyHashable: Any]
         
         if EXIFDictionary == nil {
-            print("EXIFDictionary was nil!")
+            //print("EXIFDictionary was nil!")
             
             EXIFDictionary = [AnyHashable: Any]()
         }
         if GPSDictionary == nil {
-            print("GPSDictionary was nil!")
+            //print("GPSDictionary was nil!")
             
             GPSDictionary = [AnyHashable: Any]()
         }
+        
+//        if TIFFDictionary == nil {
+//            TIFFDictionary = [AnyHashable: Any]()
+//        }
         
         GPSDictionary![kCGImagePropertyGPSLatitude] = exifDataParams.latitude
         GPSDictionary![kCGImagePropertyGPSLongitude] = exifDataParams.longitude
         EXIFDictionary![kCGImagePropertyExifDateTimeOriginal] = exifDataParams.creationDateTime
         EXIFDictionary![kCGImagePropertyExifUserComment] = exifDataParams.comment
-        //EXIFDictionary![kCGImagePropertyPNGCreationTime] = creationTime
-        //EXIFDictionary![kCGImagePropertyTIFFDateTime] = "\(creationDate), \(creationTime)"
+        //TIFFDictionary![kCGImagePropertyTIFFOrientation] = "2"
         
         
         metadataAsMutable![kCGImagePropertyExifDictionary] = EXIFDictionary
         metadataAsMutable![kCGImagePropertyGPSDictionary] = GPSDictionary
+        //metadataAsMutable![kCGImagePropertyTIFFDictionary] = TIFFDictionary
         
         print("******** metadataAsMutable info *********")/////////////
         print(metadataAsMutable!)//////////////////
