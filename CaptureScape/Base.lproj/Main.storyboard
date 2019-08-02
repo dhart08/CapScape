@@ -116,7 +116,7 @@
                                             <action selector="filesButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="BY4-l0-wvb"/>
                                         </connections>
                                     </button>
-                                    <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="gEl-Np-YiC" customClass="MapView" customModule="CaptureScape" customModuleProvider="target">
+                                    <mapView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="gEl-Np-YiC" customClass="MapView" customModule="CaptureScape" customModuleProvider="target">
                                         <rect key="frame" x="306" y="542" width="100" height="100"/>
                                         <gestureRecognizers/>
                                         <constraints>

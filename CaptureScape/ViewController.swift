@@ -428,74 +428,282 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 // MARK: - UI Updating -----------------------------------------------------------
     
     func updateCoordinatesOverlay(latitude: NSString, longitude: NSString, cardinalDirection: String!) {
-        // get phone screen measurements
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
+        let screenWidth: CGFloat = UIScreen.main.bounds.width
+        let screenHeight: CGFloat = UIScreen.main.bounds.height
         
-        // draw green screen on bitmap
-        let greenRect = CGRect(x: 0, y: 0, width: screenWidth, height: screenHeight)
-        UIGraphicsBeginImageContext(greenRect.size)
-        UIColor.green.setFill()
-        UIRectFill(greenRect)
+        var context: CGContext!
         
-        // create black rectangle for overlay
-        let blackRect = CGRect(
+        var overlayRect: CGRect!
+        var overlayOrigin: CGPoint!
+        var overlayRotation: CGFloat = 0
+        var overlayWidth: CGFloat!
+        var overlayHeight: CGFloat!
+        
+        let leftRotationAngle: CGFloat = CGFloat(90 * Double.pi / 180)
+        let rightRotationAngle: CGFloat = CGFloat(-90 * Double.pi / 180)
+        
+        var coordinatesBoxRatio: [String: CGFloat] = ["width": 0.0, "height": 0.0]
+        var directionBoxRatio: [String: CGFloat] = ["width": 0.0, "height": 0.0]
+        
+        print("screen width change: ", UIScreen.main.bounds.width, "     screen height change: ", UIScreen.main.bounds.height)
+
+        // get phone orientation screen measurements
+        // set landscape mode sizes/ratios
+        if (imageOrientation == UIImageOrientation.left) || (imageOrientation == UIImageOrientation.right) {
+            if imageOrientation == UIImageOrientation.left {
+                print("overlayOrigin on left")
+                overlayOrigin = CGPoint(x: screenWidth, y: 0)
+            }
+            else if imageOrientation == UIImageOrientation.right {
+                print("overlayOrigin on right")
+                overlayOrigin = CGPoint(x: 0, y: screenHeight)
+            }
+
+            overlayWidth = screenHeight
+            overlayHeight = screenWidth
+            
+            coordinatesBoxRatio["width"] = 0.3
+            coordinatesBoxRatio["height"] = 0.25
+            
+            directionBoxRatio["width"] = 0.125
+            directionBoxRatio["height"] = 0.15
+
+            //overlayRotation = (imageOrientation == UIImageOrientation.left) ? leftRotationAngle : rightRotationAngle
+            
+            if imageOrientation == UIImageOrientation.left {
+                overlayRotation = leftRotationAngle
+            }
+            else {
+                overlayRotation = rightRotationAngle
+            }
+        }
+        // set portrait mode sizes/ratios
+        else {
+            overlayOrigin = CGPoint(x: 0, y: 0)
+
+            overlayWidth = screenWidth
+            overlayHeight = screenHeight
+            
+            coordinatesBoxRatio["width"] = 0.55
+            coordinatesBoxRatio["height"] = 0.15
+            
+            directionBoxRatio["width"] = 0.20
+            directionBoxRatio["height"] = 0.075
+        }
+        
+        UIGraphicsBeginImageContext(UIScreen.main.bounds.size)
+        context = UIGraphicsGetCurrentContext()
+        
+        context.translateBy(x: overlayOrigin.x, y: overlayOrigin.y)
+        context.rotate(by: overlayRotation)
+        
+        //create black rectangle for coordinates black box
+        let coordinatesBlackRect = CGRect(
             x: 0,
-            y: greenRect.height - (greenRect.height / 9),
-            width: greenRect.width / 1.7,
-            height: greenRect.height / 9
+            y: overlayHeight - (overlayHeight * coordinatesBoxRatio["height"]!),
+            width: overlayWidth * coordinatesBoxRatio["width"]!,
+            height: overlayHeight * coordinatesBoxRatio["height"]!
         )
+        // curve edges of coordinates black box
+        let coordinatesBlackRectClipPath = UIBezierPath(roundedRect: coordinatesBlackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
+        // draw coordinates black box on bitmap
+        context.addPath(coordinatesBlackRectClipPath)
+        context.setFillColor(UIColor.black.cgColor)
+        context.closePath()
+        context.fillPath()
         
-        // curve edges of black rectangle
-        let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
+//        //create black rectangle for direction black box
+//        let directionBlackRect = CGRect(
+//            x: overlayWidth - (overlayWidth * directionBoxRatio["width"]!),
+//            y: overlayHeight - (overlayHeight * directionBoxRatio["height"]!),
+//            width: overlayWidth * directionBoxRatio["width"]!,
+//            height: overlayHeight * directionBoxRatio["height"]!
+//        )
+//        // curve edges of direction black box
+//        let directionBlackRectClipPath = UIBezierPath(roundedRect: directionBlackRect, byRoundingCorners: .topLeft, cornerRadii: CGSize(width: 20, height: 20)).cgPath
+//        // draw direction black box on bitmap
+//        context.addPath(directionBlackRectClipPath)
+//        context.setFillColor(UIColor.black.cgColor)
+//        context.closePath()
+//        context.fillPath()
         
-        // draw black rectangle on bitmap
-        UIGraphicsGetCurrentContext()?.addPath(rectClipPath)
-        UIGraphicsGetCurrentContext()?.setFillColor(UIColor.black.cgColor)
-        UIGraphicsGetCurrentContext()?.closePath()
-        UIGraphicsGetCurrentContext()?.fillPath()
+        //set font for on-screen coordinates stamp
+        let coordinateFontAttrs = [
+            NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
+            NSAttributedString.Key.foregroundColor: UIColor.white
+        ]
+        //draw coordinates on bitmap
+        latitude.draw(at:CGPoint(x: coordinatesBlackRect.origin.x + 5, y: coordinatesBlackRect.origin.y), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
+        longitude.draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5, y: coordinatesBlackRect.origin.y + 25), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
+        "Heading: \(cardinalDirection!)".draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5 , y: coordinatesBlackRect.origin.y + 50), withAttributes: coordinateFontAttrs as [NSAttributedStringKey : Any])
         
         // create time formatter for on-screen timestamp
         let timeStampFormatter = DateFormatter()
         timeStampFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
         let timestamp = timeStampFormatter.string(from: Date())
         
-        // set font for on-screen coordinates stamp
-        let coordinateFontAttrs = [
-            NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
-            NSAttributedString.Key.foregroundColor: UIColor.white
-        ]
-        
-        // draw coordinates on bitmap
-        latitude.draw(at: blackRect.origin, withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
-        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
-        
         // set font for on-screen timestamp
         let timestampFontAttrs = [
             NSAttributedString.Key.font: UIFont(name: "Futura", size: 16),
             NSAttributedString.Key.foregroundColor: UIColor.white
         ]
-        
         // draw timestamp on bitmap
-        "  \(timestamp)".draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 52), withAttributes: timestampFontAttrs as [NSAttributedString.Key : Any])
+        "\(timestamp)".draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5, y: coordinatesBlackRect.origin.y + 80), withAttributes: timestampFontAttrs as [NSAttributedString.Key : Any])
         
         //set font for on-screen cardinal direction stamp
-        let directionFontAttr = [
-            NSAttributedString.Key.font: UIFont(name: "Futura", size: 32),
-            NSAttributedString.Key.foregroundColor: UIColor.white
-        ]
-        
+//        let directionFontAttr = [
+//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 32),
+//            NSAttributedString.Key.foregroundColor: UIColor.white
+//        ]
+
         // draw cardinal direction on bitmap
-        let direction = NSString(string: cardinalDirection)
-        let directionCGPoint = CGPoint(x: greenRect.origin.x + 25, y: greenRect.origin.y + 25)
-        direction.draw(at: directionCGPoint, withAttributes: directionFontAttr as [NSAttributedString.Key : Any])
+//        let direction = NSString(string: cardinalDirection)
+//        let directionCGPoint = CGPoint(x: directionBlackRect.origin.x + 15, y: directionBlackRect.origin.y + 15)
+//        direction.draw(at: directionCGPoint, withAttributes: directionFontAttr as [NSAttributedString.Key : Any])
+        
+        //draw red rectangle
+//        context.setFillColor(UIColor.red.cgColor)
+//        let rect = CGRect(x: 0, y: 0, width: overlayWidth/2, height: overlayHeight/2)
+//        context.addRect(rect)
+//        context.drawPath(using: .fillStroke)
+//
+//        //draw blue circle
+//        let center = CGPoint(x: overlayWidth/2, y: overlayHeight/2)
+//        let radius = CGFloat(100)
+//        context.setFillColor(UIColor.blue.cgColor)
+//        context.addArc(center: center, radius: radius, startAngle: CGFloat(0), endAngle: CGFloat(Double.pi*2), clockwise: true)
+//        context.drawPath(using: .fillStroke)
+        
+/////////////////////////////////////////////////////////////////////////////////
+        
+//        let renderer = UIGraphicsImageRenderer(size: CGSize(width: overlayWidth, height: overlayHeight))
+//        let overlayImage = renderer.image { imageContext in
+//            imageContext.cgContext.translateBy(x: overlayOrigin.x, y: overlayOrigin.y)
+//            imageContext.cgContext.rotate(by: overlayRotation)
+//
+//            overlayRect = CGRect(x: 0, y: 0, width: overlayWidth/1.5, height: overlayHeight/1.5)
+//
+//            imageContext.cgContext.setFillColor(UIColor.purple.cgColor)
+//            imageContext.cgContext.setStrokeColor(UIColor.purple.cgColor)
+//            imageContext.cgContext.addRect(overlayRect)
+//            imageContext.cgContext.drawPath(using: .fillStroke)
+        
+//            // create black rectangle for overlay
+//            let blackRect = CGRect(
+//                x: 0,
+//                y: overlayHeight - (overlayHeight / 9),
+//                width: overlayWidth / 1.7,
+//                height: overlayHeight / 9
+//            )
+//
+//            // curve edges of black rectangle
+//            let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
+//
+//            // draw black rectangle on bitmap
+//            imageContext.cgContext.addPath(rectClipPath)
+//            imageContext.cgContext.setFillColor(UIColor.black.cgColor)
+//            imageContext.cgContext.closePath()
+//            imageContext.cgContext.fillPath()
+//        }
+        
+        
+    
+
+//        // create overlay rectangle
+//        overlayRect = CGRect(x: 0, y: 0, width: overlayWidth, height: overlayHeight)
+//        print ("overlayRect.width: ", overlayRect.size.width, "     overlayRect.height: ", overlayRect.size.height)
+//        print("current screen width: ", UIScreen.main.bounds.width, "     current screen height: ", UIScreen.main.bounds.height)
+        
+        // create graphics context
+        //UIGraphicsBeginImageContext(CGSize(width: screenWidth, height: screenHeight))
+//        UIGraphicsBeginImageContext(UIScreen.main.bounds.size)
+//        context = UIGraphicsGetCurrentContext()
+//        print("UIGraphicsContext width: ", context.width, "     UIGraphicsContext height: ", context.height)
+//
+//        let smokeScreen = CGRect(x: 0, y: 0, width: context.width, height: context.height)
+//        context.setFillColor(UIColor.gray.cgColor)
+//        context.setStrokeColor(UIColor.gray.cgColor)
+//        context.setAlpha(CGFloat(0.5))
+//        context.addRect(smokeScreen)
+//        context.drawPath(using: .fillStroke)
+//
+//        overlayImage.draw(at: CGPoint(x: 0, y: 0))
+//        print("origin width: ", overlayWidth, "     overlayHeight: ", overlayHeight)
+    
+        
+        
+        // shift graphics context and rotate origin
+        //context.rotate(by: overlayRotation)
+        //context.translateBy(x: overlayOrigin.x, y: overlayOrigin.y)
+        
+        
+        // draw green screen on bitmap
+        //let greenRect = CGRect(x: 0, y: 0, width: overlayWidth, height: overlayHeight)
+        //let greenRect = CGRect(x: 0, y: 0, width: 100, height: 200)
+        //UIColor.purple.setFill()
+        //UIRectFill(greenRect)
+        //context.setFillColor(UIColor.purple.cgColor)
+        //context.addRect(greenRect)
+        //context.drawPath(using: .fillStroke)
+        
+//        // create black rectangle for overlay
+//        let blackRect = CGRect(
+//            x: 0,
+//            y: overlayHeight - (overlayHeight / 9),
+//            width: overlayWidth / 1.7,
+//            height: overlayHeight / 9
+//        )
+//
+//        // curve edges of black rectangle
+//        let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
+//
+//        // draw black rectangle on bitmap
+//        UIGraphicsGetCurrentContext()?.addPath(rectClipPath)
+//        UIGraphicsGetCurrentContext()?.setFillColor(UIColor.black.cgColor)
+//        UIGraphicsGetCurrentContext()?.closePath()
+//        UIGraphicsGetCurrentContext()?.fillPath()
+//
+//        // create time formatter for on-screen timestamp
+//        let timeStampFormatter = DateFormatter()
+//        timeStampFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+//        let timestamp = timeStampFormatter.string(from: Date())
+//
+//        // set font for on-screen coordinates stamp
+//        let coordinateFontAttrs = [
+//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
+//            NSAttributedString.Key.foregroundColor: UIColor.white
+//        ]
+//
+//        // draw coordinates on bitmap
+//        latitude.draw(at: blackRect.origin, withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
+//        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
+//
+//        // set font for on-screen timestamp
+//        let timestampFontAttrs = [
+//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 16),
+//            NSAttributedString.Key.foregroundColor: UIColor.white
+//        ]
+//
+//        // draw timestamp on bitmap
+//        "  \(timestamp)".draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 52), withAttributes: timestampFontAttrs as [NSAttributedString.Key : Any])
+//
+//        //set font for on-screen cardinal direction stamp
+//        let directionFontAttr = [
+//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 32),
+//            NSAttributedString.Key.foregroundColor: UIColor.white
+//        ]
+//
+//        // draw cardinal direction on bitmap
+//        let direction = NSString(string: cardinalDirection)
+//        let directionCGPoint = CGPoint(x: greenRect.origin.x + 25, y: greenRect.origin.y + 25)
+//        direction.draw(at: directionCGPoint, withAttributes: directionFontAttr as [NSAttributedString.Key : Any])
         
         // get bitmap from the image context
         let coordinatesImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         coordinatesOverlay = PictureInput(image: coordinatesImage!)
         
-        ///////
+        /////////////////////////////////////////////////////////////////////////////////////////////////
         
 //        let divider: CGFloat = 4
 //        let compassInputImage = UIImage(named: "compass_needle")
@@ -767,3 +975,9 @@ extension ViewController: UIDocumentPickerDelegate {
         
     }
 }
+
+//extension UIImage {
+//    func rotateImage(image: UIImage, degrees: CGFloat) -> UIImage {
+//
+//    }
+//}
