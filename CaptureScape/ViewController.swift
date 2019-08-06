@@ -138,6 +138,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         locationFinder.startFindingLocation()
         camera.startCapture()
+        onDeviceRotation()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -299,9 +300,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //
 //        present(fileListController!, animated: true, completion: nil)
         
-        let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        var myDocumentsDir = myDocumentsList[0]
-        print(myDocumentsDir)
+        //let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        //let myDocumentsDir = myDocumentsList[0]
+        //print(myDocumentsDir)
 
         let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
         pickerController.allowsMultipleSelection = true
@@ -433,7 +434,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         var context: CGContext!
         
-        var overlayRect: CGRect!
+        //var overlayRect: CGRect!
         var overlayOrigin: CGPoint!
         var overlayRotation: CGFloat = 0
         var overlayWidth: CGFloat!
@@ -468,14 +469,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             directionBoxRatio["width"] = 0.125
             directionBoxRatio["height"] = 0.15
 
-            //overlayRotation = (imageOrientation == UIImageOrientation.left) ? leftRotationAngle : rightRotationAngle
-            
-            if imageOrientation == UIImageOrientation.left {
-                overlayRotation = leftRotationAngle
-            }
-            else {
-                overlayRotation = rightRotationAngle
-            }
+            overlayRotation = (imageOrientation == UIImageOrientation.left) ? leftRotationAngle : rightRotationAngle
         }
         // set portrait mode sizes/ratios
         else {
@@ -550,191 +544,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         // draw timestamp on bitmap
         "\(timestamp)".draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5, y: coordinatesBlackRect.origin.y + 80), withAttributes: timestampFontAttrs as [NSAttributedString.Key : Any])
         
-        //set font for on-screen cardinal direction stamp
-//        let directionFontAttr = [
-//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 32),
-//            NSAttributedString.Key.foregroundColor: UIColor.white
-//        ]
-
-        // draw cardinal direction on bitmap
-//        let direction = NSString(string: cardinalDirection)
-//        let directionCGPoint = CGPoint(x: directionBlackRect.origin.x + 15, y: directionBlackRect.origin.y + 15)
-//        direction.draw(at: directionCGPoint, withAttributes: directionFontAttr as [NSAttributedString.Key : Any])
-        
-        //draw red rectangle
-//        context.setFillColor(UIColor.red.cgColor)
-//        let rect = CGRect(x: 0, y: 0, width: overlayWidth/2, height: overlayHeight/2)
-//        context.addRect(rect)
-//        context.drawPath(using: .fillStroke)
-//
-//        //draw blue circle
-//        let center = CGPoint(x: overlayWidth/2, y: overlayHeight/2)
-//        let radius = CGFloat(100)
-//        context.setFillColor(UIColor.blue.cgColor)
-//        context.addArc(center: center, radius: radius, startAngle: CGFloat(0), endAngle: CGFloat(Double.pi*2), clockwise: true)
-//        context.drawPath(using: .fillStroke)
-        
-/////////////////////////////////////////////////////////////////////////////////
-        
-//        let renderer = UIGraphicsImageRenderer(size: CGSize(width: overlayWidth, height: overlayHeight))
-//        let overlayImage = renderer.image { imageContext in
-//            imageContext.cgContext.translateBy(x: overlayOrigin.x, y: overlayOrigin.y)
-//            imageContext.cgContext.rotate(by: overlayRotation)
-//
-//            overlayRect = CGRect(x: 0, y: 0, width: overlayWidth/1.5, height: overlayHeight/1.5)
-//
-//            imageContext.cgContext.setFillColor(UIColor.purple.cgColor)
-//            imageContext.cgContext.setStrokeColor(UIColor.purple.cgColor)
-//            imageContext.cgContext.addRect(overlayRect)
-//            imageContext.cgContext.drawPath(using: .fillStroke)
-        
-//            // create black rectangle for overlay
-//            let blackRect = CGRect(
-//                x: 0,
-//                y: overlayHeight - (overlayHeight / 9),
-//                width: overlayWidth / 1.7,
-//                height: overlayHeight / 9
-//            )
-//
-//            // curve edges of black rectangle
-//            let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
-//
-//            // draw black rectangle on bitmap
-//            imageContext.cgContext.addPath(rectClipPath)
-//            imageContext.cgContext.setFillColor(UIColor.black.cgColor)
-//            imageContext.cgContext.closePath()
-//            imageContext.cgContext.fillPath()
-//        }
-        
-        
-    
-
-//        // create overlay rectangle
-//        overlayRect = CGRect(x: 0, y: 0, width: overlayWidth, height: overlayHeight)
-//        print ("overlayRect.width: ", overlayRect.size.width, "     overlayRect.height: ", overlayRect.size.height)
-//        print("current screen width: ", UIScreen.main.bounds.width, "     current screen height: ", UIScreen.main.bounds.height)
-        
-        // create graphics context
-        //UIGraphicsBeginImageContext(CGSize(width: screenWidth, height: screenHeight))
-//        UIGraphicsBeginImageContext(UIScreen.main.bounds.size)
-//        context = UIGraphicsGetCurrentContext()
-//        print("UIGraphicsContext width: ", context.width, "     UIGraphicsContext height: ", context.height)
-//
-//        let smokeScreen = CGRect(x: 0, y: 0, width: context.width, height: context.height)
-//        context.setFillColor(UIColor.gray.cgColor)
-//        context.setStrokeColor(UIColor.gray.cgColor)
-//        context.setAlpha(CGFloat(0.5))
-//        context.addRect(smokeScreen)
-//        context.drawPath(using: .fillStroke)
-//
-//        overlayImage.draw(at: CGPoint(x: 0, y: 0))
-//        print("origin width: ", overlayWidth, "     overlayHeight: ", overlayHeight)
-    
-        
-        
-        // shift graphics context and rotate origin
-        //context.rotate(by: overlayRotation)
-        //context.translateBy(x: overlayOrigin.x, y: overlayOrigin.y)
-        
-        
-        // draw green screen on bitmap
-        //let greenRect = CGRect(x: 0, y: 0, width: overlayWidth, height: overlayHeight)
-        //let greenRect = CGRect(x: 0, y: 0, width: 100, height: 200)
-        //UIColor.purple.setFill()
-        //UIRectFill(greenRect)
-        //context.setFillColor(UIColor.purple.cgColor)
-        //context.addRect(greenRect)
-        //context.drawPath(using: .fillStroke)
-        
-//        // create black rectangle for overlay
-//        let blackRect = CGRect(
-//            x: 0,
-//            y: overlayHeight - (overlayHeight / 9),
-//            width: overlayWidth / 1.7,
-//            height: overlayHeight / 9
-//        )
-//
-//        // curve edges of black rectangle
-//        let rectClipPath = UIBezierPath(roundedRect: blackRect, byRoundingCorners: .topRight, cornerRadii: CGSize(width: 20, height: 20)).cgPath
-//
-//        // draw black rectangle on bitmap
-//        UIGraphicsGetCurrentContext()?.addPath(rectClipPath)
-//        UIGraphicsGetCurrentContext()?.setFillColor(UIColor.black.cgColor)
-//        UIGraphicsGetCurrentContext()?.closePath()
-//        UIGraphicsGetCurrentContext()?.fillPath()
-//
-//        // create time formatter for on-screen timestamp
-//        let timeStampFormatter = DateFormatter()
-//        timeStampFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
-//        let timestamp = timeStampFormatter.string(from: Date())
-//
-//        // set font for on-screen coordinates stamp
-//        let coordinateFontAttrs = [
-//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
-//            NSAttributedString.Key.foregroundColor: UIColor.white
-//        ]
-//
-//        // draw coordinates on bitmap
-//        latitude.draw(at: blackRect.origin, withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
-//        longitude.draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 25), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
-//
-//        // set font for on-screen timestamp
-//        let timestampFontAttrs = [
-//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 16),
-//            NSAttributedString.Key.foregroundColor: UIColor.white
-//        ]
-//
-//        // draw timestamp on bitmap
-//        "  \(timestamp)".draw(at: CGPoint(x: blackRect.origin.x, y: blackRect.origin.y + 52), withAttributes: timestampFontAttrs as [NSAttributedString.Key : Any])
-//
-//        //set font for on-screen cardinal direction stamp
-//        let directionFontAttr = [
-//            NSAttributedString.Key.font: UIFont(name: "Futura", size: 32),
-//            NSAttributedString.Key.foregroundColor: UIColor.white
-//        ]
-//
-//        // draw cardinal direction on bitmap
-//        let direction = NSString(string: cardinalDirection)
-//        let directionCGPoint = CGPoint(x: greenRect.origin.x + 25, y: greenRect.origin.y + 25)
-//        direction.draw(at: directionCGPoint, withAttributes: directionFontAttr as [NSAttributedString.Key : Any])
-        
         // get bitmap from the image context
         let coordinatesImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         coordinatesOverlay = PictureInput(image: coordinatesImage!)
-        
-        /////////////////////////////////////////////////////////////////////////////////////////////////
-        
-//        let divider: CGFloat = 4
-//        let compassInputImage = UIImage(named: "compass_needle")
-//        let compassInputImageRatio = CGFloat((compassInputImage?.size.width)!) / CGFloat((compassInputImage?.size.height)!)
-//        let compassImageNewSize = CGSize(width: screenHeight / divider * compassInputImageRatio, height: screenHeight / divider)
-//        let compassImageRect = CGRect(origin: CGPoint(x: 100, y: 100), size: compassImageNewSize)
-//        //let compassImageRect = CGRect(x: 0, y: 0, width: screenHeight / divider * compassInputImageRatio, height: screenHeight / divider)
-//        //let compassOrigin = CGPoint(x: screenHeight / divider * compassInputImageRatio / 2, y: screenHeight / divider / 2)
-//
-//        UIGraphicsBeginImageContext((compassInputImage?.size)!)
-//
-//        let context = UIGraphicsGetCurrentContext()
-//
-//        context?.rotate(by: CGFloat(locationFinder.heading * Double.pi / 180))
-//        context?.translateBy(x: compassImageRect.origin.x, y: compassImageRect.origin.y)
-//        //context?.translateBy(x: compassImageRect.size.width * 0.5, y: compassImageRect.size.height * 0.5)
-        
-        
-//-------> start here!
-        //"\(locationFinder.heading!)".dr
-        
-        
-        //compassInputImage?.draw(in: compassImageRect)
-
-
-        //let compassOutputImage = UIGraphicsGetImageFromCurrentImageContext()
-        //UIGraphicsEndImageContext()
-
-        //compassNeedlePictureInput = PictureInput(image: compassOutputImage!)
-        
-        
     }
     
     func updateMap() {
@@ -970,14 +783,30 @@ extension ViewController: MKMapViewDelegate {
 extension ViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
 
-        let ac = UIActivityViewController(activityItems: urls, applicationActivities: nil)
-        present(ac, animated: true, completion: nil)
-        
+        if urls.count == 1 {
+            print("found only 1 document")
+            let dc = UIDocumentInteractionController(url: urls[0])
+            dc.delegate = self
+            dc.presentPreview(animated: true)
+        }
+        else {
+            print("found multiple documents")
+            let ac = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+            present(ac, animated: true, completion: nil)
+        }
     }
 }
 
-//extension UIImage {
-//    func rotateImage(image: UIImage, degrees: CGFloat) -> UIImage {
-//
-//    }
-//}
+extension ViewController: UIDocumentInteractionControllerDelegate {
+    func documentInteractionControllerViewControllerForPreview(_ controller: UIDocumentInteractionController) -> UIViewController {
+        return self
+    }
+    
+    func documentInteractionControllerDidEndPreview(_ controller: UIDocumentInteractionController) {
+        let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
+        pickerController.allowsMultipleSelection = true
+        pickerController.delegate = self
+        
+        present(pickerController, animated: true, completion: nil)
+    }
+}

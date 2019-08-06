@@ -29,7 +29,6 @@ final class DropboxUploader {
             UIApplication.shared,
             controller: controller,
             openURL: { (url) in
-                print("opening URL...")
                 UIApplication.shared.open(url)
             }
         )

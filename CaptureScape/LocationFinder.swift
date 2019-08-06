@@ -58,7 +58,18 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        heading = newHeading.trueHeading
+        var tempHeading: Double = newHeading.trueHeading
+        
+        if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
+            if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
+                tempHeading += 90.0
+            }
+            else {
+                tempHeading -= 90.0
+            }
+        }
+        
+        heading = tempHeading
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
