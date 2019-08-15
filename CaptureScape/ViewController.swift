@@ -24,7 +24,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var photoButton: UIButton!
     @IBOutlet weak var slideshowButton: CustomButton!
     //@IBOutlet weak var photoPreview: UIImageView!
-    @IBOutlet weak var filesButton: UIButton!
+    @IBOutlet weak var toolsButton: UIButton!
     @IBOutlet weak var zoomLabel: UILabel!
     
     @IBOutlet weak var splashScreenContainer: UIView!
@@ -35,6 +35,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     var locationManager: CLLocationManager!
     var locationFinder: LocationFinder!
+    
+    var angleReader: AngleReader!
     
     var directoryHandler: DirectoryHandler!
     
@@ -50,9 +52,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     //var overlayBlender: SourceOverBlend!
     var chromaFilter: ChromaKeying!
     var coordinatesOverlay: PictureInput!
-    var compassNeedlePictureInput: PictureInput!
     var pictureOutput: PictureOutput!
-    var imageOrientation: UIImageOrientation!
+    var imageOrientation: UIImageOrientation! = UIImageOrientation.up
     var videoOrientation: CGFloat!
     var lastPictureImage: UIImage!
     var audioRecorder: AVAudioRecorder!
@@ -60,6 +61,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var slideShowBlendFilter: SourceOverBlend!
     var slideshowMovieOutput: MovieOutput!
     
+    var videoRecordingOrientation: UIImageOrientation = UIImageOrientation.up
     var isVideoRecording: Bool = false
     var isAudioRecording: Bool = false
     var fileURL: URL!
@@ -69,19 +71,44 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var closeMapButton: UIButton!
     
     var lastZoomFactor: CGFloat = 1.0
+    
+    var userSettingsModel: UserSettingsModel = UserSettingsModel()
+    var photoCount: Int = 0
 
 // MARK: - ViewController Methods ---------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
+        let licenseValidator = LicenseValidator()
+        if licenseValidator.isLicenseValid() == true {
+            print("License: valid")
+        }
+        else {
+            print("License: invalid")
+            //licenseValidator.validateNewCode(code: "12345678")
+
+            //disable app use
+            view.isHidden = true
+
+            //show lease expiration message
+            DispatchQueue.main.async {
+                let ac = UIAlertController(title: "Expired", message: "Your lease has expired. Contact technical support.", preferredStyle: .alert)
+                self.present(ac, animated: true, completion: nil)
+            }
+
+        }
+
+        //animateSplashScreen()
         animateSplashScreen()
         
         NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
         locationFinder = LocationFinder()
         locationFinder.requestAuthorization()
+        
+        angleReader = AngleReader()
+
         
         directoryHandler = DirectoryHandler()
         directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
@@ -95,8 +122,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             renderView = RenderView(frame: cameraView.bounds)
             renderView.fillMode = .stretch
             cameraView.addSubview(renderView)
-            cameraView.bringSubview(toFront: mapView)
-            cameraView.bringSubview(toFront: filesButton)
+            //cameraView.bringSubview(toFront: mapView)
+            cameraView.bringSubview(toFront: toolsButton)
 
             cameraOverlayBlendFilter = SourceOverBlend()
             //overlayBlender = SourceOverBlend()
@@ -158,12 +185,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBAction func videoButtonClick(_ sender: UIButton) {
         if isVideoRecording == false {
             isVideoRecording = true
+            videoRecordingOrientation = imageOrientation
             
             sender.setImage(UIImage(named: "video_stop"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_disabled"), for: .normal)
             photoButton.isEnabled = false
             slideshowButton.setImage(UIImage(named: "audio_disabled"), for: .normal)
             slideshowButton.isEnabled = false
+            toolsButton.isHidden = true
+            
             
             directoryHandler.createDirectory(dirType: .videos)
             
@@ -196,7 +226,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.camera.audioEncodingTarget = nil
                 self.movieOutput = nil
                 
-                self.popupMessage(message: "Video Saved", duration: 500)
+                self.popupMessage(title: nil, message: "Video Saved", duration: 500)
                 //self.flashScreen()
             }
             
@@ -205,6 +235,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             photoButton.isEnabled = true
             slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
             slideshowButton.isEnabled = true
+            toolsButton.isHidden = false
         }
     }
     
@@ -227,10 +258,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         if isVideoRecording == false {
             isVideoRecording = true
+            videoRecordingOrientation = imageOrientation
             
             slideshowButton.setImage(UIImage(named: "audio_stop"), for: .normal)
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
+            toolsButton.isHidden = true
             
             flashScreen()
 
@@ -273,18 +306,19 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 //UISaveVideoAtPathToSavedPhotosAlbum(self.fileURL.path, nil, nil, nil)
                 
-                self.popupMessage(message: "Slideshow Saved", duration: 500)
+                self.popupMessage(title: nil, message: "Slideshow Saved", duration: 500)
                 //self.flashScreen()
             }
 
-            self.slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
-            self.videoButton.setImage(UIImage(named: "video_start"), for: .normal)
-            self.videoButton.isEnabled = true
+            slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
+            videoButton.setImage(UIImage(named: "video_start"), for: .normal)
+            videoButton.isEnabled = true
+            toolsButton.isHidden = false
         }
         
     }
     
-    @IBAction func filesButtonClick(_ sender: UIButton) {
+//    @IBAction func filesButtonClick(_ sender: UIButton) {
 //        let fileListController = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "FileListController") as? FileListController
 //
 //        fileListController?.passUploaderToMainView = { uploader in
@@ -300,16 +334,40 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //
 //        present(fileListController!, animated: true, completion: nil)
         
-        //let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        //let myDocumentsDir = myDocumentsList[0]
-        //print(myDocumentsDir)
-
-        let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
-        pickerController.allowsMultipleSelection = true
-        pickerController.delegate = self
-
-        present(pickerController, animated: true, completion: nil)
+//        //let myDocumentsList = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+//        //let myDocumentsDir = myDocumentsList[0]
+//        //print(myDocumentsDir)
+//
+//        showDocumentsPicker()
+//    }
+    
+    @IBAction func toolsButtonClick(_ sender: UIButton) {
+        let toolsMenu = UIAlertController(title: "Tools", message: nil, preferredStyle: .alert)
+        
+        let filesOption = UIAlertAction(title: "File Viewer", style: .default) { (_) in
+            self.showDocumentsPicker()
+        }
+        
+        let imagePrefixOption = UIAlertAction(title: "Set Photo Name Prefix", style: .default) { (_) in
+            self.getImagePrefixInput()
+        }
+        
+        let objectSizeOption = UIAlertAction(title: "Measure Object Size", style: .default) { (_) in
+            self.getObjectSize()
+        }
+        
+        let cancelOption = UIAlertAction(title: "Cancel", style: .default) { (_) in
+            self.dismiss(animated: true, completion: nil)
+        }
+        
+        toolsMenu.addAction(filesOption)
+        toolsMenu.addAction(imagePrefixOption)
+        toolsMenu.addAction(objectSizeOption)
+        toolsMenu.addAction(cancelOption)
+        
+        present(toolsMenu, animated: true, completion: nil)
     }
+    
     
     @IBAction func mapViewClick(_ sender: Any) {
         if isMapFullScreen == false {
@@ -379,12 +437,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             if UIDevice.current.orientation == UIDeviceOrientation.portrait {
                 imageOrientation = UIImageOrientation.up
                 videoOrientation = CGFloat(0)
-                print("orientation: portrait up")
+                
+                //rotateButtons(orientation: imageOrientation)
+                
+                //print("orientation: portrait up")
             }
             else if UIDevice.current.orientation == UIDeviceOrientation.portraitUpsideDown {
                 imageOrientation = UIImageOrientation.down
                 videoOrientation = CGFloat(-Double.pi)
-                print("orientation portrait down")
+                
+                //print("orientation portrait down")
             }
         }
         else if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
@@ -392,15 +454,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
                 imageOrientation = UIImageOrientation.left
                 videoOrientation = CGFloat(Double.pi / -2)
-                print("orientation: landscape left")
+                
+                //print("orientation: landscape left")
             }
             else if UIDevice.current.orientation == UIDeviceOrientation.landscapeRight {
                 imageOrientation = UIImageOrientation.right
                 videoOrientation = CGFloat(Double.pi / 2)
-                print("orientation: landscape right")
+                
+                //print("orientation: landscape right")
             }
         }
-        
     }
     
     @objc func onDidReceiveCoordinates(_ notification: Notification) {
@@ -421,9 +484,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         coordinatesOverlay.addTarget(chromaFilter)
         coordinatesOverlay.processImage()
         
-        print("heading: \(locationFinder.getCardinalDirection())")
         
-        updateMap()
+        //updateMap()
     }
     
 // MARK: - UI Updating -----------------------------------------------------------
@@ -446,16 +508,24 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         var coordinatesBoxRatio: [String: CGFloat] = ["width": 0.0, "height": 0.0]
         var directionBoxRatio: [String: CGFloat] = ["width": 0.0, "height": 0.0]
         
-        print("screen width change: ", UIScreen.main.bounds.width, "     screen height change: ", UIScreen.main.bounds.height)
+        //print("screen width change: ", UIScreen.main.bounds.width, "     screen height change: ", UIScreen.main.bounds.height)
 
-        // get phone orientation screen measurements
-        // set landscape mode sizes/ratios
-        if (imageOrientation == UIImageOrientation.left) || (imageOrientation == UIImageOrientation.right) {
-            if imageOrientation == UIImageOrientation.left {
+        // check for video currently recording
+        var currentOrientation: UIImageOrientation!
+        if isVideoRecording == true {
+            currentOrientation = videoRecordingOrientation
+        }
+        else {
+            currentOrientation = imageOrientation
+        }
+        
+        // set landscape mode overlay sizes/ratios
+        if (currentOrientation == UIImageOrientation.left) || (currentOrientation == UIImageOrientation.right) {
+            if currentOrientation == UIImageOrientation.left {
                 print("overlayOrigin on left")
                 overlayOrigin = CGPoint(x: screenWidth, y: 0)
             }
-            else if imageOrientation == UIImageOrientation.right {
+            else if currentOrientation == UIImageOrientation.right {
                 print("overlayOrigin on right")
                 overlayOrigin = CGPoint(x: 0, y: screenHeight)
             }
@@ -463,15 +533,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             overlayWidth = screenHeight
             overlayHeight = screenWidth
             
-            coordinatesBoxRatio["width"] = 0.3
+            coordinatesBoxRatio["width"] = 0.32
             coordinatesBoxRatio["height"] = 0.25
             
             directionBoxRatio["width"] = 0.125
             directionBoxRatio["height"] = 0.15
 
-            overlayRotation = (imageOrientation == UIImageOrientation.left) ? leftRotationAngle : rightRotationAngle
+            overlayRotation = (currentOrientation == UIImageOrientation.left) ? leftRotationAngle : rightRotationAngle
         }
-        // set portrait mode sizes/ratios
+        // set portrait mode overlay sizes/ratios
         else {
             overlayOrigin = CGPoint(x: 0, y: 0)
 
@@ -503,23 +573,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         // draw coordinates black box on bitmap
         context.addPath(coordinatesBlackRectClipPath)
         context.setFillColor(UIColor.black.cgColor)
+        context.setAlpha(1.0)
         context.closePath()
         context.fillPath()
-        
-//        //create black rectangle for direction black box
-//        let directionBlackRect = CGRect(
-//            x: overlayWidth - (overlayWidth * directionBoxRatio["width"]!),
-//            y: overlayHeight - (overlayHeight * directionBoxRatio["height"]!),
-//            width: overlayWidth * directionBoxRatio["width"]!,
-//            height: overlayHeight * directionBoxRatio["height"]!
-//        )
-//        // curve edges of direction black box
-//        let directionBlackRectClipPath = UIBezierPath(roundedRect: directionBlackRect, byRoundingCorners: .topLeft, cornerRadii: CGSize(width: 20, height: 20)).cgPath
-//        // draw direction black box on bitmap
-//        context.addPath(directionBlackRectClipPath)
-//        context.setFillColor(UIColor.black.cgColor)
-//        context.closePath()
-//        context.fillPath()
         
         //set font for on-screen coordinates stamp
         let coordinateFontAttrs = [
@@ -548,6 +604,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let coordinatesImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         coordinatesOverlay = PictureInput(image: coordinatesImage!)
+        
+        rotateButtons(orientation: imageOrientation)
     }
     
     func updateMap() {
@@ -602,7 +660,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, orientation: ImageOrientation.portrait, captureAsYUV: true)
                 
             } catch {
-                popupMessage(message: "setCameraObject: Could not create camera object.", duration: nil)
+                print("setCameraObject: Could not create camera object.")
                 fatalError("ERROR: Could not create camera object.")
             }
         }
@@ -631,15 +689,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //return device
         }
         else {
-            popupMessage(message: "setCameraDevice() could not get a device!", duration: nil)
+            print("setCameraDevice() could not get a device!")
             fatalError("ERROR: Could not get capture device!")
         }
         
     }
     
-    func popupMessage(message: String, duration: Int?) {
-        let alert = UIAlertController(title: message, message: nil, preferredStyle: .alert)
+    func popupMessage(title: String?, message: String?, duration: Int?) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         
+        // if no duration, then add OK button
         if duration == nil {
             let action = UIAlertAction(title: "OK", style: .default, handler: nil)
             alert.addAction(action)
@@ -665,7 +724,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func takePhoto(completion: @escaping (UIImage) -> Void) {
         self.pictureOutput = PictureOutput()
-        self.pictureOutput.encodedImageFormat = .jpeg
+        self.pictureOutput.encodedImageFormat = .png
         self.pictureOutput.imageAvailableCallback = { outputImage in
             
             //set orientation of the output image
@@ -676,10 +735,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //}
         
             self.directoryHandler.createDirectory(dirType: .photos)
-            let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).jpg", relativeTo: self.directoryHandler.getDocumentsPath())
+//            let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
+            let fileURL = URL(fileURLWithPath: "Photos/\(self.getFilename()).png", relativeTo: self.directoryHandler.getDocumentsPath())
             
-            let jpg = UIImageJPEGRepresentation(image, 1.0)
-            try! jpg?.write(to: fileURL)
+            //let jpg = UIImageJPEGRepresentation(image, 1.0)
+            let png = UIImagePNGRepresentation(image)
+            
+            try! png?.write(to: fileURL)
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
@@ -689,7 +751,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: "")
             
             let exifDataRaderWriter = EXIFDataReaderWriter()
-            exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: jpg!, exifDataParams: exifParams)
+            exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
             
             self.pictureOutput = nil
             
@@ -761,6 +823,301 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             }
         })
     }
+    
+    func rotateButtons(orientation: UIImageOrientation) {
+        var rotationAngle: CGFloat = 0.0
+        
+        let cameraViewWidth: CGFloat = cameraView.frame.width
+        let cameraViewHeight: CGFloat = cameraView.frame.height
+        
+        var toolsButtonFrame: CGRect = toolsButton.frame
+        let toolsButtonSpacer: CGFloat = 8.0
+        
+        if (orientation == .up) || (orientation == .down){
+            toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
+            toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
+            
+            rotationAngle = CGFloat(0.0)
+        }
+        else if orientation == .left {
+            toolsButtonFrame.origin.x = toolsButtonSpacer
+            toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
+            
+            rotationAngle = CGFloat(90 * Double.pi / 180)
+            
+        }
+        else if orientation == .right {
+            toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
+            toolsButtonFrame.origin.y = toolsButtonSpacer
+            
+            rotationAngle = CGFloat(-90 * Double.pi / 180)
+        }
+        
+        UIView.animate(withDuration: 0.25) {
+            self.toolsButton.frame = toolsButtonFrame
+            
+            self.toolsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            self.videoButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            self.slideshowButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            self.photoButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            self.zoomLabel.transform = CGAffineTransform(rotationAngle: rotationAngle)
+        }
+    }
+    
+    func showDocumentsPicker() {
+        let pickerController = UIDocumentPickerViewController(documentTypes: ["public.item"], in: .import)
+        pickerController.allowsMultipleSelection = true
+        pickerController.delegate = self
+        
+        present(pickerController, animated: true, completion: nil)
+    }
+    
+    func showDocumentsOptionMenu(urls: [URL]) {
+        let popupMenu = UIAlertController(title: "\(urls.count) File(s) Selected", message: nil, preferredStyle: .actionSheet)
+        
+        
+        popupMenu.addAction(UIAlertAction(title: "Upload", style: .default, handler:{ _ in
+            //print("Upload button pressed")
+            
+            let uploadBatchFiles = {
+                let folder = "/\(self.directoryHandler.currentDirectory.lastPathComponent)"
+                var urlList: [URL]! = []
+                
+//                for indexPath in selectedIndexes! {
+//                    let filename = (self.tableView.cellForRow(at: indexPath) as! CustomFileListCell).cellFilenameLabel.text!
+//                    let url = URL(string: "\(self.directoryHandler.currentDirectory!)\(filename)")!
+//                    urlList.append(url)
+//                }
+                
+                //here lies the problem with kristen's phone?
+                self.dropboxUploader.uploadBatchFilesToDropBox(controller: self, urls: urls, folder: folder, completion: nil)
+            }
+            
+            if self.dropboxUploader == nil || self.dropboxUploader.dropboxClient == nil {
+                self.dropboxUploader = DropboxUploader()
+                self.dropboxUploader.startAuthorizationFlow(controller: self) {
+                    uploadBatchFiles()
+                }
+            } else {
+                uploadBatchFiles()
+            }
+        }))
+        
+//-------------------------------------------------------------------------
+//        popupMenu.addAction(UIAlertAction(title: "Delete", style: .default, handler: { _ in
+//
+//            let fileManager = FileManager.default
+//
+//            for url in urls {
+//
+//                let paths = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
+//                var documentsDirectory = paths[0]
+//
+//                print("URL passed: ", url)
+//                print("App URL: ", documentsDirectory)
+//            documentsDirectory.appendPathComponent(documentsDirectory.lastPathComponent)
+//
+//                //print("Appended directory")
+//
+//                print("Current Directory: ", documentsDirectory.absoluteURL)
+//            fileManager.changeCurrentDirectoryPath(documentsDirectory.absoluteString)
+//
+//                do {
+//                    print("Deleting: ", url.lastPathComponent)
+//                    try fileManager.removeItem(atPath: url.lastPathComponent)                }
+//                catch let error {
+//                    print("Error (delete file): ", error)
+//                }
+//            }
+//        }))
+        
+        popupMenu.addAction(UIAlertAction(title: "Cancel", style: .default, handler: { _ in
+            popupMenu.dismiss(animated: true, completion: nil)
+            self.showDocumentsPicker()
+        }))
+
+        present(popupMenu, animated: true, completion: nil)
+    }
+    
+    func getImagePrefixInput() {
+        let popupInputMessage = UIAlertController(title: "Enter new Photo Prefix", message: nil, preferredStyle: .alert)
+        
+        popupInputMessage.addTextField { (textField) in
+            textField.text = ""
+        }
+        
+        let okButton = UIAlertAction(title: "OK", style: .default) { (_) in
+            //let invalidCharSet: [Character] = ["\\", "/", "?", "%", "*", ":", "|", "\"", "<", ">", ".", " ", ",", "!", "~"]
+            let textField = popupInputMessage.textFields![0]
+            var suggestedPrefix = textField.text
+            var isPrefixValid = true
+            
+            suggestedPrefix = suggestedPrefix?.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if suggestedPrefix?.count != 0 {
+//                for char in invalidCharSet {
+//                    if suggestedPrefix?.firstIndex(of: char) != nil {
+//                        isPrefixValid = false
+//                    }
+//                }
+                
+                let regex = try! NSRegularExpression(pattern: "[^A-Za-z0-9]")
+                let range = NSRange(location: 0, length: suggestedPrefix!.utf16.count)
+                if regex.firstMatch(in: suggestedPrefix!, options: [], range: range) != nil {
+                    isPrefixValid = false
+                }
+            }
+            else {
+                isPrefixValid = false
+            }
+            
+            if (isPrefixValid == true) {
+                self.userSettingsModel.setImagePrefix(prefix: suggestedPrefix!)
+                self.photoCount = 0
+            }
+            else {
+                self.popupMessage(title: "File Prefix", message: "Invalid filename!", duration: 4)
+            }
+        }
+        
+        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
+            //cancel button code here
+        }
+        
+        popupInputMessage.addAction(okButton)
+        popupInputMessage.addAction(cancelButton)
+        
+        present(popupInputMessage, animated: true, completion: nil)
+    }
+    
+    func getFilename() -> String {
+        var filename: String? = userSettingsModel.getImagePrefix()
+        
+        if filename == nil {
+            filename = createTimestamp()
+        }
+        else {
+            filename = filename! + String(photoCount)
+            photoCount = photoCount + 1
+        }
+        
+        print("outputting filename: ", filename)
+        
+        return filename!
+    }
+    
+    func getObjectSize() {
+        if (UIDevice.current.orientation != UIDeviceOrientation.portrait) {
+            popupMessage(title: "Object Measure", message: "Cannot get measurements in landscape mode.", duration: 3)
+        }
+        
+        angleReader.startTrackingDeviceMotion()
+        
+        let buttonWidth = CGFloat(30)
+        let buttonHeight  = CGFloat(30)
+        let buttonX = CGFloat((UIScreen.main.bounds.width - buttonWidth) / 2)
+        let buttonY = CGFloat((UIScreen.main.bounds.height - buttonHeight) / 2)
+        let dotButtonFrame = CGRect(x: buttonX, y: buttonY, width: buttonWidth, height: buttonHeight)
+        let dotButton: UIButton = UIButton(frame: dotButtonFrame)
+        dotButton.backgroundColor = UIColor.red
+        dotButton.layer.cornerRadius = buttonWidth / 2
+        dotButton.addTarget(self, action: #selector(getPitch), for: .touchUpInside)
+        
+        view.addSubview(dotButton)
+        view.bringSubview(toFront: dotButton)
+        
+        let timer = Timer(timeInterval: 0.25, repeats: true) { (timer) in
+            // during first pitch retrieval, make sure phone is at horizontal level
+            //self.view.bringSubview(toFront: dotButton)
+            if (self.angleReader.pitch1 == nil) {
+                let currentPitch = self.angleReader.getCurrentPitch()
+                
+                if currentPitch > 87.5 {
+                    dotButton.backgroundColor = UIColor.green
+                }
+                else {
+                    dotButton.backgroundColor = UIColor.red
+                }
+            }
+                // during second pitch retrieval, make sure phone doesn't go past zenith
+            else if (self.angleReader.pitch2 == nil) {
+                let currentPitch = self.angleReader.getCurrentPitch()
+                
+                if currentPitch < 0.0 {
+                    dotButton.backgroundColor = UIColor.red
+                }
+                else {
+                    dotButton.backgroundColor = UIColor.green
+                }
+            }
+            // after second pitch retrieval, remove button and get object height
+            else {
+                self.angleReader.clearPitches()
+                print("removing button from superView!")
+                dotButton.removeFromSuperview()
+                print("killing timer!")
+                timer.invalidate()
+            }
+        }
+        
+        RunLoop.current.add(timer, forMode: .defaultRunLoopMode)
+        
+        popupMessage(title: "Object Measure", message: "Hold phone at eye level and rotate it until the button in the middle turns green, then press the button.", duration: nil)
+        
+    }
+    
+    @objc func getPitch() {
+        let currentPitch = angleReader.getCurrentPitch()
+        
+        if angleReader.pitch1 == nil {
+            if currentPitch > 87.5 {
+                angleReader.pitch1 = angleReader.getCurrentPitch()
+                popupMessage(title: "Object Measure", message: "First pitch: \(currentPitch)\nNow center the button at the top of the object and press it once it's green.", duration: nil)
+            }
+        }
+        else {
+            if currentPitch > 0.0 {
+                angleReader.pitch2 = angleReader.getCurrentPitch()
+                print("pitch2: ", currentPitch)
+                
+                let angle = angleReader.pitch1! - angleReader.pitch2!
+                
+                print("angle: ", angle)
+                
+                angleReader.stopTrackingDeviceMotion()
+                //angleReader.clearPitches()
+                
+                //popupMessage(title: "Object Measure", message: "Got second pitch: \(currentPitch)", duration: nil)
+                
+                
+                let getDistanceAlert = UIAlertController(title: "Object Measure", message: "Enter your height and distance to the object.", preferredStyle: .alert)
+                getDistanceAlert.addTextField()
+                getDistanceAlert.textFields![0].placeholder = "Height"
+                getDistanceAlert.addTextField()
+                getDistanceAlert.textFields![1].placeholder = "Distance"
+                
+                let okButton = UIAlertAction(title: "OK", style: .default) { (_) in
+                    let height = Double(getDistanceAlert.textFields![0].text!)
+                    let distance = Double(getDistanceAlert.textFields![1].text!)
+                    
+                    print("Distance: ", distance!)
+                    print("Height: ", height!)
+                    
+                    let objectHeight = (tan((angle * Double.pi / 180)) * distance! + height!)
+                    print("objectHeight: ", objectHeight)
+                    
+                    self.popupMessage(title: "Object Measure", message: "Object height is \(objectHeight) feet.", duration: nil)
+                    
+                }
+                
+                getDistanceAlert.addAction(okButton)
+                
+                present(getDistanceAlert, animated: true, completion: nil)
+                
+                //popupMessage(title: "Object Measure", message: "Angle: \(angle)", duration: nil)
+            }
+        }
+    }
 }
 
 extension ViewController: AVAudioRecorderDelegate {
@@ -776,23 +1133,62 @@ extension ViewController: AVAudioRecorderDelegate {
 
 extension ViewController: MKMapViewDelegate {
     func mapViewDidFinishLoadingMap(_ mapView: MKMapView) {
-        popupMessage(message: "Map was loaded!", duration: 500)
+        popupMessage(title: "Map", message: "Map was loaded!", duration: 500)
     }
 }
 
 extension ViewController: UIDocumentPickerDelegate {
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        
+        let fileManager = FileManager.default
+        let tmpDirContents = try! fileManager.contentsOfDirectory(atPath: fileManager.temporaryDirectory.path)
+        //print("items in tmp directory: ", tmpDirContents.count)
+        for file in tmpDirContents {
+            var fileURL = fileManager.temporaryDirectory
+            fileURL.appendPathComponent(file)
+            
+            if fileURL.hasDirectoryPath {
+                continue
+            }
+            
+            try! fileManager.removeItem(atPath: fileURL.path)
+        }
+        
+//        print("items in tmp directory after delete: ")
+//        print(try! fileManager.contentsOfDirectory(atPath: fileManager.temporaryDirectory.path).count)
+        
+        
+        var urlList = urls.map { (oldURL) -> URL in
+            let fileManager = FileManager.default
+            var newURL = fileManager.temporaryDirectory
+            newURL.appendPathComponent(oldURL.lastPathComponent)
+            
+//            if fileManager.fileExists(atPath: newURL.path) {
+//                print("\(newURL.lastPathComponent) exists!... removing")
+//                try! fileManager.removeItem(at: newURL)
+//            }
+            try! fileManager.moveItem(at: oldURL, to: newURL)
+            
+            return newURL
+        }
 
-        if urls.count == 1 {
-            print("found only 1 document")
-            let dc = UIDocumentInteractionController(url: urls[0])
+        if urlList.count == 1 {
+            print("found only 1 item to share")
+            let dc = UIDocumentInteractionController(url: urlList[0])
             dc.delegate = self
             dc.presentPreview(animated: true)
         }
         else {
-            print("found multiple documents")
-            let ac = UIActivityViewController(activityItems: urls, applicationActivities: nil)
-            present(ac, animated: true, completion: nil)
+            print("found \(urlList.count) items to share")
+//            let ac = UIActivityViewController(activityItems: urlList, applicationActivities: nil)
+//            ac.completionWithItemsHandler = {activityType, completed, returnedItems, activityError in
+//                if completed == false {
+//                    self.showDocumentsPicker()
+//                }
+//            }
+//            present(ac, animated: true, completion: nil)
+            
+            showDocumentsOptionMenu(urls: urlList)
         }
     }
 }

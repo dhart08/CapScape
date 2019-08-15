@@ -27,7 +27,10 @@
 		638FB6B6219E8A2B006112D5 /* GPUImage.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 638FB6AE219E89CE006112D5 /* GPUImage.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6399A94B22D9B90A00F628AA /* SpeechRecognition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6399A94A22D9B90A00F628AA /* SpeechRecognition.swift */; };
 		6399A95022DD2D6A00F628AA /* AudioExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6399A94F22DD2D6A00F628AA /* AudioExtractor.swift */; };
+		6399A95222FA8D4000F628AA /* AngleReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6399A95122FA8D4000F628AA /* AngleReader.swift */; };
+		6399A95422FEDE9A00F628AA /* LicenseValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6399A95322FEDE9A00F628AA /* LicenseValidator.swift */; };
 		639C39CC21AAB7D7008B59E1 /* DirectoryHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */; };
+		63C621312302705300527ECD /* UserSettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C621302302705300527ECD /* UserSettingsModel.swift */; };
 		D2EC7A980A6BA72C8022860A /* Pods_CaptureScape.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10DB3DC9F974EAEA7568C416 /* Pods_CaptureScape.framework */; };
 /* End PBXBuildFile section */
 
@@ -106,7 +109,10 @@
 		638FB6A2219E89CE006112D5 /* GPUImage.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GPUImage.xcodeproj; path = "../../../Downloads/GPUImage2-master/framework/GPUImage.xcodeproj"; sourceTree = "<group>"; };
 		6399A94A22D9B90A00F628AA /* SpeechRecognition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognition.swift; sourceTree = "<group>"; };
 		6399A94F22DD2D6A00F628AA /* AudioExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioExtractor.swift; sourceTree = "<group>"; };
+		6399A95122FA8D4000F628AA /* AngleReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AngleReader.swift; sourceTree = "<group>"; };
+		6399A95322FEDE9A00F628AA /* LicenseValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseValidator.swift; sourceTree = "<group>"; };
 		639C39CB21AAB7D7008B59E1 /* DirectoryHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryHandler.swift; sourceTree = "<group>"; };
+		63C621302302705300527ECD /* UserSettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettingsModel.swift; sourceTree = "<group>"; };
 		D6AA9E94F9651F907E6D8AFA /* Pods-CaptureScape.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CaptureScape.release.xcconfig"; path = "Pods/Target Support Files/Pods-CaptureScape/Pods-CaptureScape.release.xcconfig"; sourceTree = "<group>"; };
 		DA953C9F6D59E7497615E71D /* Pods-CaptureScape.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CaptureScape.debug.xcconfig"; path = "Pods/Target Support Files/Pods-CaptureScape/Pods-CaptureScape.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -176,6 +182,9 @@
 				637DA28122212A35004C67CB /* EXIFDataReaderWriter.swift */,
 				6399A94A22D9B90A00F628AA /* SpeechRecognition.swift */,
 				6399A94F22DD2D6A00F628AA /* AudioExtractor.swift */,
+				6399A95122FA8D4000F628AA /* AngleReader.swift */,
+				6399A95322FEDE9A00F628AA /* LicenseValidator.swift */,
+				63C621302302705300527ECD /* UserSettingsModel.swift */,
 			);
 			path = CaptureScape;
 			sourceTree = "<group>";
@@ -369,6 +378,7 @@
 			files = (
 				6355C70621BF8D0200E5AB55 /* CustomButton.swift in Sources */,
 				63005CEE21E34497007092CA /* DropboxUploader.swift in Sources */,
+				6399A95222FA8D4000F628AA /* AngleReader.swift in Sources */,
 				632FD1772144B37900CFE5EF /* LocationFinder.swift in Sources */,
 				63436C9B214374F3002A6EC6 /* ViewController.swift in Sources */,
 				6357188021BF77E100655BCB /* CameraView.swift in Sources */,
@@ -378,12 +388,14 @@
 				630B6E0821C6949500AE1CBF /* FileListController.swift in Sources */,
 				6357188521BF7C7500655BCB /* MapView.swift in Sources */,
 				637DA28222212A35004C67CB /* EXIFDataReaderWriter.swift in Sources */,
+				6399A95422FEDE9A00F628AA /* LicenseValidator.swift in Sources */,
 				6399A94B22D9B90A00F628AA /* SpeechRecognition.swift in Sources */,
 				63436CA1214374F3002A6EC6 /* CaptureScape.xcdatamodeld in Sources */,
 				6399A95022DD2D6A00F628AA /* AudioExtractor.swift in Sources */,
 				63005CF921E48F77007092CA /* TransferProgressView.swift in Sources */,
 				6354DABF21D5049300D2A72C /* FileViewController.swift in Sources */,
 				633998DA2212CFE8007C14F8 /* KMLFileBuilder.swift in Sources */,
+				63C621312302705300527ECD /* UserSettingsModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -109,38 +109,20 @@
                             <view contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="5yg-yQ-tOy" customClass="CameraView" customModule="CaptureScape" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="20" width="414" height="650"/>
                                 <subviews>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1uZ-F3-HrK">
-                                        <rect key="frame" x="356" y="8" width="50" height="50"/>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1uZ-F3-HrK" userLabel="Tools Button">
+                                        <rect key="frame" x="356" y="592" width="50" height="50"/>
                                         <state key="normal" image="folder_icon"/>
                                         <connections>
-                                            <action selector="filesButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="BY4-l0-wvb"/>
+                                            <action selector="toolsButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ivM-UO-KFb"/>
                                         </connections>
                                     </button>
-                                    <mapView hidden="YES" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="gEl-Np-YiC" customClass="MapView" customModule="CaptureScape" customModuleProvider="target">
-                                        <rect key="frame" x="306" y="542" width="100" height="100"/>
-                                        <gestureRecognizers/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" constant="100" id="MFo-cO-tfh"/>
-                                            <constraint firstAttribute="width" constant="100" id="YMM-O9-YIA"/>
-                                        </constraints>
-                                        <userDefinedRuntimeAttributes>
-                                            <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
-                                                <real key="value" value="10"/>
-                                            </userDefinedRuntimeAttribute>
-                                        </userDefinedRuntimeAttributes>
-                                        <connections>
-                                            <outletCollection property="gestureRecognizers" destination="ku2-4S-ld4" appends="YES" id="4hb-uF-Kdy"/>
-                                        </connections>
-                                    </mapView>
                                 </subviews>
                                 <color key="backgroundColor" red="0.0" green="0.56904578210000001" blue="0.57461684940000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <gestureRecognizers/>
                                 <constraints>
-                                    <constraint firstItem="1uZ-F3-HrK" firstAttribute="top" secondItem="5yg-yQ-tOy" secondAttribute="top" constant="8" id="57j-TH-SUO"/>
+                                    <constraint firstAttribute="bottom" secondItem="1uZ-F3-HrK" secondAttribute="bottom" constant="8" id="IFu-Ej-2HZ"/>
                                     <constraint firstAttribute="width" secondItem="5yg-yQ-tOy" secondAttribute="height" multiplier="375:587" id="L3U-2Z-3nj"/>
                                     <constraint firstAttribute="trailing" secondItem="1uZ-F3-HrK" secondAttribute="trailing" constant="8" id="PqJ-4b-6YN"/>
-                                    <constraint firstItem="gEl-Np-YiC" firstAttribute="trailing" secondItem="1uZ-F3-HrK" secondAttribute="trailing" id="hhy-HQ-6Ur"/>
-                                    <constraint firstAttribute="bottom" secondItem="gEl-Np-YiC" secondAttribute="bottom" constant="8" id="kYA-7x-m4J"/>
                                 </constraints>
                                 <userDefinedRuntimeAttributes>
                                     <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
@@ -189,6 +171,11 @@
                             <constraint firstItem="CAz-PT-Ryt" firstAttribute="bottom" secondItem="oVd-0E-gfQ" secondAttribute="bottom" id="qKM-1t-FK9"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="CAz-PT-Ryt"/>
+                        <variation key="default">
+                            <mask key="subviews">
+                                <exclude reference="oVd-0E-gfQ"/>
+                            </mask>
+                        </variation>
                     </view>
                     <navigationItem key="navigationItem" id="2hr-ih-TQC">
                         <leftBarButtonItems>
@@ -201,12 +188,11 @@
                         <outlet property="appNameImage" destination="FaB-wL-Sl3" id="4Vi-BB-y7G"/>
                         <outlet property="cameraView" destination="5yg-yQ-tOy" id="dIl-uB-tRq"/>
                         <outlet property="controlsContainer" destination="4HJ-Gd-YY2" id="kop-WM-e0Y"/>
-                        <outlet property="filesButton" destination="1uZ-F3-HrK" id="BsR-ZF-0Py"/>
                         <outlet property="landscapeImage" destination="F4O-cf-PA1" id="ysm-OD-NlU"/>
-                        <outlet property="mapView" destination="gEl-Np-YiC" id="23Z-Gq-W4W"/>
                         <outlet property="photoButton" destination="FWt-JQ-kdY" id="cxF-3i-nWS"/>
                         <outlet property="slideshowButton" destination="ESc-Qd-rB9" id="nrw-mr-Gor"/>
                         <outlet property="splashScreenContainer" destination="oVd-0E-gfQ" id="WXK-hE-g8B"/>
+                        <outlet property="toolsButton" destination="1uZ-F3-HrK" id="en3-el-CkK"/>
                         <outlet property="videoButton" destination="Sie-Cp-cW6" id="ecp-Lf-BRO"/>
                         <outlet property="zoomLabel" destination="6Z0-Xg-DEO" id="BFP-L9-05h"/>
                     </connections>
