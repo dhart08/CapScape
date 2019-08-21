@@ -35,7 +35,7 @@ final class AngleReader {
                     self.roll = round(attitude.roll * 180 / Double.pi)
                     self.yaw = round(attitude.yaw * 180 / Double.pi)
                     
-                    print("pitch: ", self.pitch!, "\troll: ", self.roll!, "\tyaw: ", self.yaw!)
+                    print("lpitch: ", self.pitch!, "\troll: ", self.roll!, "\tyaw: ", self.yaw!)
                 }
             })
         }
@@ -56,8 +56,6 @@ final class AngleReader {
                     let x = gyroData.rotationRate.x
                     let y = gyroData.rotationRate.y
                     let z = gyroData.rotationRate.z
-                    
-                    print("x: ", x, "\ty: ", y, "\tz: ", z)
                 }
             })
             

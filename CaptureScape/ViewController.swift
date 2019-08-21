@@ -23,9 +23,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     @IBOutlet weak var videoButton: UIButton!
     @IBOutlet weak var photoButton: UIButton!
     @IBOutlet weak var slideshowButton: CustomButton!
-    //@IBOutlet weak var photoPreview: UIImageView!
     @IBOutlet weak var toolsButton: UIButton!
     @IBOutlet weak var zoomLabel: UILabel!
+    @IBOutlet weak var filenameLabel: UILabel!
     
     @IBOutlet weak var splashScreenContainer: UIView!
     @IBOutlet weak var landscapeImage: UIImageView!
@@ -123,6 +123,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             renderView.fillMode = .stretch
             cameraView.addSubview(renderView)
             //cameraView.bringSubview(toFront: mapView)
+            cameraView.bringSubview(toFront: filenameLabel)
             cameraView.bringSubview(toFront: toolsButton)
 
             cameraOverlayBlendFilter = SourceOverBlend()
@@ -352,6 +353,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.getImagePrefixInput()
         }
         
+        let offOn = userSettingsModel.getAskForImageComment() ? "OFF" : "ON"
+        let imageCommentOption = UIAlertAction(title: "Turn \(offOn) Photo Comment", style: .default) { (_) in
+            
+            let isAskingForImageComment = self.userSettingsModel.getAskForImageComment()
+            self.userSettingsModel.setAskForImageComment(value: !isAskingForImageComment)
+        }
+        
         let objectSizeOption = UIAlertAction(title: "Measure Object Size", style: .default) { (_) in
             self.getObjectSize()
         }
@@ -362,6 +370,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         toolsMenu.addAction(filesOption)
         toolsMenu.addAction(imagePrefixOption)
+        toolsMenu.addAction(imageCommentOption)
         toolsMenu.addAction(objectSizeOption)
         toolsMenu.addAction(cancelOption)
         
@@ -507,8 +516,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         var coordinatesBoxRatio: [String: CGFloat] = ["width": 0.0, "height": 0.0]
         var directionBoxRatio: [String: CGFloat] = ["width": 0.0, "height": 0.0]
-        
-        //print("screen width change: ", UIScreen.main.bounds.width, "     screen height change: ", UIScreen.main.bounds.height)
 
         // check for video currently recording
         var currentOrientation: UIImageOrientation!
@@ -741,17 +748,29 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //let jpg = UIImageJPEGRepresentation(image, 1.0)
             let png = UIImagePNGRepresentation(image)
             
-            try! png?.write(to: fileURL)
+            do {
+                try png?.write(to: fileURL)
+                
+                DispatchQueue.main.async {
+                    self.filenameLabel.text = fileURL.lastPathComponent
+                }
+            }
+            catch let error {
+                self.popupMessage(title: "takePhoto()", message: "Error: \(error)", duration: nil)
+            }
             
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
-            dateFormatter.timeZone = TimeZone.current
-            let fileCreationDate = dateFormatter.string(from: Date())
+            self.getImageComment(completion: { (comment) in
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+                dateFormatter.timeZone = TimeZone.current
+                let fileCreationDate = dateFormatter.string(from: Date())
+                
+                let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: comment)
+                
+                let exifDataRaderWriter = EXIFDataReaderWriter()
+                exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
+            })
             
-            let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: "")
-            
-            let exifDataRaderWriter = EXIFDataReaderWriter()
-            exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
             
             self.pictureOutput = nil
             
@@ -830,16 +849,26 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let cameraViewWidth: CGFloat = cameraView.frame.width
         let cameraViewHeight: CGFloat = cameraView.frame.height
         
+        var filenameLabelFrame: CGRect = filenameLabel.frame
+        let filenameLabelSpacer: CGFloat = 8.0
         var toolsButtonFrame: CGRect = toolsButton.frame
         let toolsButtonSpacer: CGFloat = 8.0
         
         if (orientation == .up) || (orientation == .down){
+            filenameLabelFrame.origin.x = filenameLabelSpacer
+            filenameLabelFrame.origin.y = filenameLabelSpacer
+            
             toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
             toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
             
             rotationAngle = CGFloat(0.0)
         }
         else if orientation == .left {
+            //filenameLabel.center.x = cameraViewWidth - filenameLabelSpacer - (filenameLabel.frame.height / 2)
+            //filenameLabel.center.y = filenameLabelSpacer + (filenameLabel.frame.width / 2)
+            filenameLabelFrame.origin.x = cameraViewWidth - filenameLabelSpacer - (filenameLabelFrame.height / 2) - (filenameLabelFrame.width / 2)
+            filenameLabelFrame.origin.y = filenameLabelSpacer + (filenameLabelFrame.width / 2) - (filenameLabelFrame.height / 2)
+            
             toolsButtonFrame.origin.x = toolsButtonSpacer
             toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
             
@@ -847,6 +876,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
         }
         else if orientation == .right {
+            filenameLabelFrame.origin.x = filenameLabelSpacer
+            filenameLabelFrame.origin.y = cameraViewHeight - filenameLabelSpacer
+            
             toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
             toolsButtonFrame.origin.y = toolsButtonSpacer
             
@@ -854,8 +886,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         UIView.animate(withDuration: 0.25) {
+            self.filenameLabel.frame = filenameLabelFrame
             self.toolsButton.frame = toolsButtonFrame
             
+            //self.filenameLabel.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.toolsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.videoButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.slideshowButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
@@ -990,6 +1024,35 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         present(popupInputMessage, animated: true, completion: nil)
     }
     
+    func getImageComment(completion: @escaping (String) -> Void){
+        
+        if userSettingsModel.getAskForImageComment() {
+            let commentAlert = UIAlertController(title: "Image Comment", message: "Enter a comment for the image:", preferredStyle: .alert)
+            
+            commentAlert.addTextField(configurationHandler: nil)
+            
+            let okAction = UIAlertAction(title: "OK", style: .default) { (alertAction) in
+                if commentAlert.textFields![0].hasText {
+                    let comment = commentAlert.textFields![0].text!
+                    
+                    completion(comment)
+                }
+            }
+            
+            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (alertAction) in
+                completion("")
+            }
+            
+            commentAlert.addAction(okAction)
+            commentAlert.addAction(cancelAction)
+            
+            present(commentAlert, animated: true, completion: nil)
+        }
+        else {
+            completion("")
+        }
+    }
+    
     func getFilename() -> String {
         var filename: String? = userSettingsModel.getImagePrefix()
         
@@ -1020,6 +1083,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let dotButtonFrame = CGRect(x: buttonX, y: buttonY, width: buttonWidth, height: buttonHeight)
         let dotButton: UIButton = UIButton(frame: dotButtonFrame)
         dotButton.backgroundColor = UIColor.red
+        dotButton.alpha = 0.5
+        
         dotButton.layer.cornerRadius = buttonWidth / 2
         dotButton.addTarget(self, action: #selector(getPitch), for: .touchUpInside)
         
@@ -1103,7 +1168,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     print("Distance: ", distance!)
                     print("Height: ", height!)
                     
-                    let objectHeight = (tan((angle * Double.pi / 180)) * distance! + height!)
+                    var objectHeight = (tan((angle * Double.pi / 180)) * distance! + height!)
+                    objectHeight = Double(round(objectHeight * 100))
+                    objectHeight = objectHeight / 100
                     print("objectHeight: ", objectHeight)
                     
                     self.popupMessage(title: "Object Measure", message: "Object height is \(objectHeight) feet.", duration: nil)

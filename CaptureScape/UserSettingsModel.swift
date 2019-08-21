@@ -12,10 +12,12 @@ class UserSettingsModel {
     private var expirationDate: String?
     private var userHeight: Int?
     private var imagePrefix: String?
+    private var askForImageComment: Bool?
     
     private let expirationDateKey = "ExpirationDate"
     private let userHeightKey = "UserHeight"
     private let imagePrefixKey = "ImagePrefix"
+    private let askForImageCommentKey = "AskForImageComment"
     
     init() {
         
@@ -53,5 +55,15 @@ class UserSettingsModel {
     public func setImagePrefix(prefix: String) {
         //UserDefaults.standard.set(prefix, forKey: imagePrefixKey)
         imagePrefix = prefix
+    }
+    
+    public func getAskForImageComment() -> Bool {
+        askForImageComment = UserDefaults.standard.bool(forKey: askForImageCommentKey)
+        
+        return askForImageComment!
+    }
+    
+    public func setAskForImageComment(value: Bool) {
+        UserDefaults.standard.set(value, forKey: askForImageCommentKey)
     }
 }

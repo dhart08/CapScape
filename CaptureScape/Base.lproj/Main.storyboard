@@ -116,11 +116,19 @@
                                             <action selector="toolsButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ivM-UO-KFb"/>
                                         </connections>
                                     </button>
+                                    <label opaque="NO" userInteractionEnabled="NO" alpha="0.75" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HkG-Xs-avY">
+                                        <rect key="frame" x="8" y="8" width="48" height="24"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <color key="textColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
                                 </subviews>
                                 <color key="backgroundColor" red="0.0" green="0.56904578210000001" blue="0.57461684940000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <gestureRecognizers/>
                                 <constraints>
+                                    <constraint firstItem="HkG-Xs-avY" firstAttribute="top" secondItem="5yg-yQ-tOy" secondAttribute="top" constant="8" id="4Bp-gM-PRf"/>
                                     <constraint firstAttribute="bottom" secondItem="1uZ-F3-HrK" secondAttribute="bottom" constant="8" id="IFu-Ej-2HZ"/>
+                                    <constraint firstItem="HkG-Xs-avY" firstAttribute="leading" secondItem="5yg-yQ-tOy" secondAttribute="leading" constant="8" id="It9-IM-KEH"/>
                                     <constraint firstAttribute="width" secondItem="5yg-yQ-tOy" secondAttribute="height" multiplier="375:587" id="L3U-2Z-3nj"/>
                                     <constraint firstAttribute="trailing" secondItem="1uZ-F3-HrK" secondAttribute="trailing" constant="8" id="PqJ-4b-6YN"/>
                                 </constraints>
@@ -188,6 +196,7 @@
                         <outlet property="appNameImage" destination="FaB-wL-Sl3" id="4Vi-BB-y7G"/>
                         <outlet property="cameraView" destination="5yg-yQ-tOy" id="dIl-uB-tRq"/>
                         <outlet property="controlsContainer" destination="4HJ-Gd-YY2" id="kop-WM-e0Y"/>
+                        <outlet property="filenameLabel" destination="HkG-Xs-avY" id="M6m-jX-f5G"/>
                         <outlet property="landscapeImage" destination="F4O-cf-PA1" id="ysm-OD-NlU"/>
                         <outlet property="photoButton" destination="FWt-JQ-kdY" id="cxF-3i-nWS"/>
                         <outlet property="slideshowButton" destination="ESc-Qd-rB9" id="nrw-mr-Gor"/>
