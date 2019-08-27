@@ -74,33 +74,59 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     var userSettingsModel: UserSettingsModel = UserSettingsModel()
     var photoCount: Int = 0
+    
+    var updateCoordinates: Bool = true
+    var currentLatitude: String = ""
+    var currentLongitude: String = ""
 
 // MARK: - ViewController Methods ---------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let licenseValidator = LicenseValidator()
-        if licenseValidator.isLicenseValid() == true {
-            print("License: valid")
-        }
-        else {
-            print("License: invalid")
-            //licenseValidator.validateNewCode(code: "12345678")
-
-            //disable app use
-            view.isHidden = true
-
-            //show lease expiration message
-            DispatchQueue.main.async {
-                let ac = UIAlertController(title: "Expired", message: "Your lease has expired. Contact technical support.", preferredStyle: .alert)
-                self.present(ac, animated: true, completion: nil)
-            }
-
-        }
-
         //animateSplashScreen()
         animateSplashScreen()
+        
+        let licenseValidator = LicenseValidator()
+        if licenseValidator.isCurrentLicenseValid() == false {
+            print("Current License: invalid")
+            
+            //disable app use
+            //view.isHidden = true //makes alert below laggy
+            
+            func askUserLicenseBlock() {
+                DispatchQueue.main.async {
+                    licenseValidator.askUserForLicense(controller: self, message: "Enter serial and key:", completion: { (serial, key) in
+                        
+                        let newLicense = licenseValidator.convertUserInputToLicense(serial: serial, key: key)
+                        if newLicense != nil {
+                            print("New License: ", newLicense!)
+                            
+                            //check if new license is valid
+                            if licenseValidator.isNewLicenseValid(newLicense: newLicense!) == true {
+                                print("New License is valid!")
+                                
+                                self.userSettingsModel.setExpirationDate(date: newLicense!)
+                            }
+                            else {
+                                print("New License is not valid!")
+                                
+                                //restart user input process
+                                askUserLicenseBlock()
+                            }
+                        }
+                        else {
+                            print("Could not convert input to valid license!")
+                            
+                            //restart user input process
+                            askUserLicenseBlock()
+                        }
+                    })
+                }
+            }
+            
+            askUserLicenseBlock()
+        }
         
         NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
@@ -353,11 +379,17 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.getImagePrefixInput()
         }
         
-        let offOn = userSettingsModel.getAskForImageComment() ? "OFF" : "ON"
-        let imageCommentOption = UIAlertAction(title: "Turn \(offOn) Photo Comment", style: .default) { (_) in
+        let offOnComment = userSettingsModel.getAskForImageComment() ? "OFF" : "ON"
+        let imageCommentOption = UIAlertAction(title: "Turn \(offOnComment) Photo Comment", style: .default) { (_) in
             
             let isAskingForImageComment = self.userSettingsModel.getAskForImageComment()
             self.userSettingsModel.setAskForImageComment(value: !isAskingForImageComment)
+        }
+        
+        let onOffCoordinates = (updateCoordinates) ? "OFF": "ON"
+        let updateCoordinatesOption = UIAlertAction(title: "Turn \(onOffCoordinates) Location Updates", style: .default) { (_) in
+            
+            self.updateCoordinates = !self.updateCoordinates
         }
         
         let objectSizeOption = UIAlertAction(title: "Measure Object Size", style: .default) { (_) in
@@ -371,6 +403,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         toolsMenu.addAction(filesOption)
         toolsMenu.addAction(imagePrefixOption)
         toolsMenu.addAction(imageCommentOption)
+        toolsMenu.addAction(updateCoordinatesOption)
         toolsMenu.addAction(objectSizeOption)
         toolsMenu.addAction(cancelOption)
         
@@ -481,9 +514,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             return
         }
         
-        let (dmsLatitude, dmsLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+        //let (dmsLatitude, dmsLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+        if updateCoordinates == true {
+            (currentLatitude, currentLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+        }
         
-        updateCoordinatesOverlay(latitude: NSString(string: dmsLatitude), longitude: NSString(string: dmsLongitude), cardinalDirection: locationFinder.getCardinalDirection())
+        updateCoordinatesOverlay(latitude: NSString(string: currentLatitude), longitude: NSString(string: currentLongitude), cardinalDirection: locationFinder.getCardinalDirection())
         
 //        overlayBlender.removeSourceAtIndex(0)
 //        compassNeedlePictureInput.addTarget(overlayBlender)

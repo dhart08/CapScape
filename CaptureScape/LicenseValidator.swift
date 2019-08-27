@@ -7,35 +7,17 @@
 //
 
 import Foundation
+import UIKit
 
 class LicenseValidator {
     
-    private let expirationDate: String = "09-12-2019" //needs to be one day ahead of expiration day
-    private let dateFormat: String = "MM-dd-yyyy"
+    private let expirationDate: String = "08/26/2019" //needs to be one day ahead of expiration day
+    private let dateFormat: String = "MM/dd/yyyy"
     private let dateFormatter: DateFormatter = DateFormatter()
     
     init() {
         dateFormatter.dateFormat = dateFormat
     }
-    
-    //not used
-//    private func getTodaysDateString() -> String {
-//        let dateFormatter = DateFormatter()
-//        dateFormatter.dateFormat = dateFormat
-//        let date = dateFormatter.string(from: Date())
-//
-//        return date
-//    }
-    
-    //not used
-//    private func getExpirationDate() -> Date {
-//        let dateFormatter = DateFormatter()
-//        dateFormatter.dateFormat = dateFormat
-//
-//        let date = dateFormatter.date(from: expirationDate)
-//
-//        return date!
-//    }
     
     private func getStoredExpirationDate() -> String? {
         let userSettingsModel = UserSettingsModel()
@@ -44,12 +26,12 @@ class LicenseValidator {
         return date
     }
     
-    func isLicenseValid() -> Bool {
+    func isCurrentLicenseValid() -> Bool {
         var result: Bool = false
         
         // CHANGE THIS TO GET STORED DATE ON PHONE !!!!!!!!!!!!!!!!!!!!!!!!
-        //let storedDate = getStoredExpirationDate()
-        let storedDate: String? = expirationDate
+        let storedDate = getStoredExpirationDate()
+        //let storedDate: String? = expirationDate
         
         if storedDate != nil {
             let now = Date()
@@ -67,27 +49,130 @@ class LicenseValidator {
         return result
     }
     
-//    func validateNewCode(code: String) -> Bool {
-//        let keyString = "46758131"
-//        let codeString = "45258320"
-//
-//        let keyBytes = [UInt8](keyString.utf8)
-//        let codeBytes = [UInt8](codeString.utf8)
-//
-//        print("keyBytes: ", keyBytes)
-//        print("codeBytes: ", codeBytes)
-//
-//        var outputBytes = [UInt8]()
-//        var byteIndex = 0
-//        for _ in keyBytes {
-//            let keyByte = keyBytes[byteIndex]
-//            outputBytes.append(keyBytes[byteIndex] ^ codeBytes[byteIndex])
-//            byteIndex += 1
-//        }
-//
-//        print("outputBytes: ", outputBytes)
-//
-//        return true
-//    }
+    func askUserForLicense(controller: UIViewController, message: String, completion: @escaping (String, String) -> Void) {
+        let alert = UIAlertController(title: "License", message: message, preferredStyle: .alert)
+        
+        alert.addTextField(configurationHandler: nil)
+        alert.textFields![0].placeholder = "Serial"
+        alert.addTextField(configurationHandler: nil)
+        alert.textFields![1].placeholder = "Key"
+        
+        let okButton = UIAlertAction(title: "OK", style: .default) { (_) in
+            let serial = alert.textFields![0].text
+            let key = alert.textFields![1].text
+            
+            completion(serial!, key!)
+        }
+        
+        alert.addAction(okButton)
+        
+        controller.present(alert, animated: true, completion: nil)
+    }
     
+    func convertUserInputToLicense(serial: String, key: String) -> String? {
+        
+        if serial == "" { return nil }
+        else if key == "" { return nil }
+        
+        //convert serial/key from ascii/hex to UInt8 arrays
+        let serialByteArray = serial.asciiToUInt8()
+        let keyByteArray = key.hexToUInt8()
+        
+        //make sure both arrays are same size
+        if serialByteArray.count != keyByteArray?.count {
+            print("ERROR converUserInputToLicense(): serial/key arrays not same size")
+            return nil
+        }
+        
+        //xor serial/key byte arrays into one array
+        var xoredByteArray: [UInt8] = []
+        for index in 0..<serial.count {
+            let xored = serialByteArray[index] ^ keyByteArray![index]
+            xoredByteArray.append(xored)
+        }
+        
+        //convert xored byte array into string
+        let xoredString = String(bytes: xoredByteArray, encoding: .utf8)?.trimmingCharacters(in: [" "])
+        
+        return xoredString
+    }
+    
+    func isNewLicenseValid(newLicense: String) -> Bool {
+        var result: Bool = false
+        
+        let storedLicense = getStoredExpirationDate()
+        
+        print("old license: ", storedLicense!)
+        print("new license: ", newLicense)
+        
+        if storedLicense != nil {
+            let new = dateFormatter.date(from: newLicense)!
+            let old = dateFormatter.date(from: storedLicense!)!
+            
+            if old < new {
+                result = true
+            }
+        }
+        
+        return result
+    }
+}
+    
+extension String {
+    func asciiToUInt8() -> [UInt8] {
+        
+        let formattedString = self.trimmingCharacters(in: [" "])
+        
+        let byteArray = formattedString.utf8.map { (codeUnit) -> UInt8 in
+            return UInt8(codeUnit)
+        }
+        
+        return byteArray
+    }
+    
+    func hexToUInt8() -> [UInt8]? {
+        
+        let formattedString = self.lowercased().trimmingCharacters(in: [" "])
+        
+        //check for even number of hex nibbles
+        if self.count % 2 == 1 {
+            print("ERROR hexToUInt8(): Uneven number of hex characters.")
+            return nil
+        }
+        
+        //check for invalid hex characters
+        let regex = try! NSRegularExpression(pattern: "[^A-Fa-f0-9]")
+        let range = NSRange(location: 0, length: self.utf16.count)
+        if regex.firstMatch(in: self, options: [], range: range) != nil {
+            print("ERROR hexToUInt8(): Invalid Hex Character")
+            return nil
+        }
+        
+        //convert each hex character to its respective hex value
+        let nibbleArray = formattedString.map { (character) -> UInt8 in
+            UInt8(strtoul(String(character), nil, 16))
+        }
+        
+        //print("hexNibbleArray: ", nibbleArray)
+        
+        var byteArray: [UInt8] = []
+        for index in stride(from: 0, to: nibbleArray.count, by: 2) {
+            
+            let value1 = nibbleArray[index] * 16
+            let value2 = nibbleArray[index + 1]
+            
+            byteArray.append(value1 + value2)
+        }
+        
+        //print("hexByteArray: ", byteArray)
+        
+        return byteArray
+    }
+    
+    func hasNonAlphanumericCharacters() -> Bool {
+        
+        var result = false
+        
+        return result
+    }
 }

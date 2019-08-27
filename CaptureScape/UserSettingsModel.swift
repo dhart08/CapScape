@@ -24,14 +24,17 @@ class UserSettingsModel {
     }
     
     public func getExpirationDate() -> String? {
+        print("getExpirationDate()")
         if expirationDate == nil {
-            expirationDate = UserDefaults.value(forKey: expirationDateKey) as? String
+            expirationDate = UserDefaults.standard.string(forKey: expirationDateKey) // <--- never stored one in the first place
         }
         
+        print("end of getExpirationDate()")
         return expirationDate
     }
     
     public func setExpirationDate(date: String) {
+        print("setExpirationDate()")
         UserDefaults.standard.set(date, forKey: expirationDateKey)
     }
     
