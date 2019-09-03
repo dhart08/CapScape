@@ -1118,7 +1118,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let buttonY = CGFloat((UIScreen.main.bounds.height - buttonHeight) / 2)
         let dotButtonFrame = CGRect(x: buttonX, y: buttonY, width: buttonWidth, height: buttonHeight)
         let dotButton: UIButton = UIButton(frame: dotButtonFrame)
-        dotButton.backgroundColor = UIColor.red
+        dotButton.backgroundColor = UIColor.green
         dotButton.alpha = 0.5
         
         dotButton.layer.cornerRadius = buttonWidth / 2
@@ -1130,95 +1130,158 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let timer = Timer(timeInterval: 0.25, repeats: true) { (timer) in
             // during first pitch retrieval, make sure phone is at horizontal level
             //self.view.bringSubview(toFront: dotButton)
-            if (self.angleReader.pitch1 == nil) {
-                let currentPitch = self.angleReader.getCurrentPitch()
-                
-                if currentPitch > 87.5 {
-                    dotButton.backgroundColor = UIColor.green
-                }
-                else {
-                    dotButton.backgroundColor = UIColor.red
-                }
+//            if (self.angleReader.pitch1 == nil) {
+//                let currentPitch = self.angleReader.getCurrentPitch()
+//
+//                if currentPitch > 87.5 {
+//                    dotButton.backgroundColor = UIColor.green
+//                }
+//                else {
+//                    dotButton.backgroundColor = UIColor.red
+//                }
+//            }
+//                // during second pitch retrieval, make sure phone doesn't go past zenith
+//            else if (self.angleReader.pitch2 == nil) {
+//                let currentPitch = self.angleReader.getCurrentPitch()
+//
+//                if currentPitch < 0.0 {
+//                    dotButton.backgroundColor = UIColor.red
+//                }
+//                else {
+//                    dotButton.backgroundColor = UIColor.green
+//                }
+//            }
+//            // after second pitch retrieval, remove button and get object height
+//            else {
+//                self.angleReader.clearPitches()
+//                print("removing button from superView!")
+//                dotButton.removeFromSuperview()
+//                print("killing timer!")
+//                timer.invalidate()
+//            }
+            
+            if (self.angleReader.getCurrentPitch() < 0) {
+                dotButton.backgroundColor = UIColor.red
+                dotButton.isEnabled = false
             }
-                // during second pitch retrieval, make sure phone doesn't go past zenith
-            else if (self.angleReader.pitch2 == nil) {
-                let currentPitch = self.angleReader.getCurrentPitch()
-                
-                if currentPitch < 0.0 {
-                    dotButton.backgroundColor = UIColor.red
-                }
-                else {
-                    dotButton.backgroundColor = UIColor.green
-                }
-            }
-            // after second pitch retrieval, remove button and get object height
             else {
-                self.angleReader.clearPitches()
-                print("removing button from superView!")
+                dotButton.backgroundColor = UIColor.green
+                dotButton.isEnabled = true
+            }
+            
+            if self.angleReader.angle2 != nil {
                 dotButton.removeFromSuperview()
-                print("killing timer!")
                 timer.invalidate()
             }
         }
         
         RunLoop.current.add(timer, forMode: .defaultRunLoopMode)
         
-        popupMessage(title: "Object Measure", message: "Hold phone at eye level and rotate it until the button in the middle turns green, then press the button.", duration: nil)
+        //popupMessage(title: "Object Measure", message: "Hold phone at eye level and rotate it until the button in the middle turns green, then press the button.", duration: nil)
+        
+        popupMessage(title: "Object Height", message: "Point the green dot at the base of the object and then tap it.", duration: nil)
         
     }
     
     @objc func getPitch() {
-        let currentPitch = angleReader.getCurrentPitch()
+//        let currentPitch = angleReader.getCurrentPitch()
+//
+//        if angleReader.pitch1 == nil {
+//            if currentPitch > 87.5 {
+//                angleReader.pitch1 = angleReader.getCurrentPitch()
+//                popupMessage(title: "Object Measure", message: "First pitch: \(currentPitch)\nNow center the button at the top of the object and press it once it's green.", duration: nil)
+//            }
+//        }
+//        else {
+//            if currentPitch > 0.0 {
+//                angleReader.pitch2 = angleReader.getCurrentPitch()
+//                print("pitch2: ", currentPitch)
+//
+//                let angle = angleReader.pitch1! - angleReader.pitch2!
+//
+//                print("angle: ", angle)
+//
+//                angleReader.stopTrackingDeviceMotion()
+//                //angleReader.clearPitches()
+//
+//                //popupMessage(title: "Object Measure", message: "Got second pitch: \(currentPitch)", duration: nil)
+//
+//
+//                let getDistanceAlert = UIAlertController(title: "Object Measure", message: "Enter your height and distance to the object.", preferredStyle: .alert)
+//                getDistanceAlert.addTextField()
+//                getDistanceAlert.textFields![0].placeholder = "Height"
+//                getDistanceAlert.addTextField()
+//                getDistanceAlert.textFields![1].placeholder = "Distance"
+//
+//                let okButton = UIAlertAction(title: "OK", style: .default) { (_) in
+//                    let height = Double(getDistanceAlert.textFields![0].text!)
+//                    let distance = Double(getDistanceAlert.textFields![1].text!)
+//
+//                    print("Distance: ", distance!)
+//                    print("Height: ", height!)
+//
+//                    var objectHeight = (tan(angle * Double.pi / 180) * distance! + height!)
+//                    objectHeight = Double(round(objectHeight * 100))
+//                    objectHeight = objectHeight / 100
+//                    print("objectHeight: ", objectHeight)
+//
+//                    self.popupMessage(title: "Object Measure", message: "Object height is \(objectHeight) feet.", duration: nil)
+//
+//                }
+//
+//                getDistanceAlert.addAction(okButton)
+//
+//                present(getDistanceAlert, animated: true, completion: nil)
+//
+//                //popupMessage(title: "Object Measure", message: "Angle: \(angle)", duration: nil)
+//            }
+//        }
         
-        if angleReader.pitch1 == nil {
-            if currentPitch > 87.5 {
-                angleReader.pitch1 = angleReader.getCurrentPitch()
-                popupMessage(title: "Object Measure", message: "First pitch: \(currentPitch)\nNow center the button at the top of the object and press it once it's green.", duration: nil)
-            }
+        if angleReader.angle1 == nil {
+            angleReader.angle1 = angleReader.getCurrentAngle()
+            //print("Angle1 -----> \t\t pitch: \(angleReader.angle1?.pitch) \t\tgravity: \(angleReader.angle1?.gravity)") //////////////
+            
+            popupMessage(title: "Object Height", message: "Point the dot at the top of the object and then tap it.", duration: nil)
         }
-        else {
-            if currentPitch > 0.0 {
-                angleReader.pitch2 = angleReader.getCurrentPitch()
-                print("pitch2: ", currentPitch)
+        else if angleReader.angle2 == nil {
+            angleReader.angle2 = angleReader.getCurrentAngle()
+            //print("Angle1 -----> \t\t pitch: \(angleReader.angle2?.pitch) \t\tgravity: \(angleReader.angle2?.gravity)") //////////////
+            
+            let distanceAlert = UIAlertController(title: "Object Height", message: "Enter your distance in feet from the object. (ex: 10 or 2.5)", preferredStyle: .alert)
+            
+            distanceAlert.addTextField(configurationHandler: nil)
+            
+            let okbutton = UIAlertAction(title: "OK", style: .default) { (_) in
+                let distanceText = distanceAlert.textFields![0].text
                 
-                let angle = angleReader.pitch1! - angleReader.pitch2!
+//                let regex = try! NSRegularExpression(pattern: "[^0-9.]")
+//                let range = NSRange(location: 0, length: distanceText!.count)
+//                if regex.firstMatch(in: distanceText!, options: [], range: range) != nil {
+//                    self.popupMessage(title: "Object Height", message: "Invalid object height.", duration: nil)
+//
+//                    self.angleReader.stopTrackingDeviceMotion()
+//                    self.angleReader.clearAngles()
+//
+//                    return
+//                }
                 
-                print("angle: ", angle)
-                
-                angleReader.stopTrackingDeviceMotion()
-                //angleReader.clearPitches()
-                
-                //popupMessage(title: "Object Measure", message: "Got second pitch: \(currentPitch)", duration: nil)
-                
-                
-                let getDistanceAlert = UIAlertController(title: "Object Measure", message: "Enter your height and distance to the object.", preferredStyle: .alert)
-                getDistanceAlert.addTextField()
-                getDistanceAlert.textFields![0].placeholder = "Height"
-                getDistanceAlert.addTextField()
-                getDistanceAlert.textFields![1].placeholder = "Distance"
-                
-                let okButton = UIAlertAction(title: "OK", style: .default) { (_) in
-                    let height = Double(getDistanceAlert.textFields![0].text!)
-                    let distance = Double(getDistanceAlert.textFields![1].text!)
+                let distance: Double? = Double(distanceText!)
+                if distance == nil {
+                    self.popupMessage(title: "Object Height", message: "Error: Invalid distance", duration: nil)
+                }
+                else {
+                    var height = self.angleReader.getHeightFromAngles(a1: self.angleReader.angle1!, a2: self.angleReader.angle2!, distance: distance!)
+                    height = round(height * 100) / 100
                     
-                    print("Distance: ", distance!)
-                    print("Height: ", height!)
-                    
-                    var objectHeight = (tan((angle * Double.pi / 180)) * distance! + height!)
-                    objectHeight = Double(round(objectHeight * 100))
-                    objectHeight = objectHeight / 100
-                    print("objectHeight: ", objectHeight)
-                    
-                    self.popupMessage(title: "Object Measure", message: "Object height is \(objectHeight) feet.", duration: nil)
-                    
+                    self.popupMessage(title: "Object Height", message: "Object Height: \(height) ft.", duration: nil)
                 }
                 
-                getDistanceAlert.addAction(okButton)
-                
-                present(getDistanceAlert, animated: true, completion: nil)
-                
-                //popupMessage(title: "Object Measure", message: "Angle: \(angle)", duration: nil)
+                self.angleReader.stopTrackingDeviceMotion()
+                self.angleReader.clearAngles()
             }
+            
+            distanceAlert.addAction(okbutton)
+            present(distanceAlert, animated: true, completion: nil)
         }
     }
 }
