@@ -11,12 +11,12 @@ import CoreMotion
 
 struct Angle {
     var pitch: Double! = 0
-    var gravity: Double! = 0
-    
-    init(pitch: Double, gravity: Double) {
-        self.pitch = pitch
-        self.gravity = gravity
-    }
+    var roll: Double! = 0
+    var yaw: Double! = 0
+    var gravityX: Double! = 0
+    var gravityY: Double! = 0
+    var gravityZ: Double! = 0
+    var heading: Double! = 0
     
     func getAngle() -> Double {
         let angle = 90.0 - pitch
@@ -41,10 +41,10 @@ final class AngleReader {
     private var pitch: Double! = 0
     private var roll: Double! = 0
     private var yaw: Double! = 0
+    private var gravityX: Double! = 0
+    private var gravityY: Double! = 0
     private var gravityZ: Double! = 0
     
-    //var pitch1: Double?
-    //var pitch2: Double?
     var angle1: Angle?
     var angle2: Angle?
     
@@ -59,8 +59,10 @@ final class AngleReader {
             motionManager?.startDeviceMotionUpdates(to: OperationQueue(), withHandler: { (motion, error) in
                 
                 if let gravity: CMAcceleration = motion?.gravity {
+                    self.gravityX = round(gravity.x * 1000)
+                    self.gravityY = round(gravity.y * 1000)
                     self.gravityZ = round(gravity.z * 1000)
-                    //print("gravityZ: ", self.gravityZ)
+                    //print("gravityX: ", self.gravityX!, "\t\tgravityY: ", self.gravityY!, "\t\tgravityZ: ", self.gravityZ!)
                 }
                 
                 if let attitude: CMAttitude = motion?.attitude {
@@ -108,14 +110,6 @@ final class AngleReader {
 //        }
 //    }
     
-    func getCurrentPitch() -> Double {
-        return pitch
-    }
-    
-    func getCurrentGravityZ() -> Double {
-        return gravityZ
-    }
-    
 //    func getHeightFromPitches(angle1: Angle, angle2: Angle) -> Double? {
 //        if (angle1.pitch == nil) || (angle2.pitch == nil) {
 //            return nil
@@ -131,8 +125,40 @@ final class AngleReader {
 //        pitch2 = nil
 //    }
     
-    func getCurrentAngle() -> Angle {
-        let angle: Angle = Angle(pitch: self.pitch, gravity: self.gravityZ)
+    
+    func getCurrentPitch() -> Double {
+        return pitch
+    }
+    
+    func getCurrentRoll() -> Double {
+        return roll
+    }
+    
+    func getCurrentYaw() -> Double {
+        return yaw
+    }
+    
+    func getCurrentGravityX() -> Double {
+        return gravityX
+    }
+    
+    func getCurrentGravityY() -> Double {
+        return gravityY
+    }
+    
+    func getCurrentGravityZ() -> Double {
+        return gravityZ
+    }
+    
+    func getCurrentAngle(heading: Double = 0) -> Angle {
+        var angle: Angle = Angle()
+        angle.pitch = pitch
+        angle.roll = roll
+        angle.yaw = yaw
+        angle.gravityX = gravityX
+        angle.gravityY = gravityY
+        angle.gravityZ = gravityZ
+        angle.heading = heading
         
         return angle
     }
@@ -142,24 +168,40 @@ final class AngleReader {
         angle2 = nil
     }
     
-    func getHeightFromAngles(a1: Angle, a2: Angle, distance: Double) -> Double {
-        let height1 = a1.getHeight(distance: distance)
-        let height2 = a2.getHeight(distance: distance)
-        var totalHeight = 0.0
+    func getHeightFromAngles(angle1: Angle, angle2: Angle, distance: Double) -> Double {
+        let height1 = angle1.getHeight(distance: distance) * angle1.gravityZ / abs(angle1.gravityZ)
+        let height2 = angle2.getHeight(distance: distance) * angle2.gravityZ / abs(angle2.gravityZ)
         
-        if (a1.gravity < 0) && (a2.gravity < 0) {
-            // subtract a2.height from a1.height
-            totalHeight = height1 - height2
-        }
-        else if (a1.gravity < 0) && (a2.gravity > 0) {
-            //add both heights together
-            totalHeight = height1 + height2
-        }
-        else {
-            //subtract a1.height from a2.height
-            totalHeight = height2 - height1
-        }
+//        if (angle1.gravityZ < 0) && (angle2.gravityZ < 0) {
+//            // subtract a2.height from a1.height
+//            totalHeight = height1 - height2
+//        }
+//        else if (angle1.gravityZ < 0) && (angle2.gravityZ > 0) {
+//            //add both heights together
+//            totalHeight = height1 + height2
+//        }
+//        else {
+//            //subtract angle1.height from angle2.height
+//            totalHeight = height2 - height1
+//        }
+        
+        var totalHeight = 0.0
+        totalHeight = abs(height1 - height2)
         
         return totalHeight
+    }
+    
+    func getWidthFromAngles(angle1: Angle, angle2: Angle, distance: Double) -> Double {
+        print("Heading1: ", angle1.heading, "\t\tHeading2: ", angle2.heading)
+        
+        var angle = abs(angle1.heading - angle2.heading)
+        if angle > 180.0 {
+            angle = 360.0 - angle
+        }
+        
+        let midAngle = angle / 2.0
+        let width = (tan(midAngle * Double.pi / 180.0) * distance) * 2.0
+        
+        return width
     }
 }

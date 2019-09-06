@@ -128,9 +128,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             askUserLicenseBlock()
         }
         
-        NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
+        //NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
         locationFinder = LocationFinder()
+        locationFinder.locationUpdateCallbacks.append {
+            self.locationChange()
+        }
+        locationFinder.headingUpdateCallbacks.append {
+            self.locationChange()
+        }
         locationFinder.requestAuthorization()
         
         angleReader = AngleReader()
@@ -528,9 +534,22 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         chromaFilter.removeSourceAtIndex(0)
         coordinatesOverlay.addTarget(chromaFilter)
         coordinatesOverlay.processImage()
+    }
+    
+    func locationChange() {
+        if locationFinder!.latitude == nil || locationFinder.longitude == nil {
+            return
+        }
         
+        if updateCoordinates == true {
+            (currentLatitude, currentLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+        }
         
-        //updateMap()
+        updateCoordinatesOverlay(latitude: NSString(string: currentLatitude), longitude: NSString(string: currentLongitude), cardinalDirection: locationFinder.getCardinalDirection())
+
+        chromaFilter.removeSourceAtIndex(0)
+        coordinatesOverlay.addTarget(chromaFilter)
+        coordinatesOverlay.processImage()
     }
     
 // MARK: - UI Updating -----------------------------------------------------------
@@ -565,11 +584,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         // set landscape mode overlay sizes/ratios
         if (currentOrientation == UIImageOrientation.left) || (currentOrientation == UIImageOrientation.right) {
             if currentOrientation == UIImageOrientation.left {
-                print("overlayOrigin on left")
                 overlayOrigin = CGPoint(x: screenWidth, y: 0)
             }
             else if currentOrientation == UIImageOrientation.right {
-                print("overlayOrigin on right")
                 overlayOrigin = CGPoint(x: 0, y: screenHeight)
             }
 
@@ -579,8 +596,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             coordinatesBoxRatio["width"] = 0.32
             coordinatesBoxRatio["height"] = 0.25
             
-            directionBoxRatio["width"] = 0.125
-            directionBoxRatio["height"] = 0.15
+            //directionBoxRatio["width"] = 0.125
+            //directionBoxRatio["height"] = 0.15
 
             overlayRotation = (currentOrientation == UIImageOrientation.left) ? leftRotationAngle : rightRotationAngle
         }
@@ -594,8 +611,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             coordinatesBoxRatio["width"] = 0.55
             coordinatesBoxRatio["height"] = 0.15
             
-            directionBoxRatio["width"] = 0.20
-            directionBoxRatio["height"] = 0.075
+            //directionBoxRatio["width"] = 0.20
+            //directionBoxRatio["height"] = 0.075
         }
         
         UIGraphicsBeginImageContext(UIScreen.main.bounds.size)
@@ -620,9 +637,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         context.closePath()
         context.fillPath()
         
+        let font = "Helvetica" // used to be "Futura"
         //set font for on-screen coordinates stamp
         let coordinateFontAttrs = [
-            NSAttributedString.Key.font: UIFont(name: "Futura", size: 22),
+            NSAttributedString.Key.font: UIFont(name: font, size: 22),
             NSAttributedString.Key.foregroundColor: UIColor.white
         ]
         //draw coordinates on bitmap
@@ -637,7 +655,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         // set font for on-screen timestamp
         let timestampFontAttrs = [
-            NSAttributedString.Key.font: UIFont(name: "Futura", size: 16),
+            NSAttributedString.Key.font: UIFont(name: font, size: 16),
             NSAttributedString.Key.foregroundColor: UIColor.white
         ]
         // draw timestamp on bitmap
@@ -1013,7 +1031,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let popupInputMessage = UIAlertController(title: "Enter new Photo Prefix", message: nil, preferredStyle: .alert)
         
         popupInputMessage.addTextField { (textField) in
-            textField.text = ""
+            textField.text = self.userSettingsModel.getImagePrefix()
         }
         
         let okButton = UIAlertAction(title: "OK", style: .default) { (_) in
@@ -1112,12 +1130,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         angleReader.startTrackingDeviceMotion()
         
-        let buttonWidth = CGFloat(30)
-        let buttonHeight  = CGFloat(30)
+        let buttonWidth = CGFloat(50)
+        let buttonHeight  = CGFloat(50)
         let buttonX = CGFloat((UIScreen.main.bounds.width - buttonWidth) / 2)
         let buttonY = CGFloat((UIScreen.main.bounds.height - buttonHeight) / 2)
         let dotButtonFrame = CGRect(x: buttonX, y: buttonY, width: buttonWidth, height: buttonHeight)
         let dotButton: UIButton = UIButton(frame: dotButtonFrame)
+        dotButton.setTitle("+", for: .normal)
         dotButton.backgroundColor = UIColor.green
         dotButton.alpha = 0.5
         
@@ -1128,44 +1147,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         view.bringSubview(toFront: dotButton)
         
         let timer = Timer(timeInterval: 0.25, repeats: true) { (timer) in
-            // during first pitch retrieval, make sure phone is at horizontal level
-            //self.view.bringSubview(toFront: dotButton)
-//            if (self.angleReader.pitch1 == nil) {
-//                let currentPitch = self.angleReader.getCurrentPitch()
-//
-//                if currentPitch > 87.5 {
-//                    dotButton.backgroundColor = UIColor.green
-//                }
-//                else {
-//                    dotButton.backgroundColor = UIColor.red
-//                }
-//            }
-//                // during second pitch retrieval, make sure phone doesn't go past zenith
-//            else if (self.angleReader.pitch2 == nil) {
-//                let currentPitch = self.angleReader.getCurrentPitch()
-//
-//                if currentPitch < 0.0 {
-//                    dotButton.backgroundColor = UIColor.red
-//                }
-//                else {
-//                    dotButton.backgroundColor = UIColor.green
-//                }
-//            }
-//            // after second pitch retrieval, remove button and get object height
-//            else {
-//                self.angleReader.clearPitches()
-//                print("removing button from superView!")
-//                dotButton.removeFromSuperview()
-//                print("killing timer!")
-//                timer.invalidate()
-//            }
-            
             if (self.angleReader.getCurrentPitch() < 0) {
                 dotButton.backgroundColor = UIColor.red
                 dotButton.isEnabled = false
             }
             else {
-                dotButton.backgroundColor = UIColor.green
+                dotButton.backgroundColor = (self.angleReader.angle1 == nil) ? UIColor.green : UIColor.blue
                 dotButton.isEnabled = true
             }
             
@@ -1179,7 +1166,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         //popupMessage(title: "Object Measure", message: "Hold phone at eye level and rotate it until the button in the middle turns green, then press the button.", duration: nil)
         
-        popupMessage(title: "Object Height", message: "Point the green dot at the base of the object and then tap it.", duration: nil)
+        popupMessage(title: "Object Measure", message: "1. Point the green button at the bottom left corner of the object and then tap it.\n2. When the button is blue, point the button at the top right corner of the object and then tap it.", duration: nil)
         
     }
     
@@ -1238,16 +1225,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //        }
         
         if angleReader.angle1 == nil {
-            angleReader.angle1 = angleReader.getCurrentAngle()
+            angleReader.angle1 = angleReader.getCurrentAngle(heading: locationFinder.heading)
             //print("Angle1 -----> \t\t pitch: \(angleReader.angle1?.pitch) \t\tgravity: \(angleReader.angle1?.gravity)") //////////////
             
-            popupMessage(title: "Object Height", message: "Point the dot at the top of the object and then tap it.", duration: nil)
+            //popupMessage(title: "Object Height", message: "Point the dot at the top of the object and then tap it.", duration: nil)
         }
         else if angleReader.angle2 == nil {
-            angleReader.angle2 = angleReader.getCurrentAngle()
+            angleReader.angle2 = angleReader.getCurrentAngle(heading: locationFinder.heading)
             //print("Angle1 -----> \t\t pitch: \(angleReader.angle2?.pitch) \t\tgravity: \(angleReader.angle2?.gravity)") //////////////
             
-            let distanceAlert = UIAlertController(title: "Object Height", message: "Enter your distance in feet from the object. (ex: 10 or 2.5)", preferredStyle: .alert)
+            let distanceAlert = UIAlertController(title: "Object Measure", message: "Enter your distance in feet from the object. (ex: 10 or 2.5)", preferredStyle: .alert)
             
             distanceAlert.addTextField(configurationHandler: nil)
             
@@ -1267,20 +1254,28 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 let distance: Double? = Double(distanceText!)
                 if distance == nil {
-                    self.popupMessage(title: "Object Height", message: "Error: Invalid distance", duration: nil)
+                    self.popupMessage(title: "Object Measure", message: "Error: Invalid distance", duration: nil)
                 }
                 else {
-                    var height = self.angleReader.getHeightFromAngles(a1: self.angleReader.angle1!, a2: self.angleReader.angle2!, distance: distance!)
+                    var height = self.angleReader.getHeightFromAngles(angle1: self.angleReader.angle1!, angle2: self.angleReader.angle2!, distance: distance!)
+                    var width = self.angleReader.getWidthFromAngles(angle1: self.angleReader.angle1!, angle2: self.angleReader.angle2!, distance: distance!)
                     height = round(height * 100) / 100
+                    width = round(width * 100) / 100
                     
-                    self.popupMessage(title: "Object Height", message: "Object Height: \(height) ft.", duration: nil)
+                    self.popupMessage(title: "Object Measure", message: "Approx. Height: \(height) ft.\n Approx. Width: \(width) ft.", duration: nil)
                 }
                 
                 self.angleReader.stopTrackingDeviceMotion()
                 self.angleReader.clearAngles()
             }
             
+            let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
+                self.angleReader.stopTrackingDeviceMotion()
+                self.angleReader.clearAngles()
+            }
+            
             distanceAlert.addAction(okbutton)
+            distanceAlert.addAction(cancelButton)
             present(distanceAlert, animated: true, completion: nil)
         }
     }
