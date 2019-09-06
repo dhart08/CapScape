@@ -16,20 +16,21 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     var longitude: Double!
     var heading: Double! = 0
     
+    var locationUpdateCallbacks: [() -> ()] = []
+    var headingUpdateCallbacks: [() -> ()] = []
+    
     override init() {
         super.init()
         
         locationManager = CLLocationManager()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        
-        print("LocationFinder:init")
     }
     
     func requestAuthorization() {
         locationManager.requestWhenInUseAuthorization()
         
-        print("LocationFinder:requestAuthorization")
+        //print("LocationFinder:requestAuthorization")
     }
     
     func startFindingLocation() {
@@ -38,14 +39,14 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
             locationManager.startUpdatingHeading()
         }
         
-        print("LocationFinder:startFindingLocation")
+        //print("LocationFinder:startFindingLocation")
     }
     
     func stopFindingLocation() {
         locationManager.stopUpdatingLocation()
         locationManager.stopUpdatingHeading()
         
-        print("LocationFinder:stopFindingLocation")
+        //print("LocationFinder:stopFindingLocation")
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -54,7 +55,11 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         latitude = location.coordinate.latitude
         longitude = location.coordinate.longitude
         
-        NotificationCenter.default.post(name: .didReceiveCoordinates, object: nil, userInfo: nil)
+        //NotificationCenter.default.post(name: .didReceiveCoordinates, object: nil, userInfo: nil)
+        
+        for callback in locationUpdateCallbacks {
+            callback()
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
@@ -70,6 +75,10 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         }
         
         heading = tempHeading
+        
+        for callback in headingUpdateCallbacks {
+            callback()
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
