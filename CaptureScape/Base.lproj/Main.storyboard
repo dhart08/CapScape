@@ -25,7 +25,7 @@
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="Sie-Cp-cW6" secondAttribute="height" multiplier="1:1" id="hyD-pH-VTP"/>
                                         </constraints>
-                                        <state key="normal" image="video_start">
+                                        <state key="normal" image="Video">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </state>
                                         <connections>
@@ -37,7 +37,7 @@
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="ESc-Qd-rB9" secondAttribute="height" multiplier="1:1" id="o2b-Bp-Y67"/>
                                         </constraints>
-                                        <state key="normal" image="audio_start"/>
+                                        <state key="normal" image="slideshow"/>
                                         <connections>
                                             <action selector="slideshowButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="30J-fp-K4P"/>
                                         </connections>
@@ -47,7 +47,7 @@
                                         <constraints>
                                             <constraint firstAttribute="width" secondItem="FWt-JQ-kdY" secondAttribute="height" multiplier="1:1" id="QNr-u8-7hh"/>
                                         </constraints>
-                                        <state key="normal" image="photo_start">
+                                        <state key="normal" image="Photo">
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </state>
                                         <connections>
@@ -84,6 +84,7 @@
                                         <color key="backgroundColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     </view>
                                 </subviews>
+                                <color key="backgroundColor" red="0.1215686277" green="0.1294117719" blue="0.1411764771" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
                                     <constraint firstItem="FWt-JQ-kdY" firstAttribute="height" secondItem="Sie-Cp-cW6" secondAttribute="height" id="2bb-iy-jz8"/>
                                     <constraint firstItem="vQO-lA-TW8" firstAttribute="leading" secondItem="4HJ-Gd-YY2" secondAttribute="leading" id="4zY-jJ-qX1"/>
@@ -110,8 +111,12 @@
                                 <rect key="frame" x="0.0" y="20" width="414" height="650"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1uZ-F3-HrK" userLabel="Tools Button">
-                                        <rect key="frame" x="356" y="592" width="50" height="50"/>
-                                        <state key="normal" image="folder_icon"/>
+                                        <rect key="frame" x="336" y="572" width="70" height="70"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="70" id="1In-vt-yGT"/>
+                                            <constraint firstAttribute="width" constant="70" id="g5a-0n-kxr"/>
+                                        </constraints>
+                                        <state key="normal" image="Toolbox"/>
                                         <connections>
                                             <action selector="toolsButtonClick:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ivM-UO-KFb"/>
                                         </connections>
@@ -541,11 +546,11 @@
         </scene>
     </scenes>
     <resources>
+        <image name="Photo" width="500" height="500"/>
         <image name="Splash Screen (Landscape)" width="1000" height="1000"/>
         <image name="Splash_Screen (AppName)" width="1000" height="250"/>
-        <image name="audio_start" width="50" height="50"/>
-        <image name="folder_icon" width="50" height="50"/>
-        <image name="photo_start" width="50" height="50"/>
-        <image name="video_start" width="50" height="50"/>
+        <image name="Toolbox" width="500" height="500"/>
+        <image name="Video" width="500" height="500"/>
+        <image name="slideshow" width="500" height="500"/>
     </resources>
 </document>
