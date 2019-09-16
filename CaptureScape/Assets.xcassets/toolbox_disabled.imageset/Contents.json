@@ -2,7 +2,7 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "audio_stop.png",
+      "filename" : "toolbox_disabled.png",
       "scale" : "1x"
     },
     {

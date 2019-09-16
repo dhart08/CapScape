@@ -15,6 +15,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     var latitude: Double!
     var longitude: Double!
     var heading: Double! = 0
+    //var altitude:  Double! = 0
     
     var locationUpdateCallbacks: [() -> ()] = []
     var headingUpdateCallbacks: [() -> ()] = []
@@ -54,6 +55,9 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         let location: CLLocation = locations[0]
         latitude = location.coordinate.latitude
         longitude = location.coordinate.longitude
+        //altitude = location.altitude
+        
+        //print("altitude: ", location.altitude)
         
         //NotificationCenter.default.post(name: .didReceiveCoordinates, object: nil, userInfo: nil)
         

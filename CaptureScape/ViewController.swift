@@ -84,49 +84,60 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //animateSplashScreen()
         animateSplashScreen()
         
-        let licenseValidator = LicenseValidator()
-        if licenseValidator.isCurrentLicenseValid() == false {
-            print("Current License: invalid")
-            
-            //disable app use
-            //view.isHidden = true //makes alert below laggy
-            
-            func askUserLicenseBlock() {
-                DispatchQueue.main.async {
-                    licenseValidator.askUserForLicense(controller: self, message: "Enter serial and key:", completion: { (serial, key) in
-                        
-                        let newLicense = licenseValidator.convertUserInputToLicense(serial: serial, key: key)
-                        if newLicense != nil {
-                            print("New License: ", newLicense!)
-                            
-                            //check if new license is valid
-                            if licenseValidator.isNewLicenseValid(newLicense: newLicense!) == true {
-                                print("New License is valid!")
-                                
-                                self.userSettingsModel.setExpirationDate(date: newLicense!)
-                            }
-                            else {
-                                print("New License is not valid!")
-                                
-                                //restart user input process
-                                askUserLicenseBlock()
-                            }
-                        }
-                        else {
-                            print("Could not convert input to valid license!")
-                            
-                            //restart user input process
-                            askUserLicenseBlock()
-                        }
-                    })
-                }
-            }
-            
-            askUserLicenseBlock()
-        }
+        // made quickly for kristen, can delete
+//        let licenseValidator = LicenseValidator()
+//        if licenseValidator.isCurrentLicenseValid() == false {
+//            popupMessage(title: "Expired", message: "License expired. Contact technical support.", duration: nil)
+//            print("expired license!!!")
+//        }
+        
+//        let licenseValidator = LicenseValidator()
+//        if licenseValidator.isCurrentLicenseValid() == false {
+//            print("Current License: invalid")
+//
+//            //disable app use
+//            //view.isHidden = true //makes alert below laggy
+//            let blurEffect = UIBlurEffect(style: .regular)
+//            let blurView = UIVisualEffectView(effect: blurEffect)
+//            blurView.frame = self.view.frame
+//            self.view.addSubview(blurView)
+//
+//            func askUserLicenseBlock() {
+//                DispatchQueue.main.async {
+//                    licenseValidator.askUserForLicense(controller: self, message: "Enter serial and key:", completion: { (serial, key) in
+//
+//                        let newLicense = licenseValidator.convertUserInputToLicense(serial: serial, key: key)
+//                        if newLicense != nil {
+//                            print("New License: ", newLicense!)
+//
+//                            //check if new license is valid
+//                            if licenseValidator.isNewLicenseValid(newLicense: newLicense!) == true {
+//                                print("New License is valid!")
+//
+//                                self.userSettingsModel.setExpirationDate(date: newLicense!)
+//                                blurView.removeFromSuperview()
+//                            }
+//                            else {
+//                                print("New License is not valid!")
+//
+//                                //restart user input process
+//                                askUserLicenseBlock()
+//                            }
+//                        }
+//                        else {
+//                            print("Could not convert input to valid license!")
+//
+//                            //restart user input process
+//                            askUserLicenseBlock()
+//                        }
+//                    })
+//                }
+//            }
+//
+//            askUserLicenseBlock()
+//        }
         
         //NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
@@ -145,22 +156,20 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         directoryHandler = DirectoryHandler()
         directoryHandler.changeDirectory(dirType: .appDocuments, url: nil)
         
+        setFilenameLabelText()
         updateCoordinatesOverlay(latitude: "Waiting...", longitude: "Waiting...", cardinalDirection: "NA")
         
-        //DispatchQueue.global().async {
+//        DispatchQueue.global().async {
         
             setCameraDevice()
 
             renderView = RenderView(frame: cameraView.bounds)
             renderView.fillMode = .stretch
             cameraView.addSubview(renderView)
-            //cameraView.bringSubview(toFront: mapView)
             cameraView.bringSubview(toFront: filenameLabel)
-            cameraView.bringSubview(toFront: toolsButton)
+            cameraView.bringSubview(toFront: zoomLabel)
 
             cameraOverlayBlendFilter = SourceOverBlend()
-            //overlayBlender = SourceOverBlend()
-            //cameraBlender = SourceOverBlend()
             chromaFilter = ChromaKeying()
             chromaFilter.colorToReplace = Color.green
 
@@ -175,18 +184,17 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //            self.renderView = RenderView(frame: self.cameraView.bounds)
 //            self.renderView.fillMode = .stretch
 //            self.cameraView.addSubview(self.renderView)
-//            self.cameraView.bringSubview(toFront: self.mapView)
-//            self.cameraView.bringSubview(toFront: self.filesButton)
+//            self.cameraView.bringSubview(toFront: self.filenameLabel)
+//            self.cameraView.bringSubview(toFront: self.zoomLabel)
 //
-//            self.blendFilter = SourceOverBlend()
+//            self.cameraOverlayBlendFilter = SourceOverBlend()
 //            self.chromaFilter = ChromaKeying()
 //            self.chromaFilter.colorToReplace = Color.green
 //
-//            self.camera --> self.blendFilter
-//            self.coordinatesOverlay --> self.chromaFilter --> self.blendFilter --> self.renderView
+//            self.camera --> self.cameraOverlayBlendFilter
+//            self.coordinatesOverlay --> self.chromaFilter --> self.cameraOverlayBlendFilter --> self.renderView
 //
 //            self.coordinatesOverlay.processImage()
-//
 //            self.camera.startCapture()
 //
 //        }
@@ -221,11 +229,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             videoRecordingOrientation = imageOrientation
             
             sender.setImage(UIImage(named: "video_stop"), for: .normal)
+            slideshowButton.setImage(UIImage(named: "slideshow_disabled"), for: .normal)
+            slideshowButton.isEnabled = false
             photoButton.setImage(UIImage(named: "photo_disabled"), for: .normal)
             photoButton.isEnabled = false
-            slideshowButton.setImage(UIImage(named: "audio_disabled"), for: .normal)
-            slideshowButton.isEnabled = false
-            toolsButton.isHidden = true
+            toolsButton.setImage(UIImage(named: "toolbox_disabled"), for: .normal)
+            toolsButton.isEnabled = false
             
             
             directoryHandler.createDirectory(dirType: .videos)
@@ -263,12 +272,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 //self.flashScreen()
             }
             
-            videoButton.setImage(UIImage(named: "video_start"), for: .normal)
-            photoButton.setImage(UIImage(named: "photo_start"), for: .normal)
+            videoButton.setImage(UIImage(named: "video_enabled"), for: .normal)
+            photoButton.setImage(UIImage(named: "photo_enabled"), for: .normal)
             photoButton.isEnabled = true
-            slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
+            slideshowButton.setImage(UIImage(named: "slideshow_enabled"), for: .normal)
             slideshowButton.isEnabled = true
-            toolsButton.isHidden = false
+            toolsButton.setImage(UIImage(named: "toolbox_enabled"), for: .normal)
+            toolsButton.isEnabled = true
         }
     }
     
@@ -293,10 +303,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             isVideoRecording = true
             videoRecordingOrientation = imageOrientation
             
-            slideshowButton.setImage(UIImage(named: "audio_stop"), for: .normal)
             videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
             videoButton.isEnabled = false
-            toolsButton.isHidden = true
+            slideshowButton.setImage(UIImage(named: "slideshow_stop"), for: .normal)
+            toolsButton.setImage(UIImage(named: "toolbox_disabled"), for: .normal)
+            toolsButton.isEnabled = false
             
             flashScreen()
 
@@ -342,11 +353,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.popupMessage(title: nil, message: "Slideshow Saved", duration: 500)
                 //self.flashScreen()
             }
-
-            slideshowButton.setImage(UIImage(named: "audio_start"), for: .normal)
-            videoButton.setImage(UIImage(named: "video_start"), for: .normal)
+            
+            videoButton.setImage(UIImage(named: "video_enabled"), for: .normal)
             videoButton.isEnabled = true
-            toolsButton.isHidden = false
+            slideshowButton.setImage(UIImage(named: "slideshow_enabled"), for: .normal)
+            toolsButton.setImage(UIImage(named: "toolbox_enabled"), for: .normal)
+            toolsButton.isEnabled = true
         }
         
     }
@@ -375,7 +387,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //    }
     
     @IBAction func toolsButtonClick(_ sender: UIButton) {
-        let toolsMenu = UIAlertController(title: "Tools", message: nil, preferredStyle: .alert)
+        var rotationAngle = 0.0
+        if imageOrientation == UIImageOrientation.left {
+            rotationAngle = 90 * Double.pi / 180
+        }
+        else if imageOrientation == UIImageOrientation.right {
+            rotationAngle = -90 * Double.pi / 180
+        }
+        
+        let toolsMenu = CustomUIAlertController(title: "Tools", message: nil, preferredStyle: .alert)
         
         let filesOption = UIAlertAction(title: "File Viewer", style: .default) { (_) in
             self.showDocumentsPicker()
@@ -403,7 +423,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         let cancelOption = UIAlertAction(title: "Cancel", style: .default) { (_) in
-            self.dismiss(animated: true, completion: nil)
+            
+//            toolsMenu.dismiss(animated: true, completion: {
+//                UIView.animate(withDuration: 2.0, animations: {
+//                    toolsMenu.view.transform = CGAffineTransform(rotationAngle: 0.0)
+//                })
+//            })
+            
+            //toolsMenu.view.isHidden = true
+            
+            toolsMenu.dismiss(animated: false, completion: nil)
         }
         
         toolsMenu.addAction(filesOption)
@@ -412,8 +441,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         toolsMenu.addAction(updateCoordinatesOption)
         toolsMenu.addAction(objectSizeOption)
         toolsMenu.addAction(cancelOption)
+        toolsMenu.rotationAngle = rotationAngle
+        toolsMenu.view.alpha = 0.0
         
-        present(toolsMenu, animated: true, completion: nil)
+        present(toolsMenu, animated: ((rotationAngle == 0.0) ? true : false)) {
+//            UIView.animate(withDuration: 0.25, animations: {
+//                toolsMenu.view.alpha = 1.0
+//                toolsMenu.view.transform = CGAffineTransform(rotationAngle: CGFloat(rotationAngle))
+//            })
+        }
     }
     
     
@@ -638,15 +674,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         context.fillPath()
         
         let font = "Helvetica" // used to be "Futura"
+        let coordinateFontColor  = (updateCoordinates == true) ? UIColor.white : UIColor.red
         //set font for on-screen coordinates stamp
         let coordinateFontAttrs = [
             NSAttributedString.Key.font: UIFont(name: font, size: 22),
-            NSAttributedString.Key.foregroundColor: UIColor.white
+            NSAttributedString.Key.foregroundColor: coordinateFontColor
         ]
         //draw coordinates on bitmap
         latitude.draw(at:CGPoint(x: coordinatesBlackRect.origin.x + 5, y: coordinatesBlackRect.origin.y), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
         longitude.draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5, y: coordinatesBlackRect.origin.y + 25), withAttributes: coordinateFontAttrs as [NSAttributedString.Key : Any])
-        "Heading: \(cardinalDirection!)".draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5 , y: coordinatesBlackRect.origin.y + 50), withAttributes: coordinateFontAttrs as [NSAttributedStringKey : Any])
+        "Heading: \(cardinalDirection!)".draw(at: CGPoint(x: coordinatesBlackRect.origin.x + 5 , y: coordinatesBlackRect.origin.y + 50), withAttributes: [NSAttributedString.Key.font: UIFont(name: font, size: 22), NSAttributedString.Key.foregroundColor: UIColor.white])
         
         // create time formatter for on-screen timestamp
         let timeStampFormatter = DateFormatter()
@@ -789,7 +826,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         self.pictureOutput.imageAvailableCallback = { outputImage in
             
             //set orientation of the output image
-            let image = UIImage(cgImage: outputImage.cgImage!, scale: 1.0, orientation: self.imageOrientation)
+            let newSizedImage = UIImage(cgImage: outputImage.cgImage!, scale: 1.0, orientation: self.imageOrientation)
+            
+            //redraw new image to correct orientation
+            UIGraphicsBeginImageContext(newSizedImage.size)
+            newSizedImage.draw(in: CGRect(x: 0, y: 0, width: newSizedImage.size.width, height: newSizedImage.size.height))
+            let finalImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
             
             //DispatchQueue.main.async {
                 completion(outputImage)
@@ -800,31 +843,52 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             let fileURL = URL(fileURLWithPath: "Photos/\(self.getFilename()).png", relativeTo: self.directoryHandler.getDocumentsPath())
             
             //let jpg = UIImageJPEGRepresentation(image, 1.0)
-            let png = UIImagePNGRepresentation(image)
+            let png = UIImagePNGRepresentation(finalImage!)
             
             do {
-                try png?.write(to: fileURL)
+                //try png?.write(to: fileURL)
+                try png?.write(to: fileURL, options: .withoutOverwriting)
                 
-                DispatchQueue.main.async {
-                    self.filenameLabel.text = fileURL.lastPathComponent
+//                DispatchQueue.main.async {
+//                    self.setFilenameLabelText()
+//                }
+                
+                self.getImageComment(completion: { (comment) in
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+                    dateFormatter.timeZone = TimeZone.current
+                    let fileCreationDate = dateFormatter.string(from: Date())
+                    
+                    let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: comment)
+                    
+                    let exifDataRaderWriter = EXIFDataReaderWriter()
+                    exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
+                })
+            }
+            catch let error as NSError{
+                if error.code == 516 {
+                    self.popupMessage(title: "Error", message: "Could not save file. A file with that name already exists.", duration: nil)
+                }
+                else {
+                    self.popupMessage(title: "Error", message: "Could not save file.", duration: nil)
                 }
             }
-            catch let error {
-                self.popupMessage(title: "takePhoto()", message: "Error: \(error)", duration: nil)
+            
+//            self.getImageComment(completion: { (comment) in
+//                let dateFormatter = DateFormatter()
+//                dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+//                dateFormatter.timeZone = TimeZone.current
+//                let fileCreationDate = dateFormatter.string(from: Date())
+//
+//                let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: comment)
+//
+//                let exifDataRaderWriter = EXIFDataReaderWriter()
+//                exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
+//            })
+            
+            DispatchQueue.main.async {
+                self.setFilenameLabelText()
             }
-            
-            self.getImageComment(completion: { (comment) in
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
-                dateFormatter.timeZone = TimeZone.current
-                let fileCreationDate = dateFormatter.string(from: Date())
-                
-                let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: comment)
-                
-                let exifDataRaderWriter = EXIFDataReaderWriter()
-                exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
-            })
-            
             
             self.pictureOutput = nil
             
@@ -880,9 +944,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
         
         UIView.animate(withDuration: 0.75, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 30, options: .curveEaseOut, animations: {
+            print("start pop app name")
             self.appNameImage.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+            print("end pop app name")
         }, completion: { _ in
+            print("dispatching sleep thread")
             DispatchQueue.global().async {
+                print("sleeping splash screen")
                 usleep(1000 * 3000)
                 
                 DispatchQueue.main.async {
@@ -904,51 +972,84 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         let cameraViewHeight: CGFloat = cameraView.frame.height
         
         var filenameLabelFrame: CGRect = filenameLabel.frame
-        let filenameLabelSpacer: CGFloat = 8.0
-        var toolsButtonFrame: CGRect = toolsButton.frame
-        let toolsButtonSpacer: CGFloat = 8.0
+        let filenameLabelSpacer: CGFloat = 10
+        var zoomLabelFrame: CGRect = zoomLabel.frame
+        let zoomLabelSpacer: CGFloat = 10.0
+        //var toolsButtonFrame: CGRect = toolsButton.frame
+        //let toolsButtonSpacer: CGFloat = 8.0
+        
+        filenameLabel.layer.anchorPoint = CGPoint(x: 0, y: 0)
+        zoomLabel.layer.anchorPoint = CGPoint(x: 0, y: 0)
         
         if (orientation == .up) || (orientation == .down){
+            //filenameLabelFrame.origin.x = filenameLabelSpacer
+            //filenameLabelFrame.origin.y = filenameLabelSpacer
+            //filenameLabel.layer.anchorPoint = CGPoint(x: filenameLabelSpacer, y: filenameLabelSpacer)
+            
             filenameLabelFrame.origin.x = filenameLabelSpacer
             filenameLabelFrame.origin.y = filenameLabelSpacer
             
-            toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
-            toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
+            zoomLabelFrame.origin.x = cameraViewWidth - zoomLabel.bounds.width - zoomLabelSpacer
+            zoomLabelFrame.origin.y = cameraViewHeight - zoomLabel.bounds.height - zoomLabelSpacer
+            
+            //toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
+            //toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
             
             rotationAngle = CGFloat(0.0)
         }
         else if orientation == .left {
             //filenameLabel.center.x = cameraViewWidth - filenameLabelSpacer - (filenameLabel.frame.height / 2)
             //filenameLabel.center.y = filenameLabelSpacer + (filenameLabel.frame.width / 2)
-            filenameLabelFrame.origin.x = cameraViewWidth - filenameLabelSpacer - (filenameLabelFrame.height / 2) - (filenameLabelFrame.width / 2)
-            filenameLabelFrame.origin.y = filenameLabelSpacer + (filenameLabelFrame.width / 2) - (filenameLabelFrame.height / 2)
+            //filenameLabelFrame.origin.x = cameraViewWidth - filenameLabelFrame.width + filenameLabelSpacer
+            //filenameLabelFrame.origin.y = filenameLabelSpacer + (filenameLabelFrame.width / 2) - (filenameLabelFrame.height / 2)
             
-            toolsButtonFrame.origin.x = toolsButtonSpacer
-            toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
+            filenameLabelFrame.origin.x = cameraViewWidth - filenameLabelSpacer
+            filenameLabelFrame.origin.y = filenameLabelSpacer
+            
+            zoomLabelFrame.origin.x = zoomLabelSpacer + zoomLabelFrame.height
+            zoomLabelFrame.origin.y = cameraViewHeight - zoomLabelSpacer - zoomLabelFrame.width
+            
+            //zoomLabelFrame.origin.x = -zoomLabelSpacer
+            //zoomLabelFrame.origin.y = cameraViewHeight - zoomLabelSpacer - (zoomLabelFrame.width / 2) - (zoomLabelFrame.height / 2)
+            
+            //toolsButtonFrame.origin.x = toolsButtonSpacer
+            //toolsButtonFrame.origin.y = cameraViewHeight - toolsButtonFrame.height - toolsButtonSpacer
             
             rotationAngle = CGFloat(90 * Double.pi / 180)
             
         }
         else if orientation == .right {
+            //filenameLabelFrame.origin.x = -filenameLabelSpacer
+            //filenameLabelFrame.origin.y = cameraViewHeight - (filenameLabelFrame.width / 2) + (filenameLabelFrame.height / 2) - filenameLabelSpacer
+            //filenameLabel.layer.anchorPoint = CGPoint(x: cameraViewWidth - filenameLabelSpacer, y: filenameLabelSpacer)
+            
             filenameLabelFrame.origin.x = filenameLabelSpacer
             filenameLabelFrame.origin.y = cameraViewHeight - filenameLabelSpacer
             
-            toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
-            toolsButtonFrame.origin.y = toolsButtonSpacer
+            zoomLabelFrame.origin.x = cameraViewWidth - zoomLabelSpacer - zoomLabelFrame.height
+            zoomLabelFrame.origin.y = zoomLabelSpacer + zoomLabelFrame.width
+            
+            //zoomLabelFrame.origin.x = cameraViewWidth - zoomLabelFrame.width + zoomLabelSpacer
+            //zoomLabelFrame.origin.y = zoomLabelSpacer + (zoomLabelFrame.width / 2) - (zoomLabelFrame.height / 2)
+            
+            //toolsButtonFrame.origin.x = cameraViewWidth - toolsButtonFrame.width - toolsButtonSpacer
+            //toolsButtonFrame.origin.y = toolsButtonSpacer
             
             rotationAngle = CGFloat(-90 * Double.pi / 180)
         }
         
         UIView.animate(withDuration: 0.25) {
             self.filenameLabel.frame = filenameLabelFrame
-            self.toolsButton.frame = toolsButtonFrame
+            //self.toolsButton.frame = toolsButtonFrame
+            self.zoomLabel.frame = zoomLabelFrame
             
-            //self.filenameLabel.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            self.filenameLabel.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            self.zoomLabel.transform = CGAffineTransform(rotationAngle: rotationAngle)
+            //self.toolsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.toolsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.videoButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.slideshowButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
             self.photoButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
-            self.zoomLabel.transform = CGAffineTransform(rotationAngle: rotationAngle)
         }
     }
     
@@ -1038,11 +1139,20 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //let invalidCharSet: [Character] = ["\\", "/", "?", "%", "*", ":", "|", "\"", "<", ">", ".", " ", ",", "!", "~"]
             let textField = popupInputMessage.textFields![0]
             var suggestedPrefix = textField.text
-            var isPrefixValid = true
+            //var isPrefixValid = true
             
             suggestedPrefix = suggestedPrefix?.trimmingCharacters(in: .whitespacesAndNewlines)
             
-            if suggestedPrefix?.count != 0 {
+            if suggestedPrefix == self.userSettingsModel.getImagePrefix() {
+                return
+            }
+            else if suggestedPrefix?.count == 0 {
+                self.userSettingsModel.setImagePrefix(prefix: nil)
+                self.setFilenameLabelText()
+                
+                return
+            }
+            else {
 //                for char in invalidCharSet {
 //                    if suggestedPrefix?.firstIndex(of: char) != nil {
 //                        isPrefixValid = false
@@ -1051,21 +1161,27 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 let regex = try! NSRegularExpression(pattern: "[^A-Za-z0-9]")
                 let range = NSRange(location: 0, length: suggestedPrefix!.utf16.count)
-                if regex.firstMatch(in: suggestedPrefix!, options: [], range: range) != nil {
-                    isPrefixValid = false
+                if regex.firstMatch(in: suggestedPrefix!, options: [], range: range) == nil {
+                    //isPrefixValid = false
+                    
+                    self.userSettingsModel.setImagePrefix(prefix: suggestedPrefix!)
+                    self.photoCount = 0
+                    self.setFilenameLabelText()
+                }
+                else {
+                    self.popupMessage(title: "File Prefix", message: "Invalid filename!", duration: nil)
                 }
             }
-            else {
-                isPrefixValid = false
-            }
             
-            if (isPrefixValid == true) {
-                self.userSettingsModel.setImagePrefix(prefix: suggestedPrefix!)
-                self.photoCount = 0
-            }
-            else {
-                self.popupMessage(title: "File Prefix", message: "Invalid filename!", duration: 4)
-            }
+            
+//            if (isPrefixValid == true) {
+//                self.userSettingsModel.setImagePrefix(prefix: suggestedPrefix!)
+//                self.photoCount = 0
+//                self.setFilenameLabelText()
+//            }
+//            else {
+//                self.popupMessage(title: "File Prefix", message: "Invalid filename!", duration: 4)
+//            }
         }
         
         let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
@@ -1118,9 +1234,18 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             photoCount = photoCount + 1
         }
         
-        print("outputting filename: ", filename)
-        
         return filename!
+    }
+    
+    func setFilenameLabelText() {
+        if let filename = userSettingsModel.getImagePrefix() {
+            filenameLabel.text = "\(filename)\(photoCount).png"
+        }
+        else {
+            filenameLabel.text = "(timestamp)"
+        }
+        
+        return
     }
     
     func getObjectSize() {
@@ -1129,6 +1254,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         angleReader.startTrackingDeviceMotion()
+        angleReader.startTrackingDeviceRelativeAltitude()
         
         let buttonWidth = CGFloat(50)
         let buttonHeight  = CGFloat(50)
@@ -1146,6 +1272,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         view.addSubview(dotButton)
         view.bringSubview(toFront: dotButton)
         
+        videoButton.isEnabled = false
+        videoButton.setImage(UIImage(named: "video_disabled"), for: .normal)
+        slideshowButton.isEnabled = false
+        slideshowButton.setImage(UIImage(named: "slideshow_disabled"), for: .normal)
+        photoButton.isEnabled = false
+        photoButton.setImage(UIImage(named: "photo_disabled"), for: .normal)
+        toolsButton.isEnabled = false
+        toolsButton.setImage(UIImage(named: "toolbox_disabled"), for: .normal)
+        
         let timer = Timer(timeInterval: 0.25, repeats: true) { (timer) in
             if (self.angleReader.getCurrentPitch() < 0) {
                 dotButton.backgroundColor = UIColor.red
@@ -1158,6 +1293,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             if self.angleReader.angle2 != nil {
                 dotButton.removeFromSuperview()
+                
+                self.videoButton.isEnabled = true
+                self.videoButton.setImage(UIImage(named: "video_enabled"), for: .normal)
+                self.slideshowButton.isEnabled = true
+                self.slideshowButton.setImage(UIImage(named: "slideshow_enabled"), for: .normal)
+                self.photoButton.isEnabled = true
+                self.photoButton.setImage(UIImage(named: "photo_enabled"), for: .normal)
+                self.toolsButton.isEnabled = true
+                self.toolsButton.setImage(UIImage(named: "toolbox_enabled"), for: .normal)
+                
                 timer.invalidate()
             }
         }
@@ -1225,13 +1370,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //        }
         
         if angleReader.angle1 == nil {
-            angleReader.angle1 = angleReader.getCurrentAngle(heading: locationFinder.heading)
+            angleReader.angle1 = angleReader.getCurrentAngle(heading: locationFinder.heading, altitude: angleReader.getCurrentRelativeAltitude())
             //print("Angle1 -----> \t\t pitch: \(angleReader.angle1?.pitch) \t\tgravity: \(angleReader.angle1?.gravity)") //////////////
             
             //popupMessage(title: "Object Height", message: "Point the dot at the top of the object and then tap it.", duration: nil)
         }
         else if angleReader.angle2 == nil {
-            angleReader.angle2 = angleReader.getCurrentAngle(heading: locationFinder.heading)
+            angleReader.angle2 = angleReader.getCurrentAngle(heading: locationFinder.heading, altitude: angleReader.getCurrentRelativeAltitude())
             //print("Angle1 -----> \t\t pitch: \(angleReader.angle2?.pitch) \t\tgravity: \(angleReader.angle2?.gravity)") //////////////
             
             let distanceAlert = UIAlertController(title: "Object Measure", message: "Enter your distance in feet from the object. (ex: 10 or 2.5)", preferredStyle: .alert)
@@ -1266,11 +1411,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 }
                 
                 self.angleReader.stopTrackingDeviceMotion()
+                self.angleReader.stopTrackingDeviceRelativeAltitude()
                 self.angleReader.clearAngles()
             }
             
             let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
                 self.angleReader.stopTrackingDeviceMotion()
+                self.angleReader.stopTrackingDeviceRelativeAltitude()
                 self.angleReader.clearAngles()
             }
             
@@ -1365,5 +1512,75 @@ extension ViewController: UIDocumentInteractionControllerDelegate {
         pickerController.delegate = self
         
         present(pickerController, animated: true, completion: nil)
+    }
+}
+
+extension UIAlertController {
+    func dismissWithAnimation(animated animation: () -> (), completion: (() -> Void)? = nil) {
+        animation()
+        
+        animation()
+        dismiss(animated: true, completion: completion)
+    }
+    
+//    override open func viewWillDisappear(_ animated: Bool) {
+//        if animated == false {
+//            self.view.isHidden = true
+//        }
+//    }
+}
+
+//extension UIImage {
+//    func rotate(orientation: Orientation) -> UIImage? {
+//        var newSize: CGSize!
+//        if (orientation == .up) || (orientation == .down) {
+//            newSize = self.size
+//        }
+//        else {
+//            newSize = CGSize(width: self.size.height, height: self.size.width)
+//        }
+//
+//        var rotationAngle: Double! = 0.0
+//        if orientation == .left {
+//            print("rotating image .left")
+//            rotationAngle = 90
+//        }
+//        else if orientation == .right {
+//            print("rotating image .right")
+//            rotationAngle = -90
+//        }
+//        else if orientation == .down {
+//            print("rotating image .down")
+//            rotationAngle = 180
+//        }
+//
+//        print("hi")
+//        print("size= \(self.size)")
+//        UIGraphicsBeginImageContext(self.size)
+//        let context = UIGraphicsGetCurrentContext()
+//        self.draw(in: CGRect(x: 0, y: 0, width: self.size.width, height: self.size.height))
+//
+//        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+//        UIGraphicsEndImageContext()
+//
+//        return newImage
+//
+//    }
+//}
+
+class CustomUIAlertController: UIAlertController {
+    var rotationAngle = 0.0
+    
+    override func viewWillAppear(_ animated: Bool) {
+        self.view.transform = CGAffineTransform(rotationAngle: CGFloat(rotationAngle))
+        
+        // doesnt work in portrait mode?
+        UIView.animate(withDuration: 0.25) {
+            self.view.alpha = 0.9
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        self.view.isHidden = true
     }
 }

@@ -17,6 +17,7 @@ struct Angle {
     var gravityY: Double! = 0
     var gravityZ: Double! = 0
     var heading: Double! = 0
+    var altitude: Double! = 0
     
     func getAngle() -> Double {
         let angle = 90.0 - pitch
@@ -36,6 +37,8 @@ final class AngleReader {
     private var motionManager: CMMotionManager?
     private var timer: Timer?
     
+    private var altimeter: CMAltimeter?
+    
     private let motionInterval: Double = 0.25
     
     private var pitch: Double! = 0
@@ -44,6 +47,7 @@ final class AngleReader {
     private var gravityX: Double! = 0
     private var gravityY: Double! = 0
     private var gravityZ: Double! = 0
+    private var altitude: Double! = 0
     
     var angle1: Angle?
     var angle2: Angle?
@@ -76,10 +80,33 @@ final class AngleReader {
             })
         }
     }
-    
     func stopTrackingDeviceMotion() {
         self.motionManager?.stopDeviceMotionUpdates()
     }
+    
+    func startTrackingDeviceRelativeAltitude() {
+        altimeter = CMAltimeter()
+        
+        if CMAltimeter.isRelativeAltitudeAvailable() {
+            
+            altimeter?.startRelativeAltitudeUpdates(to: .main, withHandler: { (data, error) in
+                if data != nil {
+                    self.altitude = Double(exactly: data!.relativeAltitude)
+                    self.altitude = self.altitude * 100
+                    self.altitude = round(self.altitude)
+                    self.altitude = self.altitude / 100
+                    
+                    print("relativeAltitude: \(self.altitude!)")
+                }
+            })
+        }
+    }
+    
+    func stopTrackingDeviceRelativeAltitude() {
+        altimeter?.stopRelativeAltitudeUpdates()
+    }
+    
+    
     
 //    private func startGyroscopes() {
 //        if (motionManager?.isGyroAvailable)! {
@@ -150,7 +177,11 @@ final class AngleReader {
         return gravityZ
     }
     
-    func getCurrentAngle(heading: Double = 0) -> Angle {
+    func getCurrentRelativeAltitude() -> Double {
+        return altitude
+    }
+    
+    func getCurrentAngle(heading: Double = 0, altitude: Double = 0) -> Angle {
         var angle: Angle = Angle()
         angle.pitch = pitch
         angle.roll = roll
@@ -159,6 +190,7 @@ final class AngleReader {
         angle.gravityY = gravityY
         angle.gravityZ = gravityZ
         angle.heading = heading
+        angle.altitude = altitude
         
         return angle
     }
@@ -169,8 +201,11 @@ final class AngleReader {
     }
     
     func getHeightFromAngles(angle1: Angle, angle2: Angle, distance: Double) -> Double {
+        let feetInMeter = 3.28084
+        
         let height1 = angle1.getHeight(distance: distance) * angle1.gravityZ / abs(angle1.gravityZ)
         let height2 = angle2.getHeight(distance: distance) * angle2.gravityZ / abs(angle2.gravityZ)
+        let altitudeDifference = feetInMeter * abs(angle1.altitude - angle2.altitude)
         
 //        if (angle1.gravityZ < 0) && (angle2.gravityZ < 0) {
 //            // subtract a2.height from a1.height
@@ -186,7 +221,7 @@ final class AngleReader {
 //        }
         
         var totalHeight = 0.0
-        totalHeight = abs(height1 - height2)
+        totalHeight = abs(height1 - height2) + altitudeDifference
         
         return totalHeight
     }

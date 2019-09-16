@@ -2,7 +2,7 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "Slideshow.png",
+      "filename" : "slideshow_disabled.png",
       "scale" : "1x"
     },
     {
