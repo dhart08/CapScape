@@ -76,68 +76,72 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var photoCount: Int = 0
     
     var updateCoordinates: Bool = true
-    var currentLatitude: String = ""
-    var currentLongitude: String = ""
+    var currentLatitudeString: String = ""
+    var currentLongitudeString: String = ""
+    var currentLatitudeDouble: Double = 0
+    var currentLongitudeDouble: Double = 0
 
 // MARK: - ViewController Methods ---------------------------------------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        animateSplashScreen()
-        
         // made quickly for kristen, can delete
 //        let licenseValidator = LicenseValidator()
 //        if licenseValidator.isCurrentLicenseValid() == false {
-//            popupMessage(title: "Expired", message: "License expired. Contact technical support.", duration: nil)
-//            print("expired license!!!")
+//            print("expired license in viewDidLoad()!!!")
+//
+//            let alert = UIAlertController(title: "Expired", message: "Your license has expired. Please contact technical support.", preferredStyle: .alert)
+//            present(alert, animated: true, completion: nil)
 //        }
         
-//        let licenseValidator = LicenseValidator()
-//        if licenseValidator.isCurrentLicenseValid() == false {
-//            print("Current License: invalid")
-//
-//            //disable app use
-//            //view.isHidden = true //makes alert below laggy
-//            let blurEffect = UIBlurEffect(style: .regular)
-//            let blurView = UIVisualEffectView(effect: blurEffect)
-//            blurView.frame = self.view.frame
-//            self.view.addSubview(blurView)
-//
-//            func askUserLicenseBlock() {
-//                DispatchQueue.main.async {
-//                    licenseValidator.askUserForLicense(controller: self, message: "Enter serial and key:", completion: { (serial, key) in
-//
-//                        let newLicense = licenseValidator.convertUserInputToLicense(serial: serial, key: key)
-//                        if newLicense != nil {
-//                            print("New License: ", newLicense!)
-//
-//                            //check if new license is valid
-//                            if licenseValidator.isNewLicenseValid(newLicense: newLicense!) == true {
-//                                print("New License is valid!")
-//
-//                                self.userSettingsModel.setExpirationDate(date: newLicense!)
-//                                blurView.removeFromSuperview()
-//                            }
-//                            else {
-//                                print("New License is not valid!")
-//
-//                                //restart user input process
-//                                askUserLicenseBlock()
-//                            }
-//                        }
-//                        else {
-//                            print("Could not convert input to valid license!")
-//
-//                            //restart user input process
-//                            askUserLicenseBlock()
-//                        }
-//                    })
-//                }
-//            }
-//
-//            askUserLicenseBlock()
-//        }
+        animateSplashScreen()
+        
+        let licenseValidator = LicenseValidator()
+        if licenseValidator.isCurrentLicenseValid() == false {
+            print("Current License: invalid")
+
+            //disable app use
+            //view.isHidden = true //makes alert below laggy
+            let blurEffect = UIBlurEffect(style: .regular)
+            let blurView = UIVisualEffectView(effect: blurEffect)
+            blurView.frame = self.view.frame
+            self.view.addSubview(blurView)
+
+            func askUserLicenseBlock() {
+                DispatchQueue.main.async {
+                    licenseValidator.askUserForLicense(controller: self, message: "Enter serial and key:", completion: { (serial, key) in
+
+                        let newLicense = licenseValidator.convertUserInputToLicense(serial: serial, key: key)
+                        if newLicense != nil {
+                            print("New License: ", newLicense!)
+
+                            //check if new license is valid
+                            if licenseValidator.isNewLicenseValid(newLicense: newLicense!) == true {
+                                print("New License is valid!")
+
+                                self.userSettingsModel.setExpirationDate(date: newLicense!)
+                                blurView.removeFromSuperview()
+                            }
+                            else {
+                                print("New License is not valid!")
+
+                                //restart user input process
+                                askUserLicenseBlock()
+                            }
+                        }
+                        else {
+                            print("Could not convert input to valid license!")
+
+                            //restart user input process
+                            askUserLicenseBlock()
+                        }
+                    })
+                }
+            }
+
+            askUserLicenseBlock()
+        }
         
         //NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
         
@@ -558,10 +562,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         //let (dmsLatitude, dmsLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
         if updateCoordinates == true {
-            (currentLatitude, currentLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+            (currentLatitudeString, currentLongitudeString) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
         }
         
-        updateCoordinatesOverlay(latitude: NSString(string: currentLatitude), longitude: NSString(string: currentLongitude), cardinalDirection: locationFinder.getCardinalDirection())
+        updateCoordinatesOverlay(latitude: NSString(string: currentLatitudeString), longitude: NSString(string: currentLongitudeString), cardinalDirection: locationFinder.getCardinalDirection())
         
 //        overlayBlender.removeSourceAtIndex(0)
 //        compassNeedlePictureInput.addTarget(overlayBlender)
@@ -578,10 +582,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         if updateCoordinates == true {
-            (currentLatitude, currentLongitude) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+            (currentLatitudeString, currentLongitudeString) = locationFinder.decimalToDMSString(latitude: locationFinder.latitude, longitude: locationFinder.longitude)
+            
+            currentLatitudeDouble = locationFinder.latitude
+            currentLongitudeDouble = locationFinder.longitude
         }
         
-        updateCoordinatesOverlay(latitude: NSString(string: currentLatitude), longitude: NSString(string: currentLongitude), cardinalDirection: locationFinder.getCardinalDirection())
+        updateCoordinatesOverlay(latitude: NSString(string: currentLatitudeString), longitude: NSString(string: currentLongitudeString), cardinalDirection: locationFinder.getCardinalDirection())
 
         chromaFilter.removeSourceAtIndex(0)
         coordinatesOverlay.addTarget(chromaFilter)
@@ -859,7 +866,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     dateFormatter.timeZone = TimeZone.current
                     let fileCreationDate = dateFormatter.string(from: Date())
                     
-                    let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: comment)
+                    let exifParams = EXIFDataParams(latitude: self.currentLatitudeDouble, longitude: self.currentLongitudeDouble, creationDateTime: fileCreationDate, comment: comment)
                     
                     let exifDataRaderWriter = EXIFDataReaderWriter()
                     exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
@@ -942,6 +949,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func animateSplashScreen() {
         appNameImage.transform = CGAffineTransform(scaleX: 0, y: 0)
+        splashScreenContainer.isHidden = false
         
         UIView.animate(withDuration: 0.75, delay: 0.5, usingSpringWithDamping: 0.5, initialSpringVelocity: 30, options: .curveEaseOut, animations: {
             print("start pop app name")
