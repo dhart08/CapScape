@@ -69,6 +69,8 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         var tempHeading: Double = newHeading.trueHeading
         
+        print("raw heading: ", tempHeading)
+        
         if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
             if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
                 tempHeading += 90.0
@@ -76,6 +78,8 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
             else {
                 tempHeading -= 90.0
             }
+            
+            print("orientated raw heading")
         }
         
         heading = tempHeading
@@ -108,8 +112,10 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
         var lonSec = abs(lonRemainder * 60)
         lonSec = round(lonSec*100)/100
         
-        //return (deg, min, sec)
-        return ("\(latDegrees)° \(latMin)' \(latSec)\" \(latSuffix)", "\(lonDegrees)° \(lonMin)' \(lonSec)\" \(lonSuffix)")
+        //return (deg, min, sec) tuple
+        let latString = "\(latDegrees)° \(latMin)' \(latSec)\" \(latSuffix)"
+        let lonString = "\(lonDegrees)° \(lonMin)' \(lonSec)\" \(lonSuffix)"
+        return (latString, lonString)
     }
     
     func getCardinalDirection() -> String {

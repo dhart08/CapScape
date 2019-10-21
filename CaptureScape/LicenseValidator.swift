@@ -10,8 +10,7 @@ import Foundation
 import UIKit
 
 class LicenseValidator {
-    
-    private let expirationDate: String = "08/26/2019" //needs to be one day ahead of expiration day
+    private var expirationDate: String? = "10/12/2019" // <----- used for hard coding expiration date
     private let dateFormat: String = "MM/dd/yyyy"
     private let dateFormatter: DateFormatter = DateFormatter()
     
@@ -29,15 +28,14 @@ class LicenseValidator {
     func isCurrentLicenseValid() -> Bool {
         var result: Bool = false
         
-        // CHANGE THIS TO GET STORED DATE ON PHONE !!!!!!!!!!!!!!!!!!!!!!!!
-        let storedDate = getStoredExpirationDate()
-        //let storedDate: String? = expirationDate
+        //let storedDate = getStoredExpirationDate() <----- uncomment to get userSettingsModel date
+        let storedDate = expirationDate
         
         if storedDate != nil {
             let now = Date()
             let expiration = dateFormatter.date(from: storedDate!)!
             
-            if now < expiration {
+            if now <= expiration {
                 result = true
             }
         }
@@ -130,6 +128,16 @@ extension String {
         return byteArray
     }
     
+    func toHexString() -> String {
+        var uint8Array: [UInt8] = []
+        
+        for (index, value) in self.enumerated() {
+            //let
+        }
+        
+        return ""
+    }
+    
     func hexToUInt8() -> [UInt8]? {
         
         let formattedString = self.lowercased().trimmingCharacters(in: [" "])
@@ -169,10 +177,24 @@ extension String {
         return byteArray
     }
     
-    func hasNonAlphanumericCharacters() -> Bool {
+//    func hasNonAlphanumericCharacters() -> Bool {
+//
+//        var result = false
+//
+//        return result
+//    }
+    
+    func encryptDecrypt(with cipher: String) ->  String? {
+        let str = [UInt8](self.utf8)
+        let ciph = [UInt8](cipher.utf8)
+        var cipheredArray: [UInt8] = []
         
-        var result = false
+        for (index, value) in str.enumerated() {
+            cipheredArray.append(value ^ ciph[index])
+        }
         
-        return result
+        let cipheredString = String(bytes: cipheredArray, encoding: .utf8)
+        
+        return cipheredString
     }
 }

@@ -11,14 +11,18 @@ import UIKit
 struct EXIFDataParams {
     var latitude: Double?
     var longitude: Double?
+    var heading: String?
     var creationDateTime: String?
     var comment: String?
+    var makerNote: String?
     
-    init(latitude: Double? = nil, longitude: Double? = nil, creationDateTime: String? = nil, comment: String? = nil) {
+    init(latitude: Double? = nil, longitude: Double? = nil, heading: String? = nil, creationDateTime: String? = nil, comment: String? = nil, makerNote: String? = nil) {
         self.latitude = latitude
         self.longitude = longitude
+        self.heading = heading
         self.creationDateTime = creationDateTime
         self.comment = comment
+        self.makerNote = makerNote
     }
 }
 
@@ -85,8 +89,11 @@ struct EXIFDataReaderWriter {
         
         GPSDictionary![kCGImagePropertyGPSLatitude] = exifDataParams.latitude
         GPSDictionary![kCGImagePropertyGPSLongitude] = exifDataParams.longitude
+        GPSDictionary![kCGImagePropertyGPSImgDirection] = exifDataParams.heading
+        
         EXIFDictionary![kCGImagePropertyExifDateTimeOriginal] = exifDataParams.creationDateTime
         EXIFDictionary![kCGImagePropertyExifUserComment] = exifDataParams.comment
+        EXIFDictionary![kCGImagePropertyExifMakerNote] = exifDataParams.makerNote
         //TIFFDictionary![kCGImagePropertyTIFFOrientation] = "2"
         
         

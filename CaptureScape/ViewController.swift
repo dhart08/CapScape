@@ -78,10 +78,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var lastZoomFactor: CGFloat = 1.0
     
     var userSettingsModel: UserSettingsModel = UserSettingsModel()
+    
     var fileCount: Int = 0
     var fileCountFormat = "%03d"
     var fileCountIndex = 0
     var fileCountIndexIsLocked = false
+    
+    var imageAttributesIsOn = false
     
     var updateCoordinates: Bool = true
     var currentLatitudeString: String = ""
@@ -418,14 +421,13 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.getImagePrefixInput()
         }
         
-        // add attributes on/off option here
-        
-        let offOnComment = userSettingsModel.getAskForImageComment() ? "OFF" : "ON"
-        let imageCommentOption = UIAlertAction(title: "Turn \(offOnComment) Photo Comment", style: .default) { (_) in
-            
-            let isAskingForImageComment = self.userSettingsModel.getAskForImageComment()
-            self.userSettingsModel.setAskForImageComment(value: !isAskingForImageComment)
-        }
+        // add user comment on/off option here
+//        let offOnComment = userSettingsModel.getAskForImageComment() ? "OFF" : "ON"
+//        let imageCommentOption = UIAlertAction(title: "Turn \(offOnComment) Photo Comment", style: .default) { (_) in
+//
+//            let isAskingForImageComment = self.userSettingsModel.getAskForImageComment()
+//            self.userSettingsModel.setAskForImageComment(value: !isAskingForImageComment)
+//        }
         
 //        let onOffCoordinates = (updateCoordinates) ? "OFF": "ON"
 //        let updateCoordinatesOption = UIAlertAction(title: "Turn \(onOffCoordinates) Location Updates", style: .default) { (_) in
@@ -433,12 +435,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //            self.updateCoordinates = !self.updateCoordinates
 //        }
         
-        let imageAttributesOption = UIAlertAction(title: "Edit Image Attributes", style: .default) { (_) in
-            // attributes code goes here
+        let onOffAttributes = imageAttributesIsOn ? "OFF" : "ON"
+        let imageAttributesOption = UIAlertAction(title: "Turn \(onOffAttributes) Image Attributes", style: .default) { (_) in
             
-            let ac = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "AttributeViewController") as! AttributeViewController
+            self.imageAttributesIsOn = !(self.imageAttributesIsOn)
             
-            self.present(ac, animated: true, completion: nil)
+            print("imageAttributesIsOn = ", self.imageAttributesIsOn)
+            
+//            let ac = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "AttributeViewController") as! AttributeViewController
+//
+//            self.present(ac, animated: true, completion: nil)
         }
         
         let objectSizeOption = UIAlertAction(title: "Measure Object Size", style: .default) { (_) in
@@ -454,7 +460,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         toolsMenu.addAction(filesOption)
         toolsMenu.addAction(imagePrefixOption)
-        toolsMenu.addAction(imageCommentOption)
+        //toolsMenu.addAction(imageCommentOption)
         toolsMenu.addAction(imageAttributesOption)
         //toolsMenu.addAction(updateCoordinatesOption)
         toolsMenu.addAction(objectSizeOption)
@@ -872,6 +878,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             // lock coordinates to save into saved image file
             let lockedLatitude = self.currentLatitudeDouble
             let lockedLongitude = self.currentLongitudeDouble
+            let lockedHeading = String(round(self.locationFinder.heading * 100) / 100)
             
             //set orientation of the output image
             let newSizedImage = UIImage(cgImage: outputImage.cgImage!, scale: 1.0, orientation: self.imageOrientation)
@@ -901,13 +908,25 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //                    self.setFilenameLabelText()
 //                }
                 
-                self.getImageComment(completion: { (comment) in
+//                self.getImageComment(completion: { (comment) in
+//                    let dateFormatter = DateFormatter()
+//                    dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+//                    dateFormatter.timeZone = TimeZone.current
+//                    let fileCreationDate = dateFormatter.string(from: Date())
+//
+//                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, creationDateTime: fileCreationDate, comment: comment)
+//
+//                    let exifDataRaderWriter = EXIFDataReaderWriter()
+//                    exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
+//                })
+                
+                self.getImageAttributesInput(completion: { attributesData in
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
                     dateFormatter.timeZone = TimeZone.current
                     let fileCreationDate = dateFormatter.string(from: Date())
                     
-                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, creationDateTime: fileCreationDate, comment: comment)
+                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, heading: lockedHeading, creationDateTime: fileCreationDate, comment: nil, makerNote: attributesData)
                     
                     let exifDataRaderWriter = EXIFDataReaderWriter()
                     exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
@@ -1498,8 +1517,23 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         fileCountIndex = 0
         setFilenameLabelText()
+    }
+    
+    func getImageAttributesInput(completion: @escaping (String?) -> Void) {
+        print("getImageAttributesInput()")
         
-        
+        if imageAttributesIsOn == true {
+            let avc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "AttributeViewController") as! AttributeViewController
+            
+            avc.dataReturnHandler = { data in
+                completion(data)
+            }
+            
+            self.present(avc, animated: true, completion: nil)
+        }
+        else {
+            completion(nil)
+        }
     }
 }
 
