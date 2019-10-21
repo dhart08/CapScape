@@ -69,7 +69,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         var tempHeading: Double = newHeading.trueHeading
         
-        print("raw heading: ", tempHeading)
+        //print("raw heading: ", tempHeading)
         
         if UIDeviceOrientationIsLandscape(UIDevice.current.orientation) {
             if UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft {
@@ -79,7 +79,7 @@ class LocationFinder: NSObject, CLLocationManagerDelegate{
                 tempHeading -= 90.0
             }
             
-            print("orientated raw heading")
+            //print("orientated raw heading")
         }
         
         heading = tempHeading
