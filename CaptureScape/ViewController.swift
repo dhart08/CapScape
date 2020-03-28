@@ -80,7 +80,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     var userSettingsModel: UserSettingsModel = UserSettingsModel()
     
     var fileCount: Int = 0
-    var fileCountFormat = "%03d"
+    var fileCountFormat = "%04d"
     var fileCountIndex = 0
     var fileCountIndexIsLocked = false
     
@@ -266,7 +266,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             DispatchQueue.global().async {
             
-            self.movieOutput = try!  MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+            self.movieOutput = try! MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
             
             //self.blendFilter --> self.movieOutput
             self.cameraOverlayBlendFilter --> self.movieOutput
@@ -300,7 +300,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
         print("photo button clicked")
-        self.takePhoto { (image) in
+        self.savePhotoToJPEG { (image) in
             DispatchQueue.main.async {
                 self.flashScreen()
             }
@@ -327,7 +327,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             flashScreen()
 
-            self.takePhoto(completion: { (image) in
+            self.savePhotoToJPEG() { (image) in
                 DispatchQueue.main.async {
                     self.lastPictureImage = image
 
@@ -355,7 +355,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     self.currentSlideshowInput.processImage()
                     self.slideshowMovieOutput.startRecording()
                 }
-            })
+            }
         }
         else {
             isVideoRecording = false
@@ -437,14 +437,10 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         let onOffAttributes = imageAttributesIsOn ? "OFF" : "ON"
         let imageAttributesOption = UIAlertAction(title: "Turn \(onOffAttributes) Image Attributes", style: .default) { (_) in
-            
+
             self.imageAttributesIsOn = !(self.imageAttributesIsOn)
-            
+
             print("imageAttributesIsOn = ", self.imageAttributesIsOn)
-            
-//            let ac = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "AttributeViewController") as! AttributeViewController
-//
-//            self.present(ac, animated: true, completion: nil)
         }
         
         let objectSizeOption = UIAlertAction(title: "Measure Object Size", style: .default) { (_) in
@@ -544,20 +540,31 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         else {
             updateCoordinates = false
+            
+            gpsSwitch.backgroundColor = UIColor.red
+            gpsSwitch.layer.cornerRadius = 16
         }
     }
     
     @IBAction func indexSwitchClick(_ sender: UISwitch) {
+        //print("indexSwitch Clicked")
+        
         if indexSwitch.isOn == true {
-            if userSettingsModel.getImagePrefix() == nil {
-                indexSwitch.setOn(false, animated: true)
-            }
-            else {
-                lockFileIndex()
-            }
+            //print("Unlocking file index!")
+            unlockFileIndex()
         }
         else {
-            unlockFileIndex()
+            if userSettingsModel.getImagePrefix() == nil {
+                indexSwitch.setOn(true, animated: true)
+                //print("Found nil prefix!")
+            }
+            else {
+                //print("Locking file index!")
+                lockFileIndex()
+                
+                indexSwitch.backgroundColor = UIColor.red
+                indexSwitch.layer.cornerRadius = 16
+            }
         }
     }
     
@@ -852,10 +859,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             alert.addAction(action)
         }
         
-        present(alert, animated: true) {
-            if duration != nil {
-                usleep(useconds_t(1000 * duration!))
-                alert.dismiss(animated: true, completion: nil)
+        DispatchQueue.main.async {
+            self.present(alert, animated: true) {
+                if duration != nil {
+                    usleep(useconds_t(1000 * duration!))
+                    alert.dismiss(animated: true, completion: nil)
+                }
             }
         }
     }
@@ -870,7 +879,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         return timestamp
     }
     
-    func takePhoto(completion: @escaping (UIImage) -> Void) {
+    func savePhotoToPNG(completion: @escaping (UIImage) -> Void) {
         self.pictureOutput = PictureOutput()
         self.pictureOutput.encodedImageFormat = .png
         self.pictureOutput.imageAvailableCallback = { outputImage in
@@ -894,31 +903,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             //}
         
             self.directoryHandler.createDirectory(dirType: .photos)
-//            let fileURL = URL(fileURLWithPath: "Photos/\(self.createTimestamp()).png", relativeTo: self.directoryHandler.getDocumentsPath())
+//            let fileURL = URL(fileURLWithPath: "Photos/\(self.getFilename()).jpg", relativeTo: self.directoryHandler.getDocumentsPath())
             let fileURL = URL(fileURLWithPath: "Photos/\(self.getFilename()).png", relativeTo: self.directoryHandler.getDocumentsPath())
             
-            //let jpg = UIImageJPEGRepresentation(image, 1.0)
+//            let jpg = UIImageJPEGRepresentation(finalImage!, 1.0)
             let png = UIImagePNGRepresentation(finalImage!)
             
             do {
-                //try png?.write(to: fileURL)
                 try png?.write(to: fileURL, options: .withoutOverwriting)
-                
-//                DispatchQueue.main.async {
-//                    self.setFilenameLabelText()
-//                }
-                
-//                self.getImageComment(completion: { (comment) in
-//                    let dateFormatter = DateFormatter()
-//                    dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
-//                    dateFormatter.timeZone = TimeZone.current
-//                    let fileCreationDate = dateFormatter.string(from: Date())
-//
-//                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, creationDateTime: fileCreationDate, comment: comment)
-//
-//                    let exifDataRaderWriter = EXIFDataReaderWriter()
-//                    exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
-//                })
+//                try jpg?.write(to: fileURL, options: .withoutOverwriting)
                 
                 self.getImageAttributesInput(completion: { attributesData in
                     let dateFormatter = DateFormatter()
@@ -926,10 +919,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     dateFormatter.timeZone = TimeZone.current
                     let fileCreationDate = dateFormatter.string(from: Date())
                     
-                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, heading: lockedHeading, creationDateTime: fileCreationDate, comment: nil, makerNote: attributesData)
+                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, heading: lockedHeading, creationDateTime: fileCreationDate, userComment: attributesData, makerNote: nil)
                     
                     let exifDataRaderWriter = EXIFDataReaderWriter()
-                    exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
+//                    exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: jpg!, exifDataParams: exifParams)
+                    exifDataRaderWriter.writeEXIFDataToFileURL(fileURL: fileURL, image: png!, exifDataParams: exifParams)
                 })
             }
             catch let error as NSError{
@@ -941,26 +935,106 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 }
             }
             
-//            self.getImageComment(completion: { (comment) in
-//                let dateFormatter = DateFormatter()
-//                dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
-//                dateFormatter.timeZone = TimeZone.current
-//                let fileCreationDate = dateFormatter.string(from: Date())
-//
-//                let exifParams = EXIFDataParams(latitude: self.locationFinder.latitude, longitude: self.locationFinder.longitude, creationDateTime: fileCreationDate, comment: comment)
-//
-//                let exifDataRaderWriter = EXIFDataReaderWriter()
-//                exifDataRaderWriter.writeEXIFDataToPhoto(fileURL: fileURL, image: png!, exifDataParams: exifParams)
-//            })
+            DispatchQueue.main.async {
+                self.setFilenameLabelText()
+            }
+            
+            self.pictureOutput = nil
+        }
+        
+        //self.blendFilter --> self.pictureOutput
+        self.cameraOverlayBlendFilter --> self.pictureOutput
+    }
+    
+    func savePhotoToJPEG(completion: @escaping (UIImage) -> Void) {
+        self.pictureOutput = PictureOutput()
+        self.pictureOutput.encodedImageFormat = .jpeg
+        self.pictureOutput.imageAvailableCallback = { outputImage in
+            
+            // lock coordinates to save into saved image file
+            let lockedLatitude = self.currentLatitudeDouble
+            let lockedLongitude = self.currentLongitudeDouble
+            let lockedHeading = String(round(self.locationFinder.heading * 100) / 100)
+            
+            //set orientation of the output image
+            let newSizedImage = UIImage(cgImage: outputImage.cgImage!, scale: 1.0, orientation: self.imageOrientation)
+            
+            //redraw new image to correct orientation
+            UIGraphicsBeginImageContext(newSizedImage.size)
+            newSizedImage.draw(in: CGRect(x: 0, y: 0, width: newSizedImage.size.width, height: newSizedImage.size.height))
+            let rotatedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            //DispatchQueue.main.async {
+            completion(rotatedImage!)
+            //}
+
+            self.getImageAttributesInput(completion: { customAttributesData in
+                var finalImageData: Data?
+                var fileURL: URL?
+                
+                do {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "M/dd/yyyy, h:mm:ss a"
+                    dateFormatter.timeZone = TimeZone.current
+                    let fileCreationDate = dateFormatter.string(from: Date())
+                    
+                    var fileUniqueID = self.userSettingsModel.getImagePrefix()
+                    fileUniqueID = (fileUniqueID != nil) ? "\(fileUniqueID!)\(String(format: self.fileCountFormat, self.fileCount))" : ""
+                    
+                    let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, heading: lockedHeading, creationDateTime: fileCreationDate, userComment: nil, makerNote: nil, uniqueID: fileUniqueID, customAttributes: customAttributesData)
+                    
+                    let exifDataRaderWriter = EXIFDataReaderWriter()
+                    finalImageData = exifDataRaderWriter.writeEXIFDataToJPEGImage(image: rotatedImage!, exifDataParams: exifParams)
+                    
+                    self.directoryHandler.createDirectory(dirType: .photos)
+                    
+                    fileURL = URL(fileURLWithPath: "Photos/\(self.getFilename()).jpg", relativeTo: self.directoryHandler.getDocumentsPath())
+                    
+                    //let finalImageData = UIImageJPEGRepresentation(data, 1.0)
+
+                    try finalImageData?.write(to: fileURL!, options: .withoutOverwriting)
+                }
+                catch let error as NSError {
+                    if error.code == 516 {
+                        let alert = UIAlertController(title: "Save Image", message: "The file '\(fileURL!.lastPathComponent)' already exists. Would you like to overwrite it?", preferredStyle: .alert)
+                        
+                        let yesAction = UIAlertAction(title: "Yes", style: .default, handler: { (_) in
+                            func forceWriteFile() {
+                                do {
+                                    try finalImageData?.write(to: fileURL!)
+                                }
+                                catch error as NSError {
+                                    self.popupMessage(title: "Error", message: error.localizedDescription, duration: nil)
+                                }
+                                catch {
+                                    
+                                }
+                            }
+                            
+                            forceWriteFile()
+                        })
+                        
+                        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+                        
+                        alert.addAction(yesAction)
+                        alert.addAction(cancelAction)
+                        self.present(alert, animated: true, completion: nil)
+                    }
+//                        if error.code == 516 {
+//                            self.popupMessage(title: "Error", message: "Could not save file. A file with that name already exists.", duration: nil)
+//                        }
+//                        else {
+//                        self.popupMessage(title: "Error", message: error.localizedDescription, duration: nil)
+//                        }
+                }
+            })
             
             DispatchQueue.main.async {
                 self.setFilenameLabelText()
             }
             
             self.pictureOutput = nil
-            
-            print("image saved!")
-
         }
         
         //self.blendFilter --> self.pictureOutput
@@ -1016,9 +1090,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.appNameImage.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
             print("end pop app name")
         }, completion: { _ in
-            print("dispatching sleep thread")
             DispatchQueue.global().async {
-                print("sleeping splash screen")
                 usleep(1000 * 3000)
                 
                 DispatchQueue.main.async {
@@ -1203,7 +1275,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 self.fileCount = 0
                 self.unlockFileIndex()
             }
-                // set new prefix after validating text format
+            // set new prefix after validating text format
             else {
                 let regex = try! NSRegularExpression(pattern: "[^A-Za-z0-9_-]")
                 let range = NSRange(location: 0, length: suggestedPrefix!.utf16.count)
@@ -1211,9 +1283,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 // if prefix text format is valid
                 if regex.firstMatch(in: suggestedPrefix!, options: [], range: range) == nil {
                     self.userSettingsModel.setImagePrefix(prefix: suggestedPrefix!)
-                    self.fileCount = 0
+                    //self.fileCount = 0
                     self.unlockFileIndex()
-                    counterTextField.text = "0"
+                    //counterTextField.text = "0"
                 }
                 else {
                     self.popupMessage(title: "File Prefix", message: "Invalid filename!", duration: nil)
@@ -1288,7 +1360,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     func setFilenameLabelText() {
         if let filePrefix = userSettingsModel.getImagePrefix() {
-            filenameLabel.text = "\(filePrefix)\(String(format: fileCountFormat, fileCount))\(getFileIndexLetter(increment: false)).png"
+            filenameLabel.text = "\(filePrefix)\(String(format: fileCountFormat, fileCount))\(getFileIndexLetter(increment: false))"
         }
         else {
             filenameLabel.text = "(timestamp)"
@@ -1509,7 +1581,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         
         fileCountIndexIsLocked = false
-        indexSwitch.setOn(false, animated: true)
+        indexSwitch.setOn(true, animated: true)
         
         if fileCountIndex != 97 {
             fileCount += 1
@@ -1523,13 +1595,15 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         print("getImageAttributesInput()")
         
         if imageAttributesIsOn == true {
-            let avc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "AttributeViewController") as! AttributeViewController
-            
-            avc.dataReturnHandler = { data in
-                completion(data)
+            DispatchQueue.main.async {
+                let avc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "AttributeViewController") as! AttributeViewController
+                
+                avc.dataReturnHandler = { data in
+                    completion(data)
+                }
+                
+                self.present(avc, animated: true, completion: nil)
             }
-            
-            self.present(avc, animated: true, completion: nil)
         }
         else {
             completion(nil)
