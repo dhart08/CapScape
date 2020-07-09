@@ -163,6 +163,7 @@
 		63436C97214374F3002A6EC6 /* CaptureScape */ = {
 			isa = PBXGroup;
 			children = (
+				63436CA2214374F6002A6EC6 /* Assets.xcassets */,
 				638D702F221D5C14005128C6 /* CaptureScape.entitlements */,
 				63436C98214374F3002A6EC6 /* AppDelegate.swift */,
 				63436C9A214374F3002A6EC6 /* ViewController.swift */,
@@ -171,7 +172,6 @@
 				6354DABE21D5049300D2A72C /* FileViewController.swift */,
 				63005CF821E48F77007092CA /* TransferProgressView.swift */,
 				63436C9C214374F3002A6EC6 /* Main.storyboard */,
-				63436CA2214374F6002A6EC6 /* Assets.xcassets */,
 				63436CA7214374F6002A6EC6 /* Info.plist */,
 				63436C9F214374F3002A6EC6 /* CaptureScape.xcdatamodeld */,
 				632FD1762144B37900CFE5EF /* LocationFinder.swift */,
