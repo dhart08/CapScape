@@ -11,13 +11,14 @@ import Foundation
 class UserSettingsModel {
     private var expirationDate: String?
     private var userHeight: Int?
-    private var imagePrefix: String?
-    private var imageNumber: String?
+    private var filePrefix: String?
+    private var fileCount: Int?
     private var askForImageComment: Bool?
     
     private let expirationDateKey = "ExpirationDate"
     private let userHeightKey = "UserHeight"
-    private let imagePrefixKey = "ImagePrefix"
+    private let filePrefixKey = "FilePrefix"
+    private let fileCountKey = "FileCount"
     private let askForImageCommentKey = "AskForImageComment"
     
     init() {
@@ -50,34 +51,48 @@ class UserSettingsModel {
         userHeight = height
     }
     
-    public func getImagePrefix() -> String? {
-        //imagePrefix = UserDefaults.value(forKey: imagePrefixKey) as? String
-        
-        return imagePrefix
+    public func setAppCloseWithPrefix(result: Bool) {
+        UserDefaults.standard.set(result, forKey: "AppCloseWithPrefix")
     }
     
-    public func setImagePrefix(prefix: String?) {
-        //UserDefaults.standard.set(prefix, forKey: imagePrefixKey)
+    public func getAppCloseWithPrefix() -> Bool? {
+        let result: Bool? = UserDefaults.value(forKey: "AppCloseWithPrefix") as? Bool
         
+        return result
+    }
+    
+    public func getFilePrefix() -> String? {
+        let prefix = UserDefaults.standard.value(forKey: filePrefixKey) as? String
+        
+        return prefix
+    }
+    
+    public func setFilePrefix(prefix: String?) {
         if (prefix == nil) || (prefix == "") {
-            imagePrefix = nil
+            filePrefix = nil
         }
         else {
-            imagePrefix = prefix
+            filePrefix = prefix
         }
+        
+        UserDefaults.standard.set(filePrefix, forKey: filePrefixKey)
     }
     
-    public func getImageNumber() -> String? {
-        return imageNumber
+    public func getFileCount() -> Int? {
+        let fileCount = UserDefaults.standard.value(forKey: fileCountKey) as? Int
+        
+        return fileCount
     }
     
-    public func setImageNumber(num: String?) {
-        if (num == nil) || (num == "") {
-            imageNumber = nil
+    public func setFileCount(num: Int?) {
+        if (num == nil) {//|| (num == "") {
+            fileCount = nil
         }
         else {
-            imageNumber = num
+            fileCount = num
         }
+        
+        UserDefaults.standard.set(fileCount, forKey: fileCountKey)
     }
     
     public func getAskForImageComment() -> Bool {

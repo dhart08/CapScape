@@ -81,7 +81,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     var fileCount: Int = 0
     var fileCountFormat = "%04d"
-    var fileCountIndex = 0
+    var fileCountIndexLetter = 0
     var fileCountIndexIsLocked = false
     
     var imageAttributesIsOn = false
@@ -155,6 +155,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 //        }
         
         //NotificationCenter.default.addObserver(self, selector: #selector(onDidReceiveCoordinates(_:)), name: .didReceiveCoordinates, object: nil)
+        
+        if let _ = userSettingsModel.getFilePrefix(), let count = userSettingsModel.getFileCount() {
+            fileCount = count
+            setFilenameLabelText()
+        }
         
         locationFinder = LocationFinder()
         locationFinder.locationUpdateCallbacks.append {
@@ -230,6 +235,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         locationFinder.stopFindingLocation()
         camera.stopCapture()
+        
+        //insert crash code here
     }
 
     override func didReceiveMemoryWarning() {
@@ -255,7 +262,9 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             directoryHandler.createDirectory(dirType: .videos)
             
-            fileURL = URL(string: "Videos/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
+            //fileURL = URL(string: "Videos/\(createTimestamp()).mp4", relativeTo: directoryHandler.getDocumentsPath())
+            
+            fileURL = URL(fileURLWithPath: "Videos/\(self.getFilename()).m4v", relativeTo: self.directoryHandler.getDocumentsPath())
             
             do {
                 try FileManager.default.removeItem(at: fileURL!)
@@ -266,7 +275,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             
             DispatchQueue.global().async {
             
-            self.movieOutput = try! MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+            self.movieOutput = try! MovieOutput(URL: self.fileURL!, size: Size(width: 720, height: 1280), liveVideo: true)
             
             //self.blendFilter --> self.movieOutput
             self.cameraOverlayBlendFilter --> self.movieOutput
@@ -288,6 +297,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 //self.flashScreen()
             }
             
+            //Update filename label in upper left corner of screen
+            DispatchQueue.main.async {
+                self.setFilenameLabelText()
+            }
+            
             videoButton.setImage(UIImage(named: "video_enabled"), for: .normal)
             photoButton.setImage(UIImage(named: "photo_enabled"), for: .normal)
             photoButton.isEnabled = true
@@ -296,10 +310,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             toolsButton.setImage(UIImage(named: "toolbox_enabled"), for: .normal)
             toolsButton.isEnabled = true
         }
+        
+        
     }
     
     @IBAction func photoButtonClick(_ sender: UIButton) {
-        print("photo button clicked")
+        //print("photo button clicked")
         self.savePhotoToJPEG { (image) in
             DispatchQueue.main.async {
                 self.flashScreen()
@@ -336,7 +352,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     self.slideShowBlendFilter = SourceOverBlend()
 
                     self.directoryHandler.createDirectory(dirType: .slideshows)
-                    self.fileURL = URL(fileURLWithPath: "Slideshows/\(self.createTimestamp()).mp4", relativeTo: self.directoryHandler.getDocumentsPath())
+                    self.fileURL = URL(fileURLWithPath: "Slideshows/\(self.getFilename()).m4v", relativeTo: self.directoryHandler.getDocumentsPath())
 
                     do {
                         try FileManager.default.removeItem(at: self.fileURL!)
@@ -345,7 +361,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
                     }
 
-                    self.slideshowMovieOutput = try! MovieOutput(URL: self.fileURL!, size: Size(width: 1080, height: 1920), liveVideo: true)
+                    self.slideshowMovieOutput = try! MovieOutput(URL: self.fileURL!, size: Size(width: 720, height: 1280), liveVideo: true)
                     print("after 1")
                     self.camera.audioEncodingTarget = self.slideshowMovieOutput
 
@@ -417,8 +433,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.showDocumentsPicker()
         }
         
-        let imagePrefixOption = UIAlertAction(title: "Set Photo Name Prefix", style: .default) { (_) in
-            self.getImagePrefixInput()
+        let filePrefixOption = UIAlertAction(title: "Set Photo Name Prefix", style: .default) { (_) in
+            self.getFilePrefixInput()
         }
         
         // add user comment on/off option here
@@ -455,7 +471,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         
         
         toolsMenu.addAction(filesOption)
-        toolsMenu.addAction(imagePrefixOption)
+        toolsMenu.addAction(filePrefixOption)
         //toolsMenu.addAction(imageCommentOption)
         toolsMenu.addAction(imageAttributesOption)
         //toolsMenu.addAction(updateCoordinatesOption)
@@ -535,27 +551,35 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     @IBAction func gpsSwitchClick(_ sender: UISwitch) {
+        // GPS switched to unlock
         if gpsSwitch.isOn == true {
             updateCoordinates = true
+            
+            AudioServicesPlaySystemSoundWithCompletion(1305, nil)
         }
+        // GPS switched to lock
         else {
             updateCoordinates = false
             
             gpsSwitch.backgroundColor = UIColor.red
             gpsSwitch.layer.cornerRadius = 16
+            
+            AudioServicesPlaySystemSoundWithCompletion(1305, nil)
         }
     }
     
     @IBAction func indexSwitchClick(_ sender: UISwitch) {
-        //print("indexSwitch Clicked")
-        
+        // LockFileIndex switched to unlock
         if indexSwitch.isOn == true {
-            //print("Unlocking file index!")
             unlockFileIndex()
+            
+            AudioServicesPlaySystemSoundWithCompletion(1305, nil)
         }
+        // LockFileIndex switched to lock
         else {
-            if userSettingsModel.getImagePrefix() == nil {
+            if userSettingsModel.getFilePrefix() == nil {
                 indexSwitch.setOn(true, animated: true)
+                popupMessage(title: "Missing File Prefix", message: "Cannot lock file index without first setting the file prefix. Tap the toolbox button in the lower right to set the file prefix.", duration: nil)
                 //print("Found nil prefix!")
             }
             else {
@@ -564,6 +588,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 indexSwitch.backgroundColor = UIColor.red
                 indexSwitch.layer.cornerRadius = 16
+                
+                AudioServicesPlaySystemSoundWithCompletion(1305, nil)
             }
         }
     }
@@ -731,7 +757,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         context.fillPath()
         
         let font = "Helvetica" // used to be "Futura"
-        let coordinateFontColor  = (updateCoordinates == true) ? UIColor.white : UIColor.red
+        let rgbColor = UIColor.init(red: (240/255), green: (128/255), blue: (128/255), alpha: 1.0)
+        let coordinateFontColor  = (updateCoordinates == true) ? UIColor.white : rgbColor
         //set font for on-screen coordinates stamp
         let coordinateFontAttrs = [
             NSAttributedString.Key.font: UIFont(name: font, size: 22),
@@ -807,12 +834,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     func setCameraDevice() {
-        var device: AVCaptureDevice?
         
         func setCameraObject(device: AVCaptureDevice) {
             do {
                 //self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, captureAsYUV: true)
-                self.camera = try Camera(sessionPreset: .hd1920x1080, cameraDevice: device, location: .backFacing, orientation: ImageOrientation.portrait, captureAsYUV: true)
+                self.camera = try Camera(sessionPreset: .hd1280x720, cameraDevice: device, location: .backFacing, orientation: ImageOrientation.portrait, captureAsYUV: true)
                 
             } catch {
                 print("setCameraObject: Could not create camera object.")
@@ -979,7 +1005,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     dateFormatter.timeZone = TimeZone.current
                     let fileCreationDate = dateFormatter.string(from: Date())
                     
-                    var fileUniqueID = self.userSettingsModel.getImagePrefix()
+                    var fileUniqueID = self.userSettingsModel.getFilePrefix()
                     fileUniqueID = (fileUniqueID != nil) ? "\(fileUniqueID!)\(String(format: self.fileCountFormat, self.fileCount))" : ""
                     
                     let exifParams = EXIFDataParams(latitude: lockedLatitude, longitude: lockedLongitude, heading: lockedHeading, creationDateTime: fileCreationDate, userComment: nil, makerNote: nil, uniqueID: fileUniqueID, customAttributes: customAttributesData)
@@ -994,6 +1020,8 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                     //let finalImageData = UIImageJPEGRepresentation(data, 1.0)
 
                     try finalImageData?.write(to: fileURL!, options: .withoutOverwriting)
+                    
+                    AudioServicesPlaySystemSoundWithCompletion(1108, nil)
                 }
                 catch let error as NSError {
                     if error.code == 516 {
@@ -1021,12 +1049,6 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                         alert.addAction(cancelAction)
                         self.present(alert, animated: true, completion: nil)
                     }
-//                        if error.code == 516 {
-//                            self.popupMessage(title: "Error", message: "Could not save file. A file with that name already exists.", duration: nil)
-//                        }
-//                        else {
-//                        self.popupMessage(title: "Error", message: error.localizedDescription, duration: nil)
-//                        }
                 }
             })
             
@@ -1241,17 +1263,17 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         present(popupMenu, animated: true, completion: nil)
     }
     //----------------------------------------
-    func getImagePrefixInput() {
+    func getFilePrefixInput() {
         let popupInputMessage = UIAlertController(title: "Enter photo prefix", message: nil, preferredStyle: .alert)
         
         popupInputMessage.addTextField { (textField) in
             textField.placeholder = "Prefix"
-            textField.text = self.userSettingsModel.getImagePrefix()
+            textField.text = self.userSettingsModel.getFilePrefix()
         }
 
         popupInputMessage.addTextField { (textField) in
             textField.placeholder = "Count"
-            //textField.text = self.userSettingsModel.getImageNumber()
+            //textField.text = self.userSettingsModel.getFileCount()
             textField.text = String(self.fileCount)
         }
         
@@ -1265,12 +1287,12 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             suggestedPrefix = suggestedPrefix?.trimmingCharacters(in: .whitespacesAndNewlines)
             
             // if prefix is the same
-            if suggestedPrefix == self.userSettingsModel.getImagePrefix() {
+            if suggestedPrefix == self.userSettingsModel.getFilePrefix() {
                 // do nothing
             }
             //if prefix is empty make it the timestamp
             else if suggestedPrefix?.count == 0 {
-                self.userSettingsModel.setImagePrefix(prefix: nil)
+                self.userSettingsModel.setFilePrefix(prefix: nil)
                 
                 self.fileCount = 0
                 self.unlockFileIndex()
@@ -1282,7 +1304,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
                 
                 // if prefix text format is valid
                 if regex.firstMatch(in: suggestedPrefix!, options: [], range: range) == nil {
-                    self.userSettingsModel.setImagePrefix(prefix: suggestedPrefix!)
+                    self.userSettingsModel.setFilePrefix(prefix: suggestedPrefix!)
                     //self.fileCount = 0
                     self.unlockFileIndex()
                     //counterTextField.text = "0"
@@ -1342,24 +1364,46 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
     
     func getFilename() -> String {
-        var filename: String? = userSettingsModel.getImagePrefix()
         
-        if filename == nil {
+        var filename: String?
+        let filePrefix: String? = userSettingsModel.getFilePrefix()
+        
+        //if timestamp found instead of file prefix
+        if filePrefix == nil {
             filename = createTimestamp()
-        }
-        else {
-            filename = filename! + String(format: fileCountFormat, fileCount) + getFileIndexLetter(increment: true)
             
-            if fileCountIndex == 0 {
-                fileCount = fileCount + 1
+            userSettingsModel.setFilePrefix(prefix: nil)
+            userSettingsModel.setFileCount(num: nil)
+            
+            print("File get prefix: nil /n File get count: nil")
+        }
+        //if file prefix found instead of timestamp then create new filename
+        else {
+            //create filename from current prefix, filecount and fileindexletter if locked
+            filename = filePrefix! + String(format: fileCountFormat, fileCount) + getFileIndexLetter(increment: true)
+            
+            //if file index counter is not locked then increment fileCount
+            if fileCountIndexLetter == 0 {
+                //fileCount = fileCount + 1
+                incrementFileCount()
             }
+            
+            userSettingsModel.setFilePrefix(prefix: filePrefix)
+            print("getFileIndexCount: \(userSettingsModel.getFileCount()!)")
         }
         
         return filename!
     }
     
+    func incrementFileCount() {
+        fileCount = fileCount + 1
+        userSettingsModel.setFileCount(num: fileCount)
+        
+        print("File set count: \(fileCount)")
+    }
+    
     func setFilenameLabelText() {
-        if let filePrefix = userSettingsModel.getImagePrefix() {
+        if let filePrefix = userSettingsModel.getFilePrefix() {
             filenameLabel.text = "\(filePrefix)\(String(format: fileCountFormat, fileCount))\(getFileIndexLetter(increment: false))"
         }
         else {
@@ -1551,16 +1595,16 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     func getFileIndexLetter(increment: Bool) -> String {
         var charStr = ""
         
-        if fileCountIndex != 0 {
-            if let uni = UnicodeScalar(fileCountIndex) {
+        if fileCountIndexLetter != 0 {
+            if let uni = UnicodeScalar(fileCountIndexLetter) {
                 let char = Character(uni)
                 charStr = String(char)
             }
             
             if increment == true {
-                fileCountIndex += 1
-                if fileCountIndex == 123 {
-                    fileCountIndex = 97
+                fileCountIndexLetter += 1
+                if fileCountIndexLetter == 123 {
+                    fileCountIndexLetter = 97
                 }
             }
         }
@@ -1571,7 +1615,7 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     func lockFileIndex() {
         fileCountIndexIsLocked = true
         
-        fileCountIndex = 97
+        fileCountIndexLetter = 97
         setFilenameLabelText()
     }
     
@@ -1583,11 +1627,11 @@ class ViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         fileCountIndexIsLocked = false
         indexSwitch.setOn(true, animated: true)
         
-        if fileCountIndex != 97 {
+        if fileCountIndexLetter != 97 {
             fileCount += 1
         }
         
-        fileCountIndex = 0
+        fileCountIndexLetter = 0
         setFilenameLabelText()
     }
     
